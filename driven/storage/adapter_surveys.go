@@ -28,7 +28,7 @@ import (
 func (a *Adapter) GetSurvey(id string, orgID string, appID string) (*model.Survey, error) {
 	filter := bson.M{"_id": id, "org_id": orgID, "app_id": appID}
 	var entry model.Survey
-	err := a.db.surveys.FindOne(filter, &entry, nil)
+	err := a.db.surveys.FindOne(a.context, filter, &entry, nil)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeSurvey, filterArgs(filter), err)
 	}
@@ -36,13 +36,19 @@ func (a *Adapter) GetSurvey(id string, orgID string, appID string) (*model.Surve
 }
 
 // GetSurveys gets matching surveys
-func (a *Adapter) GetSurveys(orgID string, appID string, surveyIDs []string, surveyTypes []string, limit *int, offset *int) ([]model.Survey, error) {
+func (a *Adapter) GetSurveys(orgID string, appID string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int) ([]model.Survey, error) {
 	filter := bson.M{"org_id": orgID, "app_id": appID}
+	if creatorID != nil {
+		filter["creator_id"] = *creatorID
+	}
 	if len(surveyIDs) > 0 {
 		filter["_id"] = bson.M{"$in": surveyIDs}
 	}
 	if len(surveyTypes) > 0 {
 		filter["type"] = bson.M{"$in": surveyTypes}
+	}
+	if len(calendarEventID) > 0 {
+		filter["calendar_event_id"] = calendarEventID
 	}
 
 	opts := options.Find()
@@ -53,7 +59,7 @@ func (a *Adapter) GetSurveys(orgID string, appID string, surveyIDs []string, sur
 		opts.SetSkip(int64(*offset))
 	}
 	var results []model.Survey
-	err := a.db.surveys.Find(filter, &results, opts)
+	err := a.db.surveys.Find(a.context, filter, &results, opts)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeSurvey, filterArgs(filter), err)
 	}
@@ -62,7 +68,7 @@ func (a *Adapter) GetSurveys(orgID string, appID string, surveyIDs []string, sur
 
 // CreateSurvey creates a poll
 func (a *Adapter) CreateSurvey(survey model.Survey) (*model.Survey, error) {
-	_, err := a.db.surveys.InsertOne(survey)
+	_, err := a.db.surveys.InsertOne(a.context, survey)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionCreate, model.TypeSurvey, nil, err)
 	}
@@ -86,7 +92,6 @@ func (a *Adapter) UpdateSurvey(survey model.Survey, admin bool) error {
 			"result_rules":          survey.ResultRules,
 			"type":                  survey.Type,
 			"stats":                 survey.SurveyStats,
-			"sensitive":             survey.Sensitive,
 			"default_data_key":      survey.DefaultDataKey,
 			"default_data_key_rule": survey.DefaultDataKeyRule,
 			"constants":             survey.Constants,
@@ -95,7 +100,7 @@ func (a *Adapter) UpdateSurvey(survey model.Survey, admin bool) error {
 			"date_updated":          now,
 		}}
 
-		res, err := a.db.surveys.UpdateOne(filter, update, nil)
+		res, err := a.db.surveys.UpdateOne(a.context, filter, update, nil)
 		if err != nil {
 			return errors.WrapErrorAction(logutils.ActionUpdate, model.TypeSurvey, filterArgs(filter), err)
 		}
@@ -108,12 +113,12 @@ func (a *Adapter) UpdateSurvey(survey model.Survey, admin bool) error {
 }
 
 // DeleteSurvey deletes a survey
-func (a *Adapter) DeleteSurvey(id string, orgID string, appID string, creatorID *string) error {
+func (a *Adapter) DeleteSurvey(id string, orgID string, appID string, creatorID string, admin bool) error {
 	filter := bson.M{"_id": id, "org_id": orgID, "app_id": appID}
-	if creatorID != nil {
+	if !admin {
 		filter["creator_id"] = creatorID
 	}
-	res, err := a.db.surveys.DeleteOne(filter, nil)
+	res, err := a.db.surveys.DeleteOne(a.context, filter, nil)
 	if err != nil {
 		return errors.WrapErrorAction(logutils.ActionDelete, model.TypeSurvey, filterArgs(filter), err)
 	}

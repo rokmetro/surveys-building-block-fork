@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Rokwire Surveys Building Block API
   description: Surveys Building Block API Documentation
-  version: 1.0.2
+  version: 1.3.0
 servers:
   - url: 'https://api.rokwire.illinois.edu/surveys'
     description: Production server
@@ -66,6 +66,13 @@ paths:
           description: A comma-separated list of survey types to retrieve
           required: false
           style: simple
+          explode: false
+          schema:
+            type: string
+        - name: calendar_event_id
+          in: query
+          description: eventID of calendar eventID
+          required: false
           explode: false
           schema:
             type: string
@@ -217,6 +224,71 @@ paths:
           description: Unauthorized
         '403':
           description: Forbidden
+        '500':
+          description: Internal error
+  '/api/surveys/{id}/responses':
+    get:
+      tags:
+        - Client
+      summary: Retrieves all survey responses for specified survey
+      description: |
+        Retrieves all survey responses for specified survey
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: id
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          description: The start of the date range to search for
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: end_date
+          in: query
+          description: The end of the date range to search for
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The number of results to be loaded in one page
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+        - name: offset
+          in: query
+          description: The number of results previously loaded
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurveyResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
         '500':
           description: Internal error
   /api/survey-responses:
@@ -495,6 +567,303 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error
+  /api/creator/surveys:
+    get:
+      tags:
+        - Client
+      summary: Retrieves surveys created by the requesting user
+      description: |
+        Retrieves surveys created by the requesting user matching the provided query
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ids
+          in: query
+          description: A comma-separated list of survey IDs to retrieve
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: types
+          in: query
+          description: A comma-separated list of survey types to retrieve
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The number of results to be loaded in one page
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+        - name: offset
+          in: query
+          description: The number of results previously loaded
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Survey'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error
+  /api/admin/configs:
+    get:
+      tags:
+        - Admin
+      summary: Get configs
+      description: |
+        Get existing configs by search parameters
+
+        **Auth:** Requires valid admin token with one of the following permissions:
+        - `get_configs_<name>`
+        - `update_configs_<name>`
+        - `delete_configs_<name>`
+        - `all_configs_<name>`
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          description: config type
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Config'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error
+    post:
+      tags:
+        - Admin
+      summary: Create config
+      description: |
+        Creates a new config
+
+        **Auth:** Requires valid admin token with one of the following permissions:
+        - `update_configs_<name>`
+        - `all_configs_<name>`
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Config'
+            examples:
+              system:
+                summary: System-wide config
+                value:
+                  type: config_type
+                  all_apps: true
+                  all_orgs: true
+                  system: true
+                  data:
+                    example_env: example
+              org_admin:
+                summary: Organization-wide config
+                value:
+                  type: config_type
+                  all_apps: true
+                  all_orgs: false
+                  system: false
+                  data:
+                    example_env: example
+              app_org_specific:
+                summary: Application organization specific config
+                value:
+                  type: config_type
+                  all_apps: false
+                  all_orgs: false
+                  system: false
+                  data:
+                    example_env: example
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Config'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error
+  '/api/admin/configs/{id}':
+    get:
+      tags:
+        - Admin
+      summary: Get config
+      description: |
+        Gets config record
+
+        **Auth:** Requires valid admin token with one of the following permissions:
+        - `get_configs_<name>`
+        - `update_configs_<name>`
+        - `delete_configs_<name>`
+        - `all_configs_<name>`
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of config to retrieve
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Config'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error
+    put:
+      tags:
+        - Admin
+      summary: Update config
+      description: |
+        Updates existing config record
+
+        **Auth:** Requires valid admin token with one of the following permissions:
+        - `update_configs_<name>`
+        - `all_configs_<name>`
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of config to update
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+      requestBody:
+        description: New config content
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Config'
+            examples:
+              system:
+                summary: System-wide config
+                value:
+                  type: config_type
+                  all_apps: true
+                  all_orgs: true
+                  system: true
+                  data:
+                    example_env: example
+              org_admin:
+                summary: Organization-wide config
+                value:
+                  type: config_type
+                  all_apps: true
+                  all_orgs: false
+                  system: false
+                  data:
+                    example_env: example
+              app_org_specific:
+                summary: Application organization specific config
+                value:
+                  type: config_type
+                  all_apps: false
+                  all_orgs: false
+                  system: false
+                  data:
+                    example_env: example
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Success
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error
+    delete:
+      tags:
+        - Admin
+      summary: Delete config
+      description: |
+        Deletes config record
+
+        **Auth:** Requires valid admin token with one of the following permissions:
+        - `delete_configs_<name>`
+        - `all_configs_<name>`
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of config to delete
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Success
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error
   /api/admin/surveys:
     get:
       tags:
@@ -520,6 +889,13 @@ paths:
           description: A comma-separated list of survey types to retrieve
           required: false
           style: simple
+          explode: false
+          schema:
+            type: string
+        - name: calendar_event_id
+          in: query
+          description: eventID of calendar eventID
+          required: false
           explode: false
           schema:
             type: string
@@ -679,6 +1055,74 @@ paths:
           description: Forbidden
         '500':
           description: Internal error
+  '/api/admin/surveys/{id}/responses':
+    get:
+      tags:
+        - Admin
+      summary: Retrieves all survey responses for specified survey
+      deprecated: true
+      description: |
+        Retrieves all survey responses for specified survey
+
+        **Auth:** Requires admin token
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: id
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          description: The start of the date range to search for
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: end_date
+          in: query
+          description: The end of the date range to search for
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The number of results to be loaded in one page
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+        - name: offset
+          in: query
+          description: The number of results previously loaded
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurveyResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error
   /api/admin/alert-contacts:
     post:
       tags:
@@ -827,109 +1271,57 @@ paths:
           description: Forbidden
         '500':
           description: Internal error
-  '/api/system/configs/{id}':
+  /api/analytics/survey-responses:
     get:
       tags:
-        - System
-      summary: Get config
+        - Analytics
+      summary: Retrieves anonymized survey responses
       description: |
-        Gets config record
-
-        **Auth:** Requires valid admin token with one of the following permissions:
-        - `get_configs_surveys`
-        - `update_configs_surveys`
-        - `delete_configs_surveys`
-        - `all_configs_surveys`
+        Retrieves anonymized survey responses for analytics
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          description: ID of config to retrieve
-          required: true
+        - name: survey_types
+          in: query
+          description: A comma-separated list of survey types to retrieve responses for
+          required: false
           style: simple
           explode: false
           schema:
             type: string
+        - name: start_date
+          in: query
+          description: The start of the date range to search for
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: end_date
+          in: query
+          description: The end of the date range to search for
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: time_offset
+          in: query
+          description: The number of hours before now to search for
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
       responses:
         '200':
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Config'
-        '400':
-          description: Bad request
-        '401':
-          description: Unauthorized
-        '500':
-          description: Internal error
-    put:
-      tags:
-        - System
-      summary: Save config
-      description: |
-        Saves config record
-
-        **Auth:** Requires valid admin token with `update_configs_surveys` or `all_configs_surveys`  permission
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          description: ID of config to update
-          required: true
-          style: simple
-          explode: false
-          schema:
-            type: string
-      requestBody:
-        description: New config content
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Config'
-      responses:
-        '200':
-          description: Success
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: Success
-        '400':
-          description: Bad request
-        '401':
-          description: Unauthorized
-        '500':
-          description: Internal error
-    delete:
-      tags:
-        - System
-      summary: Delete config
-      description: |
-        Deletes config record
-
-        **Auth:** Requires valid admin token with `delete_configs_surveys` or `all_configs_surveys` permission
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          description: ID of config to delete
-          required: true
-          style: simple
-          explode: false
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Success
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: Success
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurveyResponseAnonymous'
         '400':
           description: Bad request
         '401':
@@ -944,30 +1336,46 @@ components:
       bearerFormat: JWT
   schemas:
     Config:
-      type: object
       required:
         - id
+        - type
+        - app_id
+        - org_id
+        - system
         - data
         - date_created
+        - date_updated
+      type: object
       properties:
         id:
-          type: string
           readOnly: true
+          type: string
+        type:
+          type: string
+        app_id:
+          readOnly: true
+          type: string
+        org_id:
+          readOnly: true
+          type: string
+        system:
+          type: boolean
         data:
-          type: string
+          anyOf:
+            - $ref: '#/components/schemas/EnvConfigData'
         date_created:
-          type: string
           readOnly: true
+          type: string
         date_updated:
+          readOnly: true
           type: string
           nullable: true
-          readOnly: true
     EnvConfigData:
       type: object
       required:
-        - example_env
+        - splunk_token
       properties:
-        example_env:
+        splunk_token:
           type: string
     Survey:
       type: object
@@ -1004,6 +1412,8 @@ components:
           $ref: '#/components/schemas/SurveyStats'
         sensitive:
           type: boolean
+        anonymous:
+          type: boolean
         default_data_key:
           type: string
         default_data_key_rule:
@@ -1025,6 +1435,8 @@ components:
           type: string
           readOnly: true
           nullable: true
+        calendar_event_id:
+          type: string
     SurveyData:
       type: object
       properties:
@@ -1171,6 +1583,37 @@ components:
           type: string
           readOnly: true
           nullable: true
+    SurveyResponseAnonymous:
+      type: object
+      required:
+        - id
+        - creator_id
+        - org_id
+        - app_id
+        - title
+        - type
+        - stats
+        - date_created
+      properties:
+        id:
+          type: string
+        creator_id:
+          type: string
+        org_id:
+          type: string
+        app_id:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+        stats:
+          $ref: '#/components/schemas/SurveyStats'
+        date_created:
+          type: string
+        date_updated:
+          type: string
+          nullable: true
     AlertContact:
       type: object
       properties:
@@ -1182,3 +1625,25 @@ components:
           type: string
         params:
           type: object
+    _admin_req_update-configs:
+      required:
+        - type
+        - all_apps
+        - all_orgs
+        - system
+        - data
+      type: object
+      properties:
+        type:
+          type: string
+        all_apps:
+          writeOnly: true
+          type: boolean
+        all_orgs:
+          writeOnly: true
+          type: boolean
+        system:
+          type: boolean
+        data:
+          anyOf:
+            - $ref: '#/components/schemas/EnvConfigData'

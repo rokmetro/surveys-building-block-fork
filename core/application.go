@@ -15,9 +15,10 @@
 package core
 
 import (
+	"application/core/interfaces"
 	"application/core/model"
-	"application/driven/storage"
 
+	"github.com/rokwire/core-auth-library-go/v3/authutils"
 	"github.com/rokwire/logging-library-go/v2/errors"
 	"github.com/rokwire/logging-library-go/v2/logs"
 	"github.com/rokwire/logging-library-go/v2/logutils"
@@ -25,7 +26,7 @@ import (
 
 type storageListener struct {
 	app *Application
-	storage.DefaultListenerImpl
+	model.DefaultStorageListener
 }
 
 // OnExampleUpdated notifies that the example collection has changed
@@ -40,18 +41,20 @@ type Application struct {
 	version string
 	build   string
 
-	Default Default // expose to the drivers adapters
-	Client  Client  // expose to the drivers adapters
-	Admin   Admin   // expose to the drivers adapters
-	BBs     BBs     // expose to the drivers adapters
-	TPS     TPS     // expose to the drivers adapters
-	System  System  // expose to the drivers adapters
-	shared  Shared
+	Default   interfaces.Default   // expose to the drivers adapters
+	Client    interfaces.Client    // expose to the drivers adapters
+	Admin     interfaces.Admin     // expose to the drivers adapters
+	Analytics interfaces.Analytics // expose to the drivers adapters
+	BBs       interfaces.BBs       // expose to the drivers adapters
+	TPS       interfaces.TPS       // expose to the drivers adapters
+	System    interfaces.System    // expose to the drivers adapters
+	shared    Shared
 
 	logger *logs.Logger
 
-	storage       Storage
-	notifications Notifications
+	storage       interfaces.Storage
+	notifications interfaces.Notifications
+	calendar      interfaces.Calendar
 }
 
 // Start starts the core part of the application
@@ -64,21 +67,25 @@ func (a *Application) Start() {
 // GetEnvConfigs retrieves the cached database env configs
 func (a *Application) GetEnvConfigs() (*model.EnvConfigData, error) {
 	// Load env configs from database
-	config, err := a.storage.GetConfig(model.ConfigIDEnv)
+	config, err := a.storage.FindConfig(model.ConfigTypeEnv, authutils.AllApps, authutils.AllOrgs)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionGet, model.TypeConfig, nil, err)
 	}
-	return config.DataAsEnvConfig()
+	if config == nil {
+		return nil, errors.ErrorData(logutils.StatusMissing, model.TypeConfig, &logutils.FieldArgs{"type": model.ConfigTypeEnv, "app_id": authutils.AllApps, "org_id": authutils.AllOrgs})
+	}
+	return model.GetConfigData[model.EnvConfigData](*config)
 }
 
 // NewApplication creates new Application
-func NewApplication(version string, build string, storage Storage, notifications Notifications, logger *logs.Logger) *Application {
-	application := Application{version: version, build: build, storage: storage, notifications: notifications, logger: logger}
+func NewApplication(version string, build string, storage interfaces.Storage, notifications interfaces.Notifications, calendar interfaces.Calendar, logger *logs.Logger) *Application {
+	application := Application{version: version, build: build, storage: storage, notifications: notifications, calendar: calendar, logger: logger}
 
 	//add the drivers ports/interfaces
 	application.Default = newAppDefault(&application)
 	application.Client = newAppClient(&application)
 	application.Admin = newAppAdmin(&application)
+	application.Analytics = newAppAnalytics(&application)
 	application.BBs = newAppBBs(&application)
 	application.TPS = newAppTPS(&application)
 	application.System = newAppSystem(&application)

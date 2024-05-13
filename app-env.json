@@ -1,14 +1,14 @@
 {
     "app_secret": {
-        "SURVEYS_MONGO_AUTH": "<mongo_url>",
-        "SURVEYS_PRIV_KEY": "<service account priv key>"
+        "SURVEYS_MONGO_AUTH": "<mongodb-connection-string>",
+        "SURVEYS_PRIV_KEY": "<service-account-priv-key>"
     },
-    "app_config":{
+    "app_config": {
+        "SURVEYS_BASE_URL": "<service-base-url>",
         "SURVEYS_PORT": "5000",
-        "SURVEYS_MONGO_DATABASE": "<db-name>",
+        "SURVEYS_MONGO_DATABASE": "<service-db-name>",
         "SURVEYS_MONGO_TIMEOUT": "",
-        "SURVEYS_BASE_URL": "<base-url>",
         "SURVEYS_CORE_BB_BASE_URL": "<core-bb-base-url>",
-        "SURVEYS_SERVICE_ACCOUNT_ID": "<service account id>"
+        "SURVEYS_SERVICE_ACCOUNT_ID": "<service-account-id>"
     }
 }

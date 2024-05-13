@@ -17,3 +17,12 @@ p, update_alert_contacts, /surveys/api/admin/alert-contacts, (GET)|(POST), Updat
 p, update_alert_contacts, /surveys/api/admin/alert-contacts/*, (GET)|(PUT),
 p, delete_alert_contacts, /surveys/api/admin/alert-contacts, (GET), Delete alert contacts
 p, delete_alert_contacts, /surveys/api/admin/alert-contacts/*, (GET)|(DELETE),
+
+p, all_configs_surveys, /surveys/api/admin/configs/*, (GET)|(PUT)|(DELETE), All surveys config admin actions
+p, all_configs_surveys, /surveys/api/admin/configs, (GET)|(POST),
+p, get_configs_surveys, /surveys/api/admin/configs/*, (GET), Get surveys configs
+p, get_configs_surveys, /surveys/api/admin/configs, (GET),
+p, update_configs_surveys, /surveys/api/admin/configs/*, (GET)|(PUT), Update surveys configs
+p, update_configs_surveys, /surveys/api/admin/configs, (GET)|(POST),
+p, delete_configs_surveys, /surveys/api/admin/configs/*, (GET)|(DELETE), Delete surveys configs
+p, delete_configs_surveys, /surveys/api/admin/configs, (GET),

@@ -14,26 +14,13 @@
 
 package storage
 
+import "application/core/model"
+
 type storageListener struct {
 	adapter *Adapter
-	DefaultListenerImpl
+	model.DefaultStorageListener
 }
 
 func (s *storageListener) OnConfigsUpdated() {
 	s.adapter.cacheConfigs()
 }
-
-// Listener represents storage listener
-type Listener interface {
-	OnConfigsUpdated()
-	OnExamplesUpdated()
-}
-
-// DefaultListenerImpl default listener implementation
-type DefaultListenerImpl struct{}
-
-// OnConfigsUpdated notifies that the configs collection has been updated
-func (d *DefaultListenerImpl) OnConfigsUpdated() {}
-
-// OnExamplesUpdated notifies that the examples collection has been updated
-func (d *DefaultListenerImpl) OnExamplesUpdated() {}

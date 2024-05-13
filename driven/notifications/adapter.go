@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/rokwire/core-auth-library-go/v2/authservice"
+	"github.com/rokwire/core-auth-library-go/v3/authservice"
 	"github.com/rokwire/logging-library-go/v2/errors"
 	"github.com/rokwire/logging-library-go/v2/logs"
 	"github.com/rokwire/logging-library-go/v2/logutils"
@@ -24,15 +24,16 @@ type Adapter struct {
 
 // NewNotificationsAdapter creates a new Notifications BB adapter instance
 func NewNotificationsAdapter(notificationHost string, serviceAccountManager *authservice.ServiceAccountManager, logger *logs.Logger) (*Adapter, error) {
-	if serviceAccountManager == nil {
-		return nil, errors.New("service account manager is nil")
-	}
-
 	return &Adapter{baseURL: notificationHost, serviceAccountManager: serviceAccountManager, logger: logger}, nil
 }
 
 // SendNotification Sends a direct notification trough Notifications BB
 func (a *Adapter) SendNotification(notification model.NotificationMessage) {
+	if a.serviceAccountManager == nil {
+		a.logger.Error("service account manager is nil")
+		return
+	}
+
 	go a.logger.Error(fmt.Sprint(a.sendNotification(notification)))
 }
 
@@ -77,6 +78,11 @@ func (a *Adapter) sendNotification(message model.NotificationMessage) error {
 
 // SendMail sends email to a user
 func (a *Adapter) SendMail(toEmail string, subject string, body string) {
+	if a.serviceAccountManager == nil {
+		a.logger.Error("service account manager is nil")
+		return
+	}
+
 	go a.logger.Error(fmt.Sprint(a.sendMail(toEmail, subject, body)))
 }
 

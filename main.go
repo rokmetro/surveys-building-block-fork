@@ -16,15 +16,17 @@ package main
 
 import (
 	"application/core"
+	"application/driven/calendar"
 	"application/driven/notifications"
 	"application/driven/storage"
 	"application/driver/web"
 	"strings"
 
-	"github.com/golang-jwt/jwt"
-	"github.com/rokwire/core-auth-library-go/v2/authservice"
-	"github.com/rokwire/core-auth-library-go/v2/envloader"
-	"github.com/rokwire/core-auth-library-go/v2/sigauth"
+	"github.com/rokwire/core-auth-library-go/v3/keys"
+
+	"github.com/rokwire/core-auth-library-go/v3/authservice"
+	"github.com/rokwire/core-auth-library-go/v3/envloader"
+	"github.com/rokwire/core-auth-library-go/v3/sigauth"
 	"github.com/rokwire/logging-library-go/v2/logs"
 )
 
@@ -46,13 +48,13 @@ func main() {
 	logger := logs.NewLogger(serviceID, &loggerOpts)
 	envLoader := envloader.NewEnvLoader(Version, logger)
 
-	envPrefix := strings.ToUpper(serviceID) + "_"
+	envPrefix := strings.ReplaceAll(strings.ToUpper(serviceID), "-", "_") + "_"
 	port := envLoader.GetAndLogEnvVar(envPrefix+"PORT", false, false)
 	if len(port) == 0 {
 		port = "80"
 	}
 
-	// MongoDB adapter
+	// mongoDB adapter
 	mongoDBAuth := envLoader.GetAndLogEnvVar(envPrefix+"MONGO_AUTH", true, true)
 	mongoDBName := envLoader.GetAndLogEnvVar(envPrefix+"MONGO_DATABASE", true, false)
 	mongoTimeout := envLoader.GetAndLogEnvVar(envPrefix+"MONGO_TIMEOUT", false, false)
@@ -73,51 +75,72 @@ func main() {
 		AuthBaseURL: coreBBBaseURL,
 	}
 
-	serviceRegLoader, err := authservice.NewRemoteServiceRegLoader(&authService, []string{"notifications"})
+	serviceRegLoader, err := authservice.NewRemoteServiceRegLoader(&authService, []string{"notifications", "calendar"})
 	if err != nil {
 		logger.Fatalf("Error initializing remote service registration loader: %v", err)
 	}
 
-	serviceRegManager, err := authservice.NewServiceRegManager(&authService, serviceRegLoader)
+	serviceRegManager, err := authservice.NewServiceRegManager(&authService, serviceRegLoader, !strings.HasPrefix(baseURL, "http://localhost"))
 	if err != nil {
 		logger.Fatalf("Error initializing service registration manager: %v", err)
 	}
 
 	// Service account
-	serviceAccountID := envLoader.GetAndLogEnvVar(envPrefix+"SERVICE_ACCOUNT_ID", true, false)
-	privKeyRaw := envLoader.GetAndLogEnvVar(envPrefix+"PRIV_KEY", true, true)
+	var serviceAccountManager *authservice.ServiceAccountManager
+
+	serviceAccountID := envLoader.GetAndLogEnvVar(envPrefix+"SERVICE_ACCOUNT_ID", false, false)
+	privKeyRaw := envLoader.GetAndLogEnvVar(envPrefix+"PRIV_KEY", false, true)
 	privKeyRaw = strings.ReplaceAll(privKeyRaw, "\\n", "\n")
-	privKey, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(privKeyRaw))
+	privKey, err := keys.NewPrivKey(keys.PS256, privKeyRaw)
 	if err != nil {
-		logger.Fatalf("Error parsing priv key: %v", err)
-	}
-	signatureAuth, err := sigauth.NewSignatureAuth(privKey, serviceRegManager, false)
-	if err != nil {
-		logger.Fatalf("Error initializing signature auth: %v", err)
-	}
+		logger.Errorf("Error parsing priv key: %v", err)
+	} else if serviceAccountID == "" {
+		logger.Errorf("Missing service account id")
+	} else {
+		signatureAuth, err := sigauth.NewSignatureAuth(privKey, serviceRegManager, false, false)
+		if err != nil {
+			logger.Fatalf("Error initializing signature auth: %v", err)
+		}
 
-	serviceAccountLoader, err := authservice.NewRemoteServiceAccountLoader(&authService, serviceAccountID, signatureAuth)
-	if err != nil {
-		logger.Fatalf("Error initializing remote service account loader: %v", err)
-	}
+		serviceAccountLoader, err := authservice.NewRemoteServiceAccountLoader(&authService, serviceAccountID, signatureAuth)
+		if err != nil {
+			logger.Fatalf("Error initializing remote service account loader: %v", err)
+		}
 
-	serviceAccountManager, err := authservice.NewServiceAccountManager(&authService, serviceAccountLoader)
-	if err != nil {
-		logger.Fatalf("Error initializing service account manager: %v", err)
+		serviceAccountManager, err = authservice.NewServiceAccountManager(&authService, serviceAccountLoader)
+		if err != nil {
+			logger.Fatalf("Error initializing service account manager: %v", err)
+		}
 	}
 
 	// Notifications adapter
+	notificationHost := ""
 	notificationsReg, err := serviceRegManager.GetServiceReg("notifications")
 	if err != nil {
-		logger.Fatalf("error finding notifications service reg: %s", err)
+		logger.Errorf("error finding notifications service reg: %s", err)
+	} else {
+		notificationHost = notificationsReg.Host
 	}
-	notificationsAdapter, err := notifications.NewNotificationsAdapter(notificationsReg.Host, serviceAccountManager, logger)
+	notificationsAdapter, err := notifications.NewNotificationsAdapter(notificationHost, serviceAccountManager, logger)
 	if err != nil {
 		logger.Fatalf("Error initializing notifications adapter: %v", err)
 	}
 
+	// Calendar adapter
+	calendarHost := ""
+	calendarReg, err := serviceRegManager.GetServiceReg("calendar")
+	if err != nil {
+		logger.Errorf("error finding calendar service reg: %s", err)
+	} else {
+		calendarHost = calendarReg.Host
+	}
+	calendarAdapter, err := calendar.NewCalendarAdapter(calendarHost, serviceAccountManager, logger)
+	if err != nil {
+		logger.Fatalf("Error initializing calendar adapter: %v", err)
+	}
+
 	// Application
-	application := core.NewApplication(Version, Build, storageAdapter, notificationsAdapter, logger)
+	application := core.NewApplication(Version, Build, storageAdapter, notificationsAdapter, calendarAdapter, logger)
 	application.Start()
 
 	// Web adapter

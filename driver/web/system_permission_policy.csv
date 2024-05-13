@@ -1,6 +1,1 @@
 p, all_system_surveys, /surveys/api/system/*, (GET)|(POST)|(PUT)|(DELETE), All Surveys BB system admin actions
-
-p, all_configs_surveys, /surveys/api/system/configs/*, (GET)|(PUT)|(DELETE), All Surveys BB config admin actions
-p, get_configs_surveys, /surveys/api/system/configs/*, (GET), Get Surveys BB configs
-p, update_configs_surveys, /surveys/api/system/configs/*, (GET)|(PUT), Update Surveys BB configs
-p, delete_configs_surveys, /surveys/api/system/configs/*, (GET)|(DELETE), Delete Surveys BB configs

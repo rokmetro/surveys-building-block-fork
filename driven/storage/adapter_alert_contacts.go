@@ -27,7 +27,7 @@ import (
 func (a *Adapter) GetAlertContacts(orgID string, appID string) ([]model.AlertContact, error) {
 	filter := bson.M{"org_id": orgID, "app_id": appID}
 	var entry []model.AlertContact
-	err := a.db.alertContacts.Find(filter, &entry, nil)
+	err := a.db.alertContacts.Find(a.context, filter, &entry, nil)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeAlertContact, filterArgs(filter), err)
 	}
@@ -38,7 +38,7 @@ func (a *Adapter) GetAlertContacts(orgID string, appID string) ([]model.AlertCon
 func (a *Adapter) GetAlertContact(id string, orgID string, appID string) (*model.AlertContact, error) {
 	filter := bson.M{"_id": id, "org_id": orgID, "app_id": appID}
 	var entry model.AlertContact
-	err := a.db.alertContacts.FindOne(filter, &entry, nil)
+	err := a.db.alertContacts.FindOne(a.context, filter, &entry, nil)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeAlertContact, filterArgs(filter), err)
 	}
@@ -50,7 +50,7 @@ func (a *Adapter) GetAlertContact(id string, orgID string, appID string) (*model
 func (a *Adapter) GetAlertContactsByKey(key string, orgID string, appID string) ([]model.AlertContact, error) {
 	filter := bson.M{"key": key, "org_id": orgID, "app_id": appID}
 	var results []model.AlertContact
-	err := a.db.alertContacts.Find(filter, &results, nil)
+	err := a.db.alertContacts.Find(a.context, filter, &results, nil)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeAlertContact, filterArgs(filter), err)
 	}
@@ -62,7 +62,7 @@ func (a *Adapter) GetAlertContactsByKey(key string, orgID string, appID string) 
 
 // CreateAlertContact creates an alert contact
 func (a *Adapter) CreateAlertContact(alertContact model.AlertContact) (*model.AlertContact, error) {
-	_, err := a.db.alertContacts.InsertOne(alertContact)
+	_, err := a.db.alertContacts.InsertOne(a.context, alertContact)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionCreate, model.TypeAlertContact, nil, err)
 	}
@@ -82,7 +82,7 @@ func (a *Adapter) UpdateAlertContact(alertContact model.AlertContact) error {
 		"date_updated": now,
 	}}
 
-	res, err := a.db.alertContacts.UpdateOne(filter, update, nil)
+	res, err := a.db.alertContacts.UpdateOne(a.context, filter, update, nil)
 	if err != nil {
 		return errors.WrapErrorAction(logutils.ActionUpdate, model.TypeAlertContact, filterArgs(filter), err)
 	}
@@ -96,7 +96,7 @@ func (a *Adapter) UpdateAlertContact(alertContact model.AlertContact) error {
 // DeleteAlertContact deletes an alert contact
 func (a *Adapter) DeleteAlertContact(id string, orgID string, appID string) error {
 	filter := bson.M{"_id": id, "org_id": orgID, "app_id": appID}
-	res, err := a.db.alertContacts.DeleteOne(filter, nil)
+	res, err := a.db.alertContacts.DeleteOne(a.context, filter, nil)
 	if err != nil {
 		return errors.WrapErrorAction(logutils.ActionUpdate, model.TypeAlertContact, filterArgs(filter), err)
 	}

@@ -1,6 +1,6 @@
 type: object
 required:
-- example_env
+- splunk_token
 properties:
-  example_env:
+  splunk_token:
     type: string

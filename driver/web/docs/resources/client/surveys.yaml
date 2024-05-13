@@ -23,6 +23,13 @@ get:
       explode: false
       schema:
         type: string
+    - name: calendar_event_id
+      in: query
+      description: eventID of calendar eventID
+      required: false
+      explode: false
+      schema: 
+        type: string
     - name: limit
       in: query
       description: The number of results to be loaded in one page

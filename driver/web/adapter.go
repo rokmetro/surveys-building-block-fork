@@ -25,13 +25,13 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/gorilla/mux"
-	"github.com/rokwire/core-auth-library-go/v2/authservice"
-	"github.com/rokwire/core-auth-library-go/v2/tokenauth"
+	"github.com/rokwire/core-auth-library-go/v3/authservice"
+	"github.com/rokwire/core-auth-library-go/v3/tokenauth"
 
 	"github.com/rokwire/logging-library-go/v2/logs"
 	"github.com/rokwire/logging-library-go/v2/logutils"
 
-	httpSwagger "github.com/swaggo/http-swagger"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 // Adapter entity
@@ -44,12 +44,13 @@ type Adapter struct {
 
 	cachedYamlDoc []byte
 
-	defaultAPIsHandler DefaultAPIsHandler
-	clientAPIsHandler  ClientAPIsHandler
-	adminAPIsHandler   AdminAPIsHandler
-	bbsAPIsHandler     BBsAPIsHandler
-	tpsAPIsHandler     TPSAPIsHandler
-	systemAPIsHandler  SystemAPIsHandler
+	defaultAPIsHandler   DefaultAPIsHandler
+	clientAPIsHandler    ClientAPIsHandler
+	adminAPIsHandler     AdminAPIsHandler
+	analyticsAPIsHandler AnalyticsAPIsHandler
+	bbsAPIsHandler       BBsAPIsHandler
+	tpsAPIsHandler       TPSAPIsHandler
+	systemAPIsHandler    SystemAPIsHandler
 
 	app *core.Application
 
@@ -77,26 +78,40 @@ func (a Adapter) Start() {
 	mainRouter.HandleFunc("/surveys", a.wrapFunc(a.clientAPIsHandler.createSurvey, a.auth.client.User)).Methods("POST")
 	mainRouter.HandleFunc("/surveys/{id}", a.wrapFunc(a.clientAPIsHandler.updateSurvey, a.auth.client.User)).Methods("PUT")
 	mainRouter.HandleFunc("/surveys/{id}", a.wrapFunc(a.clientAPIsHandler.deleteSurvey, a.auth.client.User)).Methods("DELETE")
+	mainRouter.HandleFunc("/surveys/{id}/responses", a.wrapFunc(a.clientAPIsHandler.getAllSurveyResponses, a.auth.client.User)).Methods("GET")
 	mainRouter.HandleFunc("/survey-responses/{id}", a.wrapFunc(a.clientAPIsHandler.getSurveyResponse, a.auth.client.User)).Methods("GET")
-	mainRouter.HandleFunc("/survey-responses", a.wrapFunc(a.clientAPIsHandler.getSurveyResponses, a.auth.client.User)).Methods("GET")
+	mainRouter.HandleFunc("/survey-responses", a.wrapFunc(a.clientAPIsHandler.getUserSurveyResponses, a.auth.client.User)).Methods("GET")
 	mainRouter.HandleFunc("/survey-responses", a.wrapFunc(a.clientAPIsHandler.createSurveyResponse, a.auth.client.User)).Methods("POST")
 	mainRouter.HandleFunc("/survey-responses/{id}", a.wrapFunc(a.clientAPIsHandler.updateSurveyResponse, a.auth.client.User)).Methods("PUT")
 	mainRouter.HandleFunc("/survey-responses/{id}", a.wrapFunc(a.clientAPIsHandler.deleteSurveyResponse, a.auth.client.User)).Methods("DELETE")
 	mainRouter.HandleFunc("/survey-responses", a.wrapFunc(a.clientAPIsHandler.deleteSurveyResponses, a.auth.client.User)).Methods("DELETE")
 	mainRouter.HandleFunc("/survey-alerts", a.wrapFunc(a.clientAPIsHandler.createSurveyAlert, a.auth.client.User)).Methods("POST")
+	mainRouter.HandleFunc("/creator/surveys", a.wrapFunc(a.clientAPIsHandler.getCreatorSurveys, a.auth.client.User)).Methods("GET")
 
 	// Admin APIs
 	adminRouter := mainRouter.PathPrefix("/admin").Subrouter()
+	adminRouter.HandleFunc("/configs/{id}", a.wrapFunc(a.adminAPIsHandler.getConfig, a.auth.admin.Permissions)).Methods("GET")
+	adminRouter.HandleFunc("/configs", a.wrapFunc(a.adminAPIsHandler.getConfigs, a.auth.admin.Permissions)).Methods("GET")
+	adminRouter.HandleFunc("/configs", a.wrapFunc(a.adminAPIsHandler.createConfig, a.auth.admin.Permissions)).Methods("POST")
+	adminRouter.HandleFunc("/configs/{id}", a.wrapFunc(a.adminAPIsHandler.updateConfig, a.auth.admin.Permissions)).Methods("PUT")
+	adminRouter.HandleFunc("/configs/{id}", a.wrapFunc(a.adminAPIsHandler.deleteConfig, a.auth.admin.Permissions)).Methods("DELETE")
+
 	adminRouter.HandleFunc("/surveys", a.wrapFunc(a.adminAPIsHandler.getSurveys, a.auth.admin.Permissions)).Methods("GET")
 	adminRouter.HandleFunc("/surveys/{id}", a.wrapFunc(a.adminAPIsHandler.getSurvey, a.auth.admin.Permissions)).Methods("GET")
 	adminRouter.HandleFunc("/surveys", a.wrapFunc(a.adminAPIsHandler.createSurvey, a.auth.admin.Permissions)).Methods("POST")
 	adminRouter.HandleFunc("/surveys/{id}", a.wrapFunc(a.adminAPIsHandler.updateSurvey, a.auth.admin.Permissions)).Methods("PUT")
 	adminRouter.HandleFunc("/surveys/{id}", a.wrapFunc(a.adminAPIsHandler.deleteSurvey, a.auth.admin.Permissions)).Methods("DELETE")
+	adminRouter.HandleFunc("/surveys/{id}/responses", a.wrapFunc(a.adminAPIsHandler.getAllSurveyResponses, a.auth.admin.User)).Methods("GET")
+
 	adminRouter.HandleFunc("/alert-contacts", a.wrapFunc(a.adminAPIsHandler.getAlertContacts, a.auth.admin.Permissions)).Methods("GET")
 	adminRouter.HandleFunc("/alert-contacts/{id}", a.wrapFunc(a.adminAPIsHandler.getAlertContact, a.auth.admin.Permissions)).Methods("GET")
 	adminRouter.HandleFunc("/alert-contacts", a.wrapFunc(a.adminAPIsHandler.createAlertContact, a.auth.admin.Permissions)).Methods("POST")
 	adminRouter.HandleFunc("/alert-contacts/{id}", a.wrapFunc(a.adminAPIsHandler.updateAlertContact, a.auth.admin.Permissions)).Methods("PUT")
 	adminRouter.HandleFunc("/alert-contacts/{id}", a.wrapFunc(a.adminAPIsHandler.deleteAlertContact, a.auth.admin.Permissions)).Methods("DELETE")
+
+	// Analytics APIs
+	analyticsRouter := mainRouter.PathPrefix("/analytics").Subrouter()
+	analyticsRouter.HandleFunc("/survey-responses", a.wrapFunc(a.analyticsAPIsHandler.getAnonymousSurveyResponses, a.auth.analytics)).Methods("GET")
 
 	// BB APIs
 	// bbsRouter := mainRouter.PathPrefix("/bbs").Subrouter()
@@ -105,10 +120,7 @@ func (a Adapter) Start() {
 	// tpsRouter := mainRouter.PathPrefix("/tps").Subrouter()
 
 	// System APIs
-	systemRouter := mainRouter.PathPrefix("/system").Subrouter()
-	systemRouter.HandleFunc("/configs/{id}", a.wrapFunc(a.systemAPIsHandler.getConfig, a.auth.system.Permissions)).Methods("GET")
-	systemRouter.HandleFunc("/configs/{id}", a.wrapFunc(a.systemAPIsHandler.saveConfig, a.auth.system.Permissions)).Methods("PUT")
-	systemRouter.HandleFunc("/configs/{id}", a.wrapFunc(a.systemAPIsHandler.deleteConfig, a.auth.system.Permissions)).Methods("DELETE")
+	// systemRouter := mainRouter.PathPrefix("/system").Subrouter()
 
 	a.logger.Fatalf("Error serving: %v", http.ListenAndServe(":"+a.port, router))
 }
@@ -171,7 +183,9 @@ func (a Adapter) wrapFunc(handler handlerFunc, authorization tokenauth.Handler) 
 				return
 			}
 
-			logObj.SetContext("account_id", claims.Subject)
+			if claims != nil {
+				logObj.SetContext("account_id", claims.Subject)
+			}
 			response = handler(logObj, req, claims)
 		} else {
 			response = handler(logObj, req, nil)
@@ -189,7 +203,7 @@ func NewWebAdapter(baseURL string, port string, serviceID string, app *core.Appl
 		logger.Fatalf("error parsing docs yaml - %s", err.Error())
 	}
 
-	auth, err := NewAuth(serviceRegManager)
+	auth, err := NewAuth(serviceRegManager, app)
 	if err != nil {
 		logger.Fatalf("error creating auth - %s", err.Error())
 	}
@@ -197,7 +211,9 @@ func NewWebAdapter(baseURL string, port string, serviceID string, app *core.Appl
 	defaultAPIsHandler := NewDefaultAPIsHandler(app)
 	clientAPIsHandler := NewClientAPIsHandler(app)
 	adminAPIsHandler := NewAdminAPIsHandler(app)
-	bbsAPIsHandler := NewBBsAPIsHandler(app)
+	analyticsAPIsHandler := NewAnalyticsAPIsHandler(app)
+	systemAPIsHandler := NewSystemAPIsHandler(app)
 	return Adapter{baseURL: baseURL, port: port, serviceID: serviceID, cachedYamlDoc: yamlDoc, auth: auth, defaultAPIsHandler: defaultAPIsHandler,
-		clientAPIsHandler: clientAPIsHandler, adminAPIsHandler: adminAPIsHandler, bbsAPIsHandler: bbsAPIsHandler, app: app, logger: logger}
+		clientAPIsHandler: clientAPIsHandler, adminAPIsHandler: adminAPIsHandler, analyticsAPIsHandler: analyticsAPIsHandler, systemAPIsHandler: systemAPIsHandler,
+		app: app, logger: logger}
 }

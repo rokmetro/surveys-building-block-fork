@@ -1,6 +1,8 @@
-FROM golang:1.18-buster as builder
+FROM golang:1.22-alpine as builder
 
 ENV CGO_ENABLED=0
+
+RUN apk add --no-cache --update make git
 
 RUN mkdir /app
 WORKDIR /app
@@ -8,10 +10,10 @@ WORKDIR /app
 COPY . .
 RUN make
 
-FROM alpine:3.16.2
+FROM alpine:3.17.2
 
 #we need timezone database
-RUN apk --no-cache add tzdata
+RUN apk add --no-cache --update tzdata
 
 COPY --from=builder /app/bin/application /
 COPY --from=builder /app/driver/web/docs/gen/def.yaml /driver/web/docs/gen/def.yaml
@@ -23,13 +25,9 @@ COPY --from=builder /app/driver/web/bbs_permission_policy.csv /driver/web/bbs_pe
 COPY --from=builder /app/driver/web/tps_permission_policy.csv /driver/web/tps_permission_policy.csv
 COPY --from=builder /app/driver/web/system_permission_policy.csv /driver/web/system_permission_policy.csv
 
-COPY --from=builder /app/vendor/github.com/rokwire/core-auth-library-go/v2/authorization/authorization_model_scope.conf /app/vendor/github.com/rokwire/core-auth-library-go/v2/authorization/authorization_model_scope.conf
-COPY --from=builder /app/vendor/github.com/rokwire/core-auth-library-go/v2/authorization/authorization_model_string.conf /app/vendor/github.com/rokwire/core-auth-library-go/v2/authorization/authorization_model_string.conf
-
+COPY --from=builder /app/vendor/github.com/rokwire/core-auth-library-go/v3/authorization/authorization_model_scope.conf /app/vendor/github.com/rokwire/core-auth-library-go/v3/authorization/authorization_model_scope.conf
+COPY --from=builder /app/vendor/github.com/rokwire/core-auth-library-go/v3/authorization/authorization_model_string.conf /app/vendor/github.com/rokwire/core-auth-library-go/v3/authorization/authorization_model_string.conf
 
 COPY --from=builder /etc/passwd /etc/passwd
-
-#we need timezone database
-COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo 
 
 ENTRYPOINT ["/application"]

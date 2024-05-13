@@ -24,31 +24,42 @@ import (
 const (
 	// TypeConfig configs type
 	TypeConfig logutils.MessageDataType = "config"
+	// TypeConfigData config data type
+	TypeConfigData logutils.MessageDataType = "config data"
 	// TypeEnvConfigData env configs type
 	TypeEnvConfigData logutils.MessageDataType = "env config data"
 
-	// ConfigIDEnv is the Config ID for EnvConfigData
-	ConfigIDEnv string = "env"
+	// ConfigTypeEnv is the Config Type for EnvConfigData
+	ConfigTypeEnv string = "env"
 )
 
 // Config contain generic configs
 type Config struct {
 	ID          string      `json:"id" bson:"_id"`
+	Type        string      `json:"type" bson:"type"`
+	AppID       string      `json:"app_id" bson:"app_id"`
+	OrgID       string      `json:"org_id" bson:"org_id"`
+	System      bool        `json:"system" bson:"system"`
 	Data        interface{} `json:"data" bson:"data"`
 	DateCreated time.Time   `json:"date_created" bson:"date_created"`
-	DateUpdated *time.Time  `json:"date_updated" bson:"date_updated"`
-}
-
-// DataAsEnvConfig returns the config Data as an EnvConfigData if the cast succeeds
-func (c Config) DataAsEnvConfig() (*EnvConfigData, error) {
-	data, ok := c.Data.(EnvConfigData)
-	if !ok {
-		return nil, errors.ErrorData(logutils.StatusInvalid, TypeEnvConfigData, nil)
-	}
-	return &data, nil
+	DateUpdated *time.Time  `json:"date_updated,omitempty" bson:"date_updated"`
 }
 
 // EnvConfigData contains environment configs for this service
 type EnvConfigData struct {
-	ExampleEnv string `json:"example_env" bson:"example_env"`
+	AnalyticsToken string `json:"analytics_token" bson:"analytics_token"`
+	ExternalID     string `json:"external_id" bson:"external_id"`
+}
+
+// GetConfigData returns a pointer to the given config's Data as the given type T
+func GetConfigData[T ConfigData](c Config) (*T, error) {
+	if data, ok := c.Data.(T); ok {
+		return &data, nil
+	}
+	return nil, errors.ErrorData(logutils.StatusInvalid, TypeConfigData, &logutils.FieldArgs{"type": c.Type})
+}
+
+// ConfigData represents any set of data that may be stored in a config
+type ConfigData interface {
+	EnvConfigData | map[string]interface{}
 }

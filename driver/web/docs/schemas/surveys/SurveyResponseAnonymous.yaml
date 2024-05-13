@@ -1,0 +1,30 @@
+type: object
+required:
+  - id
+  - creator_id
+  - org_id
+  - app_id
+  - title
+  - type
+  - stats
+  - date_created
+properties:
+  id:
+    type: string
+  creator_id:
+    type: string
+  org_id:
+    type: string
+  app_id:
+    type: string
+  title: 
+    type: string
+  type:
+    type: string
+  stats:
+    $ref: "./SurveyStats.yaml"
+  date_created:
+    type: string
+  date_updated:
+    type: string
+    nullable: true

@@ -53,6 +53,7 @@ type Survey struct {
 	Type               string                 `json:"type" bson:"type"`
 	SurveyStats        *SurveyStats           `json:"stats" bson:"stats"`
 	Sensitive          bool                   `json:"sensitive" bson:"sensitive"`
+	Anonymous          bool                   `json:"anonymous" bson:"anonymous"`
 	DefaultDataKey     *string                `json:"default_data_key" bson:"default_data_key"`
 	DefaultDataKeyRule *string                `json:"default_data_key_rule" bson:"default_data_key_rule"`
 	Constants          map[string]interface{} `json:"constants" bson:"constants"`
@@ -61,6 +62,20 @@ type Survey struct {
 	ResponseKeys       []string               `json:"response_keys" bson:"response_keys"`
 	DateCreated        time.Time              `json:"date_created" bson:"date_created"`
 	DateUpdated        *time.Time             `json:"date_updated" bson:"date_updated"`
+	CalendarEventID    string                 `json:"calendar_event_id" bson:"calendar_event_id"`
+}
+
+// SurveyResponseAnonymous represents an anonymized survey response
+type SurveyResponseAnonymous struct {
+	ID          string       `json:"id"`
+	CreatorID   string       `json:"creator_id"`
+	OrgID       string       `json:"org_id"`
+	AppID       string       `json:"app_id"`
+	Title       string       `json:"title"`
+	Type        string       `json:"type"`
+	SurveyStats *SurveyStats `json:"stats"`
+	DateCreated time.Time    `json:"date_created"`
+	DateUpdated *time.Time   `json:"date_updated,omitempty"`
 }
 
 // SurveyStats are stats of a Survey
@@ -75,7 +90,8 @@ type SurveyStats struct {
 
 // SurveyData is data stored for a Survey
 type SurveyData struct {
-	Section             *string     `json:"section" bson:"section"`
+	Section             *string     `json:"section,omitempty" bson:"section,omitempty"`
+	Sections            []string    `json:"sections,omitempty" bson:"sections,omitempty"`
 	AllowSkip           bool        `json:"allow_skip" bson:"allow_skip"`
 	Text                string      `json:"text" bson:"text"`
 	MoreInfo            string      `json:"more_info" bson:"more_info"`
@@ -92,7 +108,7 @@ type SurveyData struct {
 	CorrectAnswer  interface{}   `json:"correct_answer,omitempty" bson:"correct_answer,omitempty"`
 	CorrectAnswers []interface{} `json:"correct_answers,omitempty" bson:"correct_answers,omitempty"`
 	Options        []OptionData  `json:"options,omitempty" bson:"options,omitempty"`
-	Actions        []ActionData  `json:"actions,omitempty" bson:"actions,omitempty"`
+	Actions        *[]ActionData `json:"actions,omitempty" bson:"actions,omitempty"`
 	SelfScore      *bool         `json:"self_score,omitempty" bson:"self_score,omitempty"`
 	MaximumScore   *float64      `json:"maximum_score,omitempty" bson:"maximum_score,omitempty"`
 	Style          *string       `json:"style,omitempty" bson:"style,omitempty"`

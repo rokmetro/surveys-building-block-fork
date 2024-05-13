@@ -15,14 +15,14 @@
 package core_test
 
 import (
-	"application/core"
+	"application/core/interfaces"
 	"testing"
 )
 
 func Test_appDefault_GetVersion(t *testing.T) {
 	tests := []struct {
 		name string
-		a    core.Default
+		a    interfaces.Default
 		want string
 	}{
 		// TODO: Add test cases.

@@ -15,27 +15,33 @@
 package web
 
 import (
+	"application/core"
+	"application/core/model"
+	"application/utils"
+	"crypto/subtle"
+	"encoding/base64"
 	"net/http"
 
-	"github.com/rokwire/core-auth-library-go/v2/authorization"
+	"github.com/rokwire/core-auth-library-go/v3/authorization"
 	"github.com/rokwire/logging-library-go/v2/errors"
 	"github.com/rokwire/logging-library-go/v2/logutils"
 
-	"github.com/rokwire/core-auth-library-go/v2/authservice"
-	"github.com/rokwire/core-auth-library-go/v2/tokenauth"
+	"github.com/rokwire/core-auth-library-go/v3/authservice"
+	"github.com/rokwire/core-auth-library-go/v3/tokenauth"
 )
 
 // Auth handler
 type Auth struct {
-	client tokenauth.Handlers
-	admin  tokenauth.Handlers
-	bbs    tokenauth.Handlers
-	tps    tokenauth.Handlers
-	system tokenauth.Handlers
+	client    tokenauth.Handlers
+	admin     tokenauth.Handlers
+	bbs       tokenauth.Handlers
+	tps       tokenauth.Handlers
+	system    tokenauth.Handlers
+	analytics tokenauth.Handler
 }
 
 // NewAuth creates new auth handler
-func NewAuth(serviceRegManager *authservice.ServiceRegManager) (*Auth, error) {
+func NewAuth(serviceRegManager *authservice.ServiceRegManager, app *core.Application) (*Auth, error) {
 	client, err := newClientAuth(serviceRegManager)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionCreate, "client auth", nil, err)
@@ -66,12 +72,15 @@ func NewAuth(serviceRegManager *authservice.ServiceRegManager) (*Auth, error) {
 	}
 	systemHandlers := tokenauth.NewHandlers(system)
 
+	analyticsHandler := newAnalyticsTokenAuth(app)
+
 	auth := Auth{
-		client: clientHandlers,
-		admin:  adminHandlers,
-		bbs:    bbsHandlers,
-		tps:    tpsHandlers,
-		system: systemHandlers,
+		client:    clientHandlers,
+		admin:     adminHandlers,
+		bbs:       bbsHandlers,
+		tps:       tpsHandlers,
+		system:    systemHandlers,
+		analytics: analyticsHandler,
 	}
 	return &auth, nil
 }
@@ -97,8 +106,8 @@ func newClientAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth
 		return http.StatusOK, nil
 	}
 
-	auth := tokenauth.NewScopeHandler(*clientTokenAuth, check)
-	return &auth, nil
+	auth := tokenauth.NewScopeHandler(clientTokenAuth, check)
+	return auth, nil
 }
 
 func newAdminAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth.StandardHandler, error) {
@@ -116,8 +125,8 @@ func newAdminAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth.
 		return http.StatusOK, nil
 	}
 
-	auth := tokenauth.NewStandardHandler(*adminTokenAuth, check)
-	return &auth, nil
+	auth := tokenauth.NewStandardHandler(adminTokenAuth, check)
+	return auth, nil
 }
 
 func newBBsAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth.StandardHandler, error) {
@@ -139,8 +148,8 @@ func newBBsAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth.St
 		return http.StatusOK, nil
 	}
 
-	auth := tokenauth.NewStandardHandler(*bbsTokenAuth, check)
-	return &auth, nil
+	auth := tokenauth.NewStandardHandler(bbsTokenAuth, check)
+	return auth, nil
 }
 
 func newTPSAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth.StandardHandler, error) {
@@ -162,8 +171,8 @@ func newTPSAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth.St
 		return http.StatusOK, nil
 	}
 
-	auth := tokenauth.NewStandardHandler(*tpsTokenAuth, check)
-	return &auth, nil
+	auth := tokenauth.NewStandardHandler(tpsTokenAuth, check)
+	return auth, nil
 }
 
 func newSystemAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth.StandardHandler, error) {
@@ -181,6 +190,35 @@ func newSystemAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth
 		return http.StatusOK, nil
 	}
 
-	auth := tokenauth.NewStandardHandler(*systemTokenAuth, check)
-	return &auth, nil
+	auth := tokenauth.NewStandardHandler(systemTokenAuth, check)
+	return auth, nil
+}
+
+type analyticsTokenAuth struct {
+	app *core.Application
+}
+
+func (a *analyticsTokenAuth) Check(req *http.Request) (int, *tokenauth.Claims, error) {
+	// validate static token by comparing it against env config
+	token, err := tokenauth.GetAccessToken(req)
+	if err != nil {
+		return http.StatusUnauthorized, nil, errors.WrapErrorData(logutils.StatusInvalid, logutils.TypeToken, nil, err)
+	}
+	envConfig, err := a.app.GetEnvConfigs()
+	if err != nil {
+		return http.StatusInternalServerError, nil, errors.WrapErrorAction(logutils.ActionGet, model.TypeConfig, logutils.StringArgs(model.ConfigTypeEnv), err)
+	}
+	hashedToken := utils.SHA256Hash([]byte(token))
+	if subtle.ConstantTimeCompare([]byte(base64.StdEncoding.EncodeToString(hashedToken)), []byte(envConfig.AnalyticsToken)) == 0 {
+		return http.StatusForbidden, nil, errors.WrapErrorData(logutils.StatusInvalid, logutils.TypeToken, nil, err)
+	}
+	return http.StatusOK, nil, nil
+}
+
+func (a *analyticsTokenAuth) GetTokenAuth() *tokenauth.TokenAuth {
+	return nil
+}
+
+func newAnalyticsTokenAuth(app *core.Application) *analyticsTokenAuth {
+	return &analyticsTokenAuth{app: app}
 }

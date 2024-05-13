@@ -16,7 +16,8 @@ package core_test
 
 import (
 	"application/core"
-	"application/core/mocks"
+	"application/core/interfaces"
+	"application/core/interfaces/mocks"
 	"application/core/model"
 	"errors"
 	"reflect"
@@ -25,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
+	"github.com/rokwire/core-auth-library-go/v3/authutils"
 	"github.com/rokwire/logging-library-go/v2/logs"
 )
 
@@ -32,10 +34,10 @@ const (
 	serviceID string = "surveys"
 )
 
-func buildTestApplication(storage core.Storage) *core.Application {
+func buildTestApplication(storage interfaces.Storage) *core.Application {
 	loggerOpts := logs.LoggerOpts{SuppressRequests: logs.NewStandardHealthCheckHTTPRequestProperties(serviceID + "/version")}
 	logger := logs.NewLogger(serviceID, &loggerOpts)
-	return core.NewApplication("1.1.1", "build", storage, nil, logger)
+	return core.NewApplication("1.1.1", "build", storage, nil, nil, logger)
 }
 
 func TestApplication_Start(t *testing.T) {
@@ -49,15 +51,15 @@ func TestApplication_Start(t *testing.T) {
 }
 
 func TestApplication_GetEnvConfigs(t *testing.T) {
-	data := model.EnvConfigData{ExampleEnv: "example"}
-	config := model.Config{ID: "env", Data: data, DateCreated: time.Now(), DateUpdated: nil}
+	data := model.EnvConfigData{AnalyticsToken: "example"}
+	config := model.Config{Type: model.ConfigTypeEnv, AppID: authutils.AllApps, OrgID: authutils.AllOrgs, Data: data, DateCreated: time.Now(), DateUpdated: nil}
 
 	storage := mocks.NewStorage(t)
-	storage.On("GetConfig", "env").Return(&config, nil)
+	storage.On("FindConfig", model.ConfigTypeEnv, authutils.AllApps, authutils.AllOrgs).Return(&config, nil)
 	app := buildTestApplication(storage)
 
 	storage2 := mocks.NewStorage(t)
-	storage2.On("GetConfig", "env").Return(nil, errors.New("no config found"))
+	storage2.On("FindConfig", model.ConfigTypeEnv, authutils.AllApps, authutils.AllOrgs).Return(nil, errors.New("no config found"))
 	app2 := buildTestApplication(storage2)
 
 	tests := []struct {

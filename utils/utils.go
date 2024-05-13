@@ -15,6 +15,7 @@
 package utils
 
 import (
+	"crypto/sha256"
 	"time"
 )
 
@@ -40,4 +41,10 @@ func GetTime(time *time.Time) string {
 		return ""
 	}
 	return time.String()
+}
+
+// SHA256Hash computes the SHA256 hash of a byte slice
+func SHA256Hash(data []byte) []byte {
+	hash := sha256.Sum256(data)
+	return hash[:]
 }

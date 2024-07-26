@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Rokwire Surveys Building Block API
   description: Surveys Building Block API Documentation
-  version: 1.3.0
+  version: 1.9.0
 servers:
   - url: 'https://api.rokwire.illinois.edu/surveys'
     description: Production server
@@ -92,6 +92,58 @@ paths:
           explode: false
           schema:
             type: number
+        - name: public
+          in: query
+          description: Shows if the survery is public or not
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: boolean
+        - name: archived
+          in: query
+          description: Shows if the survery is archived or not
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: boolean
+        - name: completed
+          in: query
+          description: Shows if the survery is completed or not
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: boolean
+      requestBody:
+        description: Get survey time filter request body
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start_time_before:
+                  type: integer
+                  nullable: true
+                  format: int64
+                  description: UNIX UTC timestamp in seconds
+                start_time_after:
+                  type: integer
+                  nullable: true
+                  format: int64
+                  description: UNIX UTC timestamp in seconds
+                end_time_before:
+                  type: integer
+                  nullable: true
+                  format: int64
+                  description: UNIX UTC timestamp in seconds
+                end_time_after:
+                  type: integer
+                  nullable: true
+                  format: int64
+                  description: UNIX UTC timestamp in seconds
       responses:
         '200':
           description: Success
@@ -183,7 +235,7 @@ paths:
           schema:
             type: string
       requestBody:
-        description: Data body model.Survey
+        description: Data body model.SurveyRequest
         content:
           application/json:
             schema:
@@ -915,6 +967,37 @@ paths:
           explode: false
           schema:
             type: number
+        - name: public
+          in: query
+          description: Shows if the survery is public or not
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: boolean
+        - name: archived
+          in: query
+          description: Shows if the survery is archived or not
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: boolean
+        - name: completed
+          in: query
+          description: Shows if the survery is completed or not
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: boolean
+      requestBody:
+        description: Get survey time filter request body
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/paths/~1api~1surveys/get/requestBody/content/application~1json/schema'
       responses:
         '200':
           description: Success
@@ -1437,6 +1520,22 @@ components:
           nullable: true
         calendar_event_id:
           type: string
+        start_date:
+          type: string
+          nullable: true
+        end_date:
+          type: string
+          nullable: true
+        public:
+          type: boolean
+          nullable: true
+        archived:
+          type: boolean
+          nullable: true
+        estimated_completion_time:
+          type: integer
+          format: int64
+          nullable: true
     SurveyData:
       type: object
       properties:
@@ -1460,6 +1559,9 @@ components:
           type: boolean
         response:
           type: object
+        extras:
+          type: object
+          nullable: true
         type:
           type: string
         correct_answer:

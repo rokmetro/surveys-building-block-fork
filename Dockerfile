@@ -10,7 +10,8 @@ WORKDIR /app
 COPY . .
 RUN make
 
-FROM alpine:3.17.2
+FROM alpine:3.20
+
 
 #we need timezone database
 RUN apk add --no-cache --update tzdata

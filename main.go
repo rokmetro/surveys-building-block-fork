@@ -17,6 +17,7 @@ package main
 import (
 	"application/core"
 	"application/driven/calendar"
+	corebb "application/driven/core"
 	"application/driven/notifications"
 	"application/driven/storage"
 	"application/driver/web"
@@ -139,8 +140,12 @@ func main() {
 		logger.Fatalf("Error initializing calendar adapter: %v", err)
 	}
 
+	//core adapter
+	coreAdapter := corebb.NewCoreAdapter(coreBBBaseURL, serviceAccountManager)
+
 	// Application
-	application := core.NewApplication(Version, Build, storageAdapter, notificationsAdapter, calendarAdapter, logger)
+	application := core.NewApplication(Version, Build, storageAdapter, notificationsAdapter,
+		calendarAdapter, coreAdapter, serviceID, logger)
 	application.Start()
 
 	// Web adapter

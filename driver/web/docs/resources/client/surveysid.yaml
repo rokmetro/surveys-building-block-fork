@@ -46,7 +46,7 @@ put:
       schema:
         type: string
   requestBody:
-    description: Data body model.Survey
+    description: Data body model.SurveyRequest
     content:
       application/json:
         schema:

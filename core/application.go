@@ -17,6 +17,7 @@ package core
 import (
 	"application/core/interfaces"
 	"application/core/model"
+	corebb "application/driven/core"
 
 	"github.com/rokwire/core-auth-library-go/v3/authutils"
 	"github.com/rokwire/logging-library-go/v2/errors"
@@ -52,9 +53,11 @@ type Application struct {
 
 	logger *logs.Logger
 
-	storage       interfaces.Storage
-	notifications interfaces.Notifications
-	calendar      interfaces.Calendar
+	storage         interfaces.Storage
+	notifications   interfaces.Notifications
+	calendar        interfaces.Calendar
+	corebb          *corebb.Adapter
+	deleteDataLogic deleteDataLogic
 }
 
 // Start starts the core part of the application
@@ -62,6 +65,7 @@ func (a *Application) Start() {
 	//set storage listener
 	storageListener := storageListener{app: a}
 	a.storage.RegisterStorageListener(&storageListener)
+	a.deleteDataLogic.start()
 }
 
 // GetEnvConfigs retrieves the cached database env configs
@@ -78,8 +82,12 @@ func (a *Application) GetEnvConfigs() (*model.EnvConfigData, error) {
 }
 
 // NewApplication creates new Application
-func NewApplication(version string, build string, storage interfaces.Storage, notifications interfaces.Notifications, calendar interfaces.Calendar, logger *logs.Logger) *Application {
-	application := Application{version: version, build: build, storage: storage, notifications: notifications, calendar: calendar, logger: logger}
+func NewApplication(version string, build string, storage interfaces.Storage, notifications interfaces.Notifications, calendar interfaces.Calendar,
+	coreBB *corebb.Adapter, serviceID string, logger *logs.Logger) *Application {
+	deleteDataLogic := deleteDataLogic{logger: *logger, core: coreBB, serviceID: serviceID, storage: storage}
+
+	application := Application{version: version, build: build, storage: storage, notifications: notifications,
+		calendar: calendar, deleteDataLogic: deleteDataLogic, logger: logger}
 
 	//add the drivers ports/interfaces
 	application.Default = newAppDefault(&application)

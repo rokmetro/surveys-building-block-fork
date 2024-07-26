@@ -18,7 +18,10 @@ import (
 	"application/core"
 	"application/core/model"
 	"encoding/json"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -55,6 +58,25 @@ func (h ClientAPIsHandler) getSurvey(l *logs.Log, r *http.Request, claims *token
 }
 
 func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionRead, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, false)
+	}
+
+	var items *model.SurveyTimeFilterRequest
+	// If the body is empty or only contains whitespace, treat it as nil
+	if len(data) == 0 {
+		log.Println("Request body is empty, proceeding with default behavior.")
+		items = &model.SurveyTimeFilterRequest{StartTimeBefore: nil, StartTimeAfter: nil, EndTimeAfter: nil, EndTimeBefore: nil}
+	} else {
+		// Unmarshal the data into the items struct
+		err = json.Unmarshal(data, &items)
+		if err != nil {
+			log.Printf("Error unmarshaling request body: %v", err)
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
+		}
+	}
+	filter := surveyTimeFilter(items)
 	surveyIDsRaw := r.URL.Query().Get("ids")
 	var surveyIDs []string
 	if len(surveyIDsRaw) > 0 {
@@ -69,7 +91,7 @@ func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *toke
 	calendarEventID := r.URL.Query().Get("calendar_event_id")
 
 	limitRaw := r.URL.Query().Get("limit")
-	limit := 20
+	limit := 0
 	if len(limitRaw) > 0 {
 		intParsed, err := strconv.Atoi(limitRaw)
 		if err != nil {
@@ -87,30 +109,72 @@ func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *toke
 		offset = intParsed
 	}
 
-	resData, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, nil, surveyIDs, surveyTypes, calendarEventID, &limit, &offset)
+	publicStr := r.URL.Query().Get("public")
+
+	var public *bool
+
+	if publicStr != "" {
+		valuePublic, err := strconv.ParseBool(publicStr)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
+		}
+		public = &valuePublic
+	}
+
+	archivedStr := r.URL.Query().Get("archived")
+
+	var archived *bool
+
+	if archivedStr != "" {
+		valueArchived, err := strconv.ParseBool(archivedStr)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
+		}
+		archived = &valueArchived
+	}
+
+	completedStr := r.URL.Query().Get("completed")
+
+	var completed *bool
+
+	if completedStr != "" {
+		valueCompleted, err := strconv.ParseBool(completedStr)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
+		}
+		completed = &valueCompleted
+	}
+
+	surveys, surverysRsponse, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, nil, surveyIDs, surveyTypes, calendarEventID,
+		&limit, &offset, filter, public, archived, completed)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}
 
-	data, err := json.Marshal(resData)
+	resData := getSurveysResData(surveys, surverysRsponse, completed)
+	sort.Slice(resData, func(i, j int) bool {
+		return resData[i].DateCreated.After(resData[j].DateCreated)
+	})
+
+	rdata, err := json.Marshal(resData)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
 	}
 
-	return l.HTTPResponseSuccessJSON(data)
+	return l.HTTPResponseSuccessJSON(rdata)
 }
 
 func (h ClientAPIsHandler) createSurvey(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
-	var item model.Survey
-	err := json.NewDecoder(r.Body).Decode(&item)
+	var items model.SurveyRequest
+	err := json.NewDecoder(r.Body).Decode(&items)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDecode, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, true)
 	}
-
-	item.OrgID = claims.OrgID
-	item.AppID = claims.AppID
-	item.CreatorID = claims.Subject
-	item.Type = "user"
+	items.CreatorID = claims.Subject
+	items.OrgID = claims.OrgID
+	items.AppID = claims.AppID
+	items.Type = "user"
+	item := surveyRequestToSurvey(items)
 
 	createdItem, err := h.app.Client.CreateSurvey(item, claims.ExternalIDs)
 	if err != nil {
@@ -133,16 +197,17 @@ func (h ClientAPIsHandler) updateSurvey(l *logs.Log, r *http.Request, claims *to
 		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
 	}
 
-	var item model.Survey
-	err := json.NewDecoder(r.Body).Decode(&item)
+	var items model.SurveyRequest
+	err := json.NewDecoder(r.Body).Decode(&items)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDecode, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, true)
 	}
+	items.CreatorID = claims.Subject
+	items.OrgID = claims.OrgID
+	items.AppID = claims.AppID
+	items.Type = "user"
 
-	item.ID = id
-	item.OrgID = claims.OrgID
-	item.AppID = claims.AppID
-	item.Type = "user"
+	item := updateSurveyRequestToSurvey(items, id)
 
 	err = h.app.Client.UpdateSurvey(item, claims.Subject, claims.ExternalIDs)
 	if err != nil {
@@ -458,7 +523,7 @@ func (h ClientAPIsHandler) getCreatorSurveys(l *logs.Log, r *http.Request, claim
 		offset = intParsed
 	}
 
-	resData, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset)
+	resData, _, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset, nil, nil, nil, nil)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}

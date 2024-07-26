@@ -20,6 +20,9 @@ properties:
     type: boolean
   response:
     type: object
+  extras:
+    type: object 
+    nullable: true 
   type:
     type: string
   correct_answer:

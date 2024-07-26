@@ -21,6 +21,7 @@ import (
 	"github.com/rokwire/logging-library-go/v2/errors"
 	"github.com/rokwire/logging-library-go/v2/logutils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -36,19 +37,61 @@ func (a *Adapter) GetSurvey(id string, orgID string, appID string) (*model.Surve
 }
 
 // GetSurveys gets matching surveys
-func (a *Adapter) GetSurveys(orgID string, appID string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int) ([]model.Survey, error) {
-	filter := bson.M{"org_id": orgID, "app_id": appID}
+func (a *Adapter) GetSurveys(orgID string, appID string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool) ([]model.Survey, error) {
+	filter := bson.D{
+		{Key: "org_id", Value: orgID},
+		{Key: "app_id", Value: appID},
+	}
+
 	if creatorID != nil {
-		filter["creator_id"] = *creatorID
+		filter = append(filter, bson.E{Key: "creator_id", Value: *creatorID})
 	}
 	if len(surveyIDs) > 0 {
-		filter["_id"] = bson.M{"$in": surveyIDs}
+		filter = append(filter, bson.E{Key: "_id", Value: bson.M{"$in": surveyIDs}})
 	}
 	if len(surveyTypes) > 0 {
-		filter["type"] = bson.M{"$in": surveyTypes}
+		filter = append(filter, bson.E{Key: "type", Value: bson.M{"$in": surveyTypes}})
 	}
-	if len(calendarEventID) > 0 {
-		filter["calendar_event_id"] = calendarEventID
+	if calendarEventID != "" {
+		filter = append(filter, bson.E{Key: "calendar_event_id", Value: calendarEventID})
+	}
+
+	if timeFilter.StartTimeAfter != nil {
+		filter = append(filter, primitive.E{Key: "start_date", Value: primitive.M{"$gte": *timeFilter.StartTimeAfter}})
+	}
+	if timeFilter.StartTimeBefore != nil {
+		filter = append(filter, primitive.E{Key: "start_date", Value: primitive.M{"$lte": *timeFilter.StartTimeBefore}})
+	}
+
+	if timeFilter.EndTimeAfter != nil {
+		filter = append(filter, primitive.E{Key: "end_date", Value: primitive.M{"$gte": *timeFilter.EndTimeAfter}})
+	}
+	if timeFilter.EndTimeBefore != nil {
+		filter = append(filter, primitive.E{Key: "end_date", Value: primitive.M{"$lte": *timeFilter.EndTimeBefore}})
+	}
+
+	if public != nil {
+		if *public == true {
+			filter = append(filter, bson.E{Key: "public", Value: true})
+		} else {
+			filter = append(filter, bson.E{Key: "$or", Value: bson.A{
+				bson.M{"public": false},
+				bson.M{"public": bson.M{"$exists": false}},
+				bson.M{"public": nil},
+			}})
+		}
+	}
+
+	if archived != nil {
+		if *archived == true {
+			filter = append(filter, bson.E{Key: "archived", Value: true})
+		} else {
+			filter = append(filter, bson.E{Key: "$or", Value: bson.A{
+				bson.M{"archived": false},
+				bson.M{"archived": bson.M{"$exists": false}},
+				bson.M{"archived": nil},
+			}})
+		}
 	}
 
 	opts := options.Find()
@@ -58,11 +101,25 @@ func (a *Adapter) GetSurveys(orgID string, appID string, creatorID *string, surv
 	if offset != nil {
 		opts.SetSkip(int64(*offset))
 	}
+	if timeFilter.StartTimeBefore != nil {
+		opts.SetSort(bson.D{{Key: "start_date", Value: -1}})
+	} else if timeFilter.StartTimeAfter != nil {
+		opts.SetSort(bson.D{{Key: "start_date", Value: 1}})
+	}
+
+	if timeFilter.EndTimeBefore != nil {
+		opts.SetSort(bson.D{{Key: "end_date", Value: -1}})
+	} else if timeFilter.EndTimeAfter != nil {
+		opts.SetSort(bson.D{{Key: "end_date", Value: 1}})
+
+	}
+
 	var results []model.Survey
 	err := a.db.surveys.Find(a.context, filter, &results, opts)
 	if err != nil {
-		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeSurvey, filterArgs(filter), err)
+		return nil, err
 	}
+
 	return results, nil
 }
 
@@ -85,19 +142,24 @@ func (a *Adapter) UpdateSurvey(survey model.Survey, admin bool) error {
 			filter["creator_id"] = survey.CreatorID
 		}
 		update := bson.M{"$set": bson.M{
-			"title":                 survey.Title,
-			"more_info":             survey.MoreInfo,
-			"data":                  survey.Data,
-			"scored":                survey.Scored,
-			"result_rules":          survey.ResultRules,
-			"type":                  survey.Type,
-			"stats":                 survey.SurveyStats,
-			"default_data_key":      survey.DefaultDataKey,
-			"default_data_key_rule": survey.DefaultDataKeyRule,
-			"constants":             survey.Constants,
-			"strings":               survey.Strings,
-			"sub_rules":             survey.SubRules,
-			"date_updated":          now,
+			"title":                     survey.Title,
+			"more_info":                 survey.MoreInfo,
+			"data":                      survey.Data,
+			"scored":                    survey.Scored,
+			"result_rules":              survey.ResultRules,
+			"type":                      survey.Type,
+			"stats":                     survey.SurveyStats,
+			"default_data_key":          survey.DefaultDataKey,
+			"default_data_key_rule":     survey.DefaultDataKeyRule,
+			"constants":                 survey.Constants,
+			"strings":                   survey.Strings,
+			"sub_rules":                 survey.SubRules,
+			"start_date":                survey.StartDate,
+			"end_date":                  survey.EndDate,
+			"public":                    survey.Public,
+			"archived":                  survey.Archived,
+			"estimated_completion_time": survey.EstimatedCompletionTime,
+			"date_updated":              now,
 		}}
 
 		res, err := a.db.surveys.UpdateOne(a.context, filter, update, nil)

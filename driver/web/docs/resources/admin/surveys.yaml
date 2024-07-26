@@ -48,6 +48,37 @@ get:
       explode: false
       schema:
         type: number
+    - name: public
+      in: query
+      description: Shows if the survery is public or not
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: boolean
+    - name: archived
+      in: query
+      description: Shows if the survery is archived or not
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: boolean  
+    - name: completed
+      in: query
+      description: Shows if the survery is completed or not
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: boolean          
+  requestBody:
+    description: Get survey time filter request body
+    required: false
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/surveys/SurveyTimeFilter.yaml"      
   responses:
     200:
       description: Success

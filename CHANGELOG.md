@@ -5,6 +5,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [1.9.0] - 2024-007-26
+### Added 
+- Add "complete" field to show if the survey is completed [#61](https://github.com/rokwire/surveys-building-block/issues/61)
+## [1.8.2] - 2024-007-26
+### Fixed
+- Fix Get /surveys [#58](https://github.com/rokwire/surveys-building-block/issues/58)
+
+## [1.8.1] - 2024-007-26
+### Fixed
+- Fix "public" and "archived" [#55](https://github.com/rokwire/surveys-building-block/issues/55)
+
+## [1.8.0] - 2024-007-25
+### Added
+- Fix "start_date" and "end_date" timestamp, "archived", "public" and set "complete" in the result [#52](https://github.com/rokwire/surveys-building-block/issues/52)
+
+## [1.7.0] - 2024-007-24
+### Added
+- Add Estimated_completion_time [#49](https://github.com/rokwire/surveys-building-block/issues/49)
+
+## [1.6.0] - 2024-007-23
+### Added
+- Archived flag [#40](https://github.com/rokwire/surveys-building-block/issues/40)
+### Added
+- Public flag [#37](https://github.com/rokwire/surveys-building-block/issues/37)
+### Added
+- Add extras field to survey data [#39](https://github.com/rokwire/surveys-building-block/issues/39)
+### Fixed
+- Fix "start_date" and "end_date" [#43](https://github.com/rokwire/surveys-building-block/issues/43)
+
+## [1.5.0] - 2024-007-22
+### Added 
+- Start/end date [#38](https://github.com/rokwire/surveys-building-block/issues/38)
+
+## [1.4.0] - 2024-007-11
+### Added
+- Remove user data [#34](https://github.com/rokwire/surveys-building-block/issues/34)
+
 ## [1.3.0] - 2023-09-20
 ### Added
 - Reintroduce survey responses admin API [#27](https://github.com/rokwire/surveys-building-block/issues/27)

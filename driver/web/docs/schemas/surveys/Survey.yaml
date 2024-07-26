@@ -57,3 +57,19 @@ properties:
     nullable: true
   calendar_event_id:
     type: string
+  start_date:
+    type: string
+    nullable: true
+  end_date:
+    type: string
+    nullable: true
+  public:
+    type: boolean
+    nullable: true
+  archived:
+    type: boolean
+    nullable: true 
+  estimated_completion_time:
+    type: integer
+    format: int64
+    nullable: true       

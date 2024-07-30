@@ -2,6 +2,7 @@ package web
 
 import (
 	"application/core/model"
+	"sort"
 	"time"
 )
 
@@ -139,9 +140,67 @@ func getSurveysResData(items []model.Survey, surveyResponses []model.SurveyRespo
 				Archived:                item.Archived,
 				EstimatedCompletionTime: item.EstimatedCompletionTime,
 				Completed:               &isCompleted,
+				DateCreated:             item.DateCreated,
 			})
 		}
 	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].DateCreated.After(list[j].DateCreated)
+	})
 
 	return list
+}
+
+func sortIfpublicIsTrue(list []model.SurveysResponseData, public *bool) []model.SurveysResponseData {
+
+	if public == nil || !*public {
+		// If public is nil or false, just return the list as-is
+		return list
+	}
+
+	var incompleteSurveys, noEndDateSurveys, completedSurveys []model.SurveysResponseData
+
+	// Split surveys into categories based on completion status and end date
+	for _, survey := range list {
+		if survey.Completed != nil && *survey.Completed {
+			completedSurveys = append(completedSurveys, survey)
+		} else if survey.EndDate != nil {
+			incompleteSurveys = append(incompleteSurveys, survey)
+		} else {
+			noEndDateSurveys = append(noEndDateSurveys, survey)
+		}
+	}
+
+	// Sort incomplete surveys by end date (ascending)
+	sort.Slice(incompleteSurveys, func(i, j int) bool {
+		return incompleteSurveys[i].EndDate.Before(*incompleteSurveys[j].EndDate)
+	})
+
+	// Sort no-end-date surveys first by start date (descending) or by creation date if start date is missing
+	sort.Slice(noEndDateSurveys, func(i, j int) bool {
+		if noEndDateSurveys[i].StartDate != nil && noEndDateSurveys[j].StartDate != nil {
+			return noEndDateSurveys[i].StartDate.After(*noEndDateSurveys[j].StartDate)
+		}
+		if noEndDateSurveys[i].StartDate != nil {
+			return true
+		}
+		if noEndDateSurveys[j].StartDate != nil {
+			return false
+		}
+		return noEndDateSurveys[i].DateCreated.After(noEndDateSurveys[j].DateCreated)
+	})
+
+	// Sort completed surveys by estimated completion time (descending)
+	sort.Slice(completedSurveys, func(i, j int) bool {
+		if completedSurveys[i].EstimatedCompletionTime != nil && completedSurveys[j].EstimatedCompletionTime != nil {
+			return *completedSurveys[i].EstimatedCompletionTime > *completedSurveys[j].EstimatedCompletionTime
+		}
+		return completedSurveys[i].DateCreated.After(completedSurveys[j].DateCreated)
+	})
+
+	// Combine all sorted slices
+	result := append(incompleteSurveys, noEndDateSurveys...)
+	result = append(result, completedSurveys...)
+
+	return result
 }

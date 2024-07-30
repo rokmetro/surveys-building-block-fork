@@ -102,6 +102,7 @@ func (a Adapter) Start() {
 	adminRouter.HandleFunc("/surveys/{id}", a.wrapFunc(a.adminAPIsHandler.updateSurvey, a.auth.admin.Permissions)).Methods("PUT")
 	adminRouter.HandleFunc("/surveys/{id}", a.wrapFunc(a.adminAPIsHandler.deleteSurvey, a.auth.admin.Permissions)).Methods("DELETE")
 	adminRouter.HandleFunc("/surveys/{id}/responses", a.wrapFunc(a.adminAPIsHandler.getAllSurveyResponses, a.auth.admin.User)).Methods("GET")
+	adminRouter.HandleFunc("/surveys/{id}/response", a.wrapFunc(a.adminAPIsHandler.getAllSurveysResponses, a.auth.admin.Permissions)).Methods("GET")
 
 	adminRouter.HandleFunc("/alert-contacts", a.wrapFunc(a.adminAPIsHandler.getAlertContacts, a.auth.admin.Permissions)).Methods("GET")
 	adminRouter.HandleFunc("/alert-contacts/{id}", a.wrapFunc(a.adminAPIsHandler.getAlertContact, a.auth.admin.Permissions)).Methods("GET")

@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Rokwire Surveys Building Block API
   description: Surveys Building Block API Documentation
-  version: 1.9.0
+  version: 1.10.0
 servers:
   - url: 'https://api.rokwire.illinois.edu/surveys'
     description: Production server
@@ -1352,6 +1352,73 @@ paths:
           description: Unauthorized
         '403':
           description: Forbidden
+        '500':
+          description: Internal error
+  '/api/admin/surveys/{id}/response':
+    get:
+      tags:
+        - Admin
+      summary: Retrieves all survey responses for specified survey
+      description: |
+        Retrieves all survey responses for specified survey
+
+        **Auth:** Requires admin token with `get_survey_responses` permission
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: id
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          description: The start of the date range to search for
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: end_date
+          in: query
+          description: The end of the date range to search for
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The number of results to be loaded in one page
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+        - name: offset
+          in: query
+          description: The number of results previously loaded
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurveyResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
         '500':
           description: Internal error
   /api/analytics/survey-responses:

@@ -2,8 +2,6 @@ FROM docker.io/golang:1.22-alpine as builder
 
 ENV CGO_ENABLED=0
 
-RUN apk add --no-cache --update make git
-
 RUN mkdir /app
 WORKDIR /app
 # Copy the source from the current directory to the Working Directory inside the container

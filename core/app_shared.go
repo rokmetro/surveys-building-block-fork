@@ -34,13 +34,18 @@ func (a appShared) getSurvey(id string, orgID string, appID string) (*model.Surv
 	return a.app.storage.GetSurvey(id, orgID, appID)
 }
 
-func (a appShared) getSurveys(orgID string, appID string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool) ([]model.Survey, []model.SurveyResponse, error) {
+func (a appShared) getSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool) ([]model.Survey, []model.SurveyResponse, error) {
 	surveys, err := a.app.storage.GetSurveys(orgID, appID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	surveysResponse, err := a.app.storage.GetSurveyResponses(nil, nil, nil, surveyIDs, surveyTypes, nil, nil, nil, nil)
+	matchingSurveyIDs := make([]string, len(surveys))
+	for i, survey := range surveys {
+		matchingSurveyIDs[i] = survey.ID
+	}
+
+	surveysResponse, err := a.app.storage.GetSurveyResponses(&orgID, &appID, userID, matchingSurveyIDs, nil, nil, nil, nil, nil)
 	if err != nil {
 		return nil, nil, err
 	}

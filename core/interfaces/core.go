@@ -66,6 +66,7 @@ type Admin interface {
 
 	// Survey Responses
 	GetAllSurveyResponses(orgID string, appID string, surveyID string, userID string, externalIDs map[string]string, startDate *time.Time, endDate *time.Time, limit *int, offset *int) ([]model.SurveyResponse, error)
+	GetAllSurveysResponses(orgID string, appID string, surveyID string, userID string, externalIDs map[string]string, startDate *time.Time, endDate *time.Time, limit *int, offset *int) ([]model.SurveyResponse, error)
 
 	// Alert Contacts
 	GetAlertContacts(orgID string, appID string) ([]model.AlertContact, error)

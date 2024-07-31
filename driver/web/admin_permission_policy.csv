@@ -26,3 +26,5 @@ p, update_configs_surveys, /surveys/api/admin/configs/*, (GET)|(PUT), Update sur
 p, update_configs_surveys, /surveys/api/admin/configs, (GET)|(POST),
 p, delete_configs_surveys, /surveys/api/admin/configs/*, (GET)|(DELETE), Delete surveys configs
 p, delete_configs_surveys, /surveys/api/admin/configs, (GET),
+
+p, get_survey_responses, /surveys/api/admin/surveys/*/response, (GET), 

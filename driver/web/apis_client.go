@@ -21,7 +21,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -151,12 +150,10 @@ func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *toke
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}
 
-	resData := getSurveysResData(surveys, surverysRsponse, completed)
-	sort.Slice(resData, func(i, j int) bool {
-		return resData[i].DateCreated.After(resData[j].DateCreated)
-	})
+	list := getSurveysResData(surveys, surverysRsponse, completed)
+	respData := sortIfpublicIsTrue(list, public)
 
-	rdata, err := json.Marshal(resData)
+	rdata, err := json.Marshal(respData)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
 	}

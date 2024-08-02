@@ -49,6 +49,9 @@ type Config struct {
 type EnvConfigData struct {
 	AnalyticsToken string `json:"analytics_token" bson:"analytics_token"`
 	ExternalID     string `json:"external_id" bson:"external_id"`
+
+	CORSAllowedOrigins []string `json:"cors_allowed_origins" bson:"cors_allowed_origins"`
+	CORSAllowedHeaders []string `json:"cors_allowed_headers" bson:"cors_allowed_headers"`
 }
 
 // GetConfigData returns a pointer to the given config's Data as the given type T

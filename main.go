@@ -16,6 +16,7 @@ package main
 
 import (
 	"application/core"
+	"application/core/model"
 	"application/driven/calendar"
 	corebb "application/driven/core"
 	"application/driven/notifications"
@@ -23,12 +24,15 @@ import (
 	"application/driver/web"
 	"strings"
 
+	"github.com/rokwire/core-auth-library-go/v3/authutils"
 	"github.com/rokwire/core-auth-library-go/v3/keys"
 
 	"github.com/rokwire/core-auth-library-go/v3/authservice"
 	"github.com/rokwire/core-auth-library-go/v3/envloader"
 	"github.com/rokwire/core-auth-library-go/v3/sigauth"
+	"github.com/rokwire/logging-library-go/v2/errors"
 	"github.com/rokwire/logging-library-go/v2/logs"
+	"github.com/rokwire/logging-library-go/v2/logutils"
 )
 
 var (
@@ -148,7 +152,25 @@ func main() {
 		calendarAdapter, coreAdapter, serviceID, logger)
 	application.Start()
 
+	// read CORS parameters from stored env config
+	var envData *model.EnvConfigData
+	var corsAllowedHeaders []string
+	var corsAllowedOrigins []string
+	config, err := storageAdapter.FindConfig(model.ConfigTypeEnv, authutils.AllApps, authutils.AllOrgs)
+	if err != nil {
+		logger.Fatal(errors.WrapErrorAction(logutils.ActionFind, model.TypeConfig, nil, err).Error())
+	}
+	if config != nil {
+		envData, err = model.GetConfigData[model.EnvConfigData](*config)
+		if err != nil {
+			logger.Fatal(errors.WrapErrorAction(logutils.ActionCast, model.TypeEnvConfigData, nil, err).Error())
+		}
+
+		corsAllowedHeaders = envData.CORSAllowedHeaders
+		corsAllowedOrigins = envData.CORSAllowedOrigins
+	}
+
 	// Web adapter
-	webAdapter := web.NewWebAdapter(baseURL, port, serviceID, application, serviceRegManager, logger)
+	webAdapter := web.NewWebAdapter(baseURL, port, serviceID, application, serviceRegManager, corsAllowedOrigins, corsAllowedHeaders, logger)
 	webAdapter.Start()
 }

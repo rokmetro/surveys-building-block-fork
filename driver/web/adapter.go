@@ -27,6 +27,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rokwire/core-auth-library-go/v3/authservice"
 	"github.com/rokwire/core-auth-library-go/v3/tokenauth"
+	"github.com/rokwire/core-auth-library-go/v3/webauth"
 
 	"github.com/rokwire/logging-library-go/v2/logs"
 	"github.com/rokwire/logging-library-go/v2/logutils"
@@ -53,6 +54,9 @@ type Adapter struct {
 	systemAPIsHandler    SystemAPIsHandler
 
 	app *core.Application
+
+	corsAllowedOrigins []string
+	corsAllowedHeaders []string
 
 	logger *logs.Logger
 }
@@ -123,7 +127,11 @@ func (a Adapter) Start() {
 	// System APIs
 	// systemRouter := mainRouter.PathPrefix("/system").Subrouter()
 
-	a.logger.Fatalf("Error serving: %v", http.ListenAndServe(":"+a.port, router))
+	var handler http.Handler = router
+	if len(a.corsAllowedOrigins) > 0 {
+		handler = webauth.SetupCORS(a.corsAllowedOrigins, a.corsAllowedHeaders, router)
+	}
+	a.logger.Fatalf("Error serving: %v", http.ListenAndServe(":"+a.port, handler))
 }
 
 func (a Adapter) serveDoc(w http.ResponseWriter, r *http.Request) {
@@ -198,7 +206,8 @@ func (a Adapter) wrapFunc(handler handlerFunc, authorization tokenauth.Handler) 
 }
 
 // NewWebAdapter creates new WebAdapter instance
-func NewWebAdapter(baseURL string, port string, serviceID string, app *core.Application, serviceRegManager *authservice.ServiceRegManager, logger *logs.Logger) Adapter {
+func NewWebAdapter(baseURL string, port string, serviceID string, app *core.Application, serviceRegManager *authservice.ServiceRegManager,
+	corsAllowedOrigins []string, corsAllowedHeaders []string, logger *logs.Logger) Adapter {
 	yamlDoc, err := loadDocsYAML(baseURL)
 	if err != nil {
 		logger.Fatalf("error parsing docs yaml - %s", err.Error())
@@ -216,5 +225,5 @@ func NewWebAdapter(baseURL string, port string, serviceID string, app *core.Appl
 	systemAPIsHandler := NewSystemAPIsHandler(app)
 	return Adapter{baseURL: baseURL, port: port, serviceID: serviceID, cachedYamlDoc: yamlDoc, auth: auth, defaultAPIsHandler: defaultAPIsHandler,
 		clientAPIsHandler: clientAPIsHandler, adminAPIsHandler: adminAPIsHandler, analyticsAPIsHandler: analyticsAPIsHandler, systemAPIsHandler: systemAPIsHandler,
-		app: app, logger: logger}
+		app: app, corsAllowedOrigins: corsAllowedOrigins, corsAllowedHeaders: corsAllowedHeaders, logger: logger}
 }

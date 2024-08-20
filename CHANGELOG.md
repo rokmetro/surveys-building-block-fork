@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add CORS support
 ### Fixed
 - Fix survey completed field [#69](https://github.com/rokwire/surveys-building-block/issues/69)
+- Fix GET surveys time filtering
 
 ## [1.10.0] - 2024-07-30
 ### Added 

@@ -57,17 +57,29 @@ func (a *Adapter) GetSurveys(orgID string, appID string, creatorID *string, surv
 	}
 
 	if timeFilter.StartTimeAfter != nil {
-		filter = append(filter, primitive.E{Key: "start_date", Value: primitive.M{"$gte": *timeFilter.StartTimeAfter}})
+		filter = append(filter, primitive.E{Key: "$or", Value: bson.A{
+			bson.M{"start_date": nil},
+			bson.M{"start_date": primitive.M{"$gte": *timeFilter.StartTimeAfter}},
+		}})
 	}
 	if timeFilter.StartTimeBefore != nil {
-		filter = append(filter, primitive.E{Key: "start_date", Value: primitive.M{"$lte": *timeFilter.StartTimeBefore}})
+		filter = append(filter, primitive.E{Key: "$or", Value: bson.A{
+			bson.M{"start_date": nil},
+			bson.M{"start_date": primitive.M{"$lte": *timeFilter.StartTimeBefore}},
+		}})
 	}
 
 	if timeFilter.EndTimeAfter != nil {
-		filter = append(filter, primitive.E{Key: "end_date", Value: primitive.M{"$gte": *timeFilter.EndTimeAfter}})
+		filter = append(filter, primitive.E{Key: "$or", Value: bson.A{
+			bson.M{"end_date": nil},
+			bson.M{"end_date": primitive.M{"$gte": *timeFilter.EndTimeAfter}},
+		}})
 	}
 	if timeFilter.EndTimeBefore != nil {
-		filter = append(filter, primitive.E{Key: "end_date", Value: primitive.M{"$lte": *timeFilter.EndTimeBefore}})
+		filter = append(filter, primitive.E{Key: "$or", Value: bson.A{
+			bson.M{"end_date": nil},
+			bson.M{"end_date": primitive.M{"$lte": *timeFilter.EndTimeBefore}},
+		}})
 	}
 
 	if public != nil {

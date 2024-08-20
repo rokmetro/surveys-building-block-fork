@@ -71,14 +71,39 @@ get:
       style: simple
       explode: false
       schema:
-        type: boolean          
-  requestBody:
-    description: Get survey time filter request body
-    required: false
-    content:
-      application/json:
-        schema:
-          $ref: "../../schemas/surveys/SurveyTimeFilter.yaml"      
+        type: boolean
+    - name: start_time_before
+      in: query
+      description: Only include surveys starting before this UTC timestamp
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string
+    - name: start_time_after
+      in: query
+      description: Only include surveys starting after this UTC timestamp
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string
+    - name: end_time_before
+      in: query
+      description: Only include surveys ending before this UTC timestamp
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string
+    - name: end_time_after
+      in: query
+      description: Only include surveys ending after this UTC timestamp
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string  
   responses:
     200:
       description: Success

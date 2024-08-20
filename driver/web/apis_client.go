@@ -18,8 +18,6 @@ import (
 	"application/core"
 	"application/core/model"
 	"encoding/json"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -57,25 +55,6 @@ func (h ClientAPIsHandler) getSurvey(l *logs.Log, r *http.Request, claims *token
 }
 
 func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return l.HTTPResponseErrorAction(logutils.ActionRead, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, false)
-	}
-
-	var items *model.SurveyTimeFilterRequest
-	// If the body is empty or only contains whitespace, treat it as nil
-	if len(data) == 0 {
-		log.Println("Request body is empty, proceeding with default behavior.")
-		items = &model.SurveyTimeFilterRequest{StartTimeBefore: nil, StartTimeAfter: nil, EndTimeAfter: nil, EndTimeBefore: nil}
-	} else {
-		// Unmarshal the data into the items struct
-		err = json.Unmarshal(data, &items)
-		if err != nil {
-			log.Printf("Error unmarshaling request body: %v", err)
-			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
-		}
-	}
-	filter := surveyTimeFilter(items)
 	surveyIDsRaw := r.URL.Query().Get("ids")
 	var surveyIDs []string
 	if len(surveyIDsRaw) > 0 {
@@ -143,6 +122,25 @@ func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *toke
 		}
 		completed = &valueCompleted
 	}
+
+	var timeFilterItems model.SurveyTimeFilterRequest
+	startsBeforeRaw := r.URL.Query().Get("starts_before")
+	if startsBeforeRaw != "" {
+		timeFilterItems.StartTimeBefore = &startsBeforeRaw
+	}
+	startsAfterRaw := r.URL.Query().Get("starts_after")
+	if startsAfterRaw != "" {
+		timeFilterItems.StartTimeAfter = &startsAfterRaw
+	}
+	endsBeforeRaw := r.URL.Query().Get("ends_before")
+	if endsBeforeRaw != "" {
+		timeFilterItems.EndTimeBefore = &endsBeforeRaw
+	}
+	endsAfterRaw := r.URL.Query().Get("ends_after")
+	if endsAfterRaw != "" {
+		timeFilterItems.EndTimeAfter = &endsAfterRaw
+	}
+	filter := surveyTimeFilter(&timeFilterItems)
 
 	surveys, surverysRsponse, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
 		&limit, &offset, filter, public, archived, completed)
@@ -520,7 +518,26 @@ func (h ClientAPIsHandler) getCreatorSurveys(l *logs.Log, r *http.Request, claim
 		offset = intParsed
 	}
 
-	resData, _, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset, nil, nil, nil, nil)
+	var timeFilterItems model.SurveyTimeFilterRequest
+	startsBeforeRaw := r.URL.Query().Get("starts_before")
+	if startsBeforeRaw != "" {
+		timeFilterItems.StartTimeBefore = &startsBeforeRaw
+	}
+	startsAfterRaw := r.URL.Query().Get("starts_after")
+	if startsAfterRaw != "" {
+		timeFilterItems.StartTimeAfter = &startsAfterRaw
+	}
+	endsBeforeRaw := r.URL.Query().Get("ends_before")
+	if endsBeforeRaw != "" {
+		timeFilterItems.EndTimeBefore = &endsBeforeRaw
+	}
+	endsAfterRaw := r.URL.Query().Get("ends_after")
+	if endsAfterRaw != "" {
+		timeFilterItems.EndTimeAfter = &endsAfterRaw
+	}
+	filter := surveyTimeFilter(&timeFilterItems)
+
+	resData, _, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset, filter, nil, nil, nil)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}

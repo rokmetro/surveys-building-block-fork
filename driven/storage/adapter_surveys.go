@@ -499,16 +499,28 @@ func (a *Adapter) GetSurveysAndSurveyResponses(orgID string, appID string, creat
 		surveyFilter = append(surveyFilter, bson.E{Key: "calendar_event_id", Value: calendarEventID})
 	}
 	if timeFilter.StartTimeAfter != nil {
-		surveyFilter = append(surveyFilter, bson.E{Key: "start_date", Value: bson.M{"$gte": *timeFilter.StartTimeAfter}})
+		surveyFilter = append(surveyFilter, primitive.E{Key: "$or", Value: bson.A{
+			bson.M{"start_date": nil},
+			bson.M{"start_date": primitive.M{"$gte": *timeFilter.StartTimeAfter}},
+		}})
 	}
 	if timeFilter.StartTimeBefore != nil {
-		surveyFilter = append(surveyFilter, bson.E{Key: "start_date", Value: bson.M{"$lte": *timeFilter.StartTimeBefore}})
+		surveyFilter = append(surveyFilter, primitive.E{Key: "$or", Value: bson.A{
+			bson.M{"start_date": nil},
+			bson.M{"start_date": primitive.M{"$lte": *timeFilter.StartTimeBefore}},
+		}})
 	}
 	if timeFilter.EndTimeAfter != nil {
-		surveyFilter = append(surveyFilter, bson.E{Key: "end_date", Value: bson.M{"$gte": *timeFilter.EndTimeAfter}})
+		surveyFilter = append(surveyFilter, primitive.E{Key: "$or", Value: bson.A{
+			bson.M{"end_date": nil},
+			bson.M{"end_date": primitive.M{"$gte": *timeFilter.EndTimeAfter}},
+		}})
 	}
 	if timeFilter.EndTimeBefore != nil {
-		surveyFilter = append(surveyFilter, bson.E{Key: "end_date", Value: bson.M{"$lte": *timeFilter.EndTimeBefore}})
+		surveyFilter = append(surveyFilter, primitive.E{Key: "$or", Value: bson.A{
+			bson.M{"end_date": nil},
+			bson.M{"end_date": primitive.M{"$lte": *timeFilter.EndTimeBefore}},
+		}})
 	}
 
 	if public != nil {

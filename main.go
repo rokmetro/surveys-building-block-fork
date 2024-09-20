@@ -156,6 +156,7 @@ func main() {
 	var envData *model.EnvConfigData
 	var corsAllowedHeaders []string
 	var corsAllowedOrigins []string
+	validateAdminClaim := false
 	config, err := storageAdapter.FindConfig(model.ConfigTypeEnv, authutils.AllApps, authutils.AllOrgs)
 	if err != nil {
 		logger.Fatal(errors.WrapErrorAction(logutils.ActionFind, model.TypeConfig, nil, err).Error())
@@ -168,9 +169,10 @@ func main() {
 
 		corsAllowedHeaders = envData.CORSAllowedHeaders
 		corsAllowedOrigins = envData.CORSAllowedOrigins
+		validateAdminClaim = envData.ValidateAdminClaim
 	}
 
 	// Web adapter
-	webAdapter := web.NewWebAdapter(baseURL, port, serviceID, application, serviceRegManager, corsAllowedOrigins, corsAllowedHeaders, logger)
+	webAdapter := web.NewWebAdapter(baseURL, port, serviceID, application, serviceRegManager, corsAllowedOrigins, corsAllowedHeaders, validateAdminClaim, logger)
 	webAdapter.Start()
 }

@@ -207,13 +207,13 @@ func (a Adapter) wrapFunc(handler handlerFunc, authorization tokenauth.Handler) 
 
 // NewWebAdapter creates new WebAdapter instance
 func NewWebAdapter(baseURL string, port string, serviceID string, app *core.Application, serviceRegManager *authservice.ServiceRegManager,
-	corsAllowedOrigins []string, corsAllowedHeaders []string, logger *logs.Logger) Adapter {
+	corsAllowedOrigins []string, corsAllowedHeaders []string, validateAdminClaim bool, logger *logs.Logger) Adapter {
 	yamlDoc, err := loadDocsYAML(baseURL)
 	if err != nil {
 		logger.Fatalf("error parsing docs yaml - %s", err.Error())
 	}
 
-	auth, err := NewAuth(serviceRegManager, app)
+	auth, err := NewAuth(serviceRegManager, app, validateAdminClaim)
 	if err != nil {
 		logger.Fatalf("error creating auth - %s", err.Error())
 	}

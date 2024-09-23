@@ -41,14 +41,14 @@ type Auth struct {
 }
 
 // NewAuth creates new auth handler
-func NewAuth(serviceRegManager *authservice.ServiceRegManager, app *core.Application) (*Auth, error) {
-	client, err := newClientAuth(serviceRegManager)
+func NewAuth(serviceRegManager *authservice.ServiceRegManager, app *core.Application, validateAdminClaim bool) (*Auth, error) {
+	client, err := newClientAuth(serviceRegManager, validateAdminClaim)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionCreate, "client auth", nil, err)
 	}
 	clientHandlers := tokenauth.NewHandlers(client)
 
-	admin, err := newAdminAuth(serviceRegManager)
+	admin, err := newAdminAuth(serviceRegManager, validateAdminClaim)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionCreate, "admin auth", nil, err)
 	}
@@ -87,7 +87,7 @@ func NewAuth(serviceRegManager *authservice.ServiceRegManager, app *core.Applica
 
 ///////
 
-func newClientAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth.StandardHandler, error) {
+func newClientAuth(serviceRegManager *authservice.ServiceRegManager, validateAdminClaim bool) (*tokenauth.StandardHandler, error) {
 	clientPermissionAuth := authorization.NewCasbinStringAuthorization("driver/web/client_permission_policy.csv")
 	clientScopeAuth := authorization.NewCasbinScopeAuthorization("driver/web/client_scope_policy.csv", serviceRegManager.AuthService.ServiceID)
 	clientTokenAuth, err := tokenauth.NewTokenAuth(true, serviceRegManager, clientPermissionAuth, clientScopeAuth)
@@ -96,7 +96,7 @@ func newClientAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth
 	}
 
 	check := func(claims *tokenauth.Claims, req *http.Request) (int, error) {
-		if claims.Admin {
+		if validateAdminClaim && claims.Admin {
 			return http.StatusUnauthorized, errors.ErrorData(logutils.StatusInvalid, "admin claim", nil)
 		}
 		if claims.System {
@@ -110,7 +110,7 @@ func newClientAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth
 	return auth, nil
 }
 
-func newAdminAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth.StandardHandler, error) {
+func newAdminAuth(serviceRegManager *authservice.ServiceRegManager, validateAdminClaim bool) (*tokenauth.StandardHandler, error) {
 	adminPermissionAuth := authorization.NewCasbinStringAuthorization("driver/web/admin_permission_policy.csv")
 	adminTokenAuth, err := tokenauth.NewTokenAuth(true, serviceRegManager, adminPermissionAuth, nil)
 	if err != nil {
@@ -118,7 +118,7 @@ func newAdminAuth(serviceRegManager *authservice.ServiceRegManager) (*tokenauth.
 	}
 
 	check := func(claims *tokenauth.Claims, req *http.Request) (int, error) {
-		if !claims.Admin {
+		if validateAdminClaim && !claims.Admin {
 			return http.StatusUnauthorized, errors.ErrorData(logutils.StatusInvalid, "admin claim", nil)
 		}
 

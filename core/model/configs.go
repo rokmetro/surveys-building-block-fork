@@ -52,6 +52,7 @@ type EnvConfigData struct {
 
 	CORSAllowedOrigins []string `json:"cors_allowed_origins" bson:"cors_allowed_origins"`
 	CORSAllowedHeaders []string `json:"cors_allowed_headers" bson:"cors_allowed_headers"`
+	ValidateAdminClaim bool     `json:"validate_admin_claim" bson:"validate_admin_claim"`
 }
 
 // GetConfigData returns a pointer to the given config's Data as the given type T

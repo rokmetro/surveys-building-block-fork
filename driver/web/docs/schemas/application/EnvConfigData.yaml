@@ -14,3 +14,6 @@ properties:
     items:
       type: string
     nullable: true
+  validate_admin_claim:
+    type: boolean
+    nullable: true

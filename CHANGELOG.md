@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Add CORS support
+- Add validate admin claim flag to environment config
 ### Fixed
 - Fix survey completed field [#69](https://github.com/rokwire/surveys-building-block/issues/69)
 - Fix GET surveys time filtering

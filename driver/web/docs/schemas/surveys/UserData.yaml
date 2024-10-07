@@ -1,0 +1,10 @@
+type: object
+properties:
+  survey:
+    type: array
+    items:
+      $ref: "./SurveysUserData.yaml"
+  survey_responses:
+    type: array
+    items:
+      $ref: "./SurveyResponseUserData.yaml"    

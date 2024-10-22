@@ -12,6 +12,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix survey completed field [#69](https://github.com/rokwire/surveys-building-block/issues/69)
 - Fix GET surveys time filtering
 
+## [1.11.0] - 2024-10-07
+### Added
+- Consolidate the information, and make it accessible with a single API call [#79](https://github.com/rokwire/surveys-building-block/issues/79)
+
+## [1.10.3] - 2024-08-21
+### Fixed
+-  Fix GET surveys time filtering [#75](https://github.com/rokwire/surveys-building-block/issues/75)
+
+## [1.10.2] - 2024-08-06
+### Fixed
+- Use mongo db aggregation pipeline for get surveys and survey responses [#71](https://github.com/rokwire/surveys-building-block/issues/71)
+
+## [1.10.1] - 2024-08-01
+### Fixed
+- Fix survey completed field [#69](https://github.com/rokwire/surveys-building-block/issues/69)
+
 ## [1.10.0] - 2024-07-30
 ### Added 
 - Add admin GET survey responses API [#66](https://github.com/rokwire/surveys-building-block/issues/66)

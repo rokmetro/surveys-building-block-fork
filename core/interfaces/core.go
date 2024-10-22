@@ -46,6 +46,9 @@ type Client interface {
 
 	// Survey Alerts
 	CreateSurveyAlert(surveyAlert model.SurveyAlert) error
+
+	// User data
+	GetUserData(orgID string, appID string, userID *string) (*model.UserData, error)
 }
 
 // Admin exposes administrative APIs for the driver adapters

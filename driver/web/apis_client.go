@@ -151,6 +151,13 @@ func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *toke
 	list := getSurveysResData(surveys, surverysRsponse, completed)
 	respData := sortIfpublicIsTrue(list, public)
 
+	// Set response to nil to indicate last page and no more results should be loaded
+	if len(surveys) == 0 {
+		respData = nil
+	} else if respData == nil {
+		respData = []model.SurveysResponseData{}
+	}
+
 	rdata, err := json.Marshal(respData)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)

@@ -14,6 +14,10 @@
 
 package model
 
+import (
+	"time"
+)
+
 // Score object maintains data of accumulated scores from surveys
 type Score struct {
 	UserID            string        `json:"user_id" bson:"user_id"`
@@ -26,6 +30,7 @@ type Score struct {
 
 // SurveyScore maintains individual score for specific survey
 type SurveyScore struct {
-	SurveyID string `json:"survey_id" bson:"survey_id"`
-	Score    uint32 `json:"score" bson:"score"`
+	SurveyID    string    `json:"survey_id" bson:"survey_id"`
+	Score       uint32    `json:"score" bson:"score"`
+	DateCreated time.Time `json:"date_created" bson:"date_created"`
 }

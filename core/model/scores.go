@@ -18,19 +18,16 @@ import (
 	"time"
 )
 
-// TotalScore object maintains data of accumulated scores from surveys
-type TotalScore struct {
-	UserID            string  `json:"user_id" bson:"user_id"`
-	OrgID             string  `json:"org_id" bson:"org_id"`
-	AppID             string  `json:"app_id" bson:"app_id"`
-	ExternalProfileID string  `json:"external_profile_id" bson:"external_profile_id"`
-	TotalScore        uint32  `json:"total_score" bson:"total_score"`
-	Scores            []Score `json:"scores" bson:"scores"`
-}
-
-// Score maintains individual score for specific survey
+// Score object maintains data of accumulated scores from surveys
 type Score struct {
-	SurveyID    string    `json:"survey_id" bson:"survey_id"`
-	Score       uint32    `json:"score" bson:"score"`
-	DateCreated time.Time `json:"date_created" bson:"date_created"`
+	UserID                 string    `json:"user_id" bson:"user_id"`
+	OrgID                  string    `json:"org_id" bson:"org_id"`
+	AppID                  string    `json:"app_id" bson:"app_id"`
+	ExternalProfileID      string    `json:"external_profile_id" bson:"external_profile_id"`
+	Score                  uint32    `json:"score" bson:"score"`
+	ResponseCount          uint32    `json:"response_count" bson:"response_count"`
+	PrevSurveyResponseDate time.Time `json:"prev_survey_response_date" bson:"prev_survey_response_date"`
+	CurrentStreak          uint32    `json:"current_streak" bson:"current_streak"`
+	AnswerCount            uint32    `json:"answer_count" bson:"answer_count"`
+	CorrectAnswerCount     uint32    `json:"correct_answer_count" bson:"correct_answer_count"`
 }

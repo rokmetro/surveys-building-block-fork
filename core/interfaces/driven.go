@@ -53,6 +53,11 @@ type Storage interface {
 	CreateAlertContact(alertContact model.AlertContact) (*model.AlertContact, error)
 	UpdateAlertContact(alertContact model.AlertContact) error
 	DeleteAlertContact(id string, orgID string, appID string) error
+
+	GetScore(orgID string, appID string, userID string) (*model.Score, error)
+	GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
+	CreateScore(score model.Score) error
+	UpdateScore(score model.Score) error
 }
 
 // StorageListener represents storage listener

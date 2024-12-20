@@ -21,7 +21,10 @@ import (
 )
 
 const (
-	TypeScore logutils.MessageDataType = "score"
+	TypeScore             logutils.MessageDataType = "score"
+	SurveyTypeFashionQuiz string                   = "fashion_quiz"
+	ScoreStreakMultiplier float32                  = 2.0
+	ScoreStreakMinDays    uint32                   = 2
 )
 
 // Score object maintains data of accumulated scores from surveys
@@ -30,6 +33,7 @@ type Score struct {
 	OrgID                  string    `json:"org_id" bson:"org_id"`
 	AppID                  string    `json:"app_id" bson:"app_id"`
 	UserID                 string    `json:"user_id" bson:"user_id"`
+	SurveyType             string    `json:"survey_type" bson:"survey_type"`
 	ExternalProfileID      string    `json:"external_profile_id" bson:"external_profile_id"`
 	Score                  uint32    `json:"score" bson:"score"`
 	ResponseCount          uint32    `json:"response_count" bson:"response_count"`

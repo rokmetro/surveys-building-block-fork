@@ -23,8 +23,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (a *Adapter) GetScore(id string, orgID string, appID string, userID string) (*model.Score, error) {
-	filter := bson.M{"_id": id, "org_id": orgID, "app_id": appID, "user_id": userID}
+func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Score, error) {
+	filter := bson.M{"org_id": orgID, "app_id": appID, "user_id": userID}
 	var entry model.Score
 	err := a.db.scores.FindOne(a.context, filter, &entry, nil)
 	if err != nil {
@@ -33,14 +33,8 @@ func (a *Adapter) GetScore(id string, orgID string, appID string, userID string)
 	return &entry, nil
 }
 
-func (a *Adapter) GetScores(orgID *string, appID *string, limit *int, offset *int) ([]model.Score, error) {
-	filter := bson.M{}
-	if orgID != nil {
-		filter["org_id"] = orgID
-	}
-	if appID != nil {
-		filter["app_id"] = appID
-	}
+func (a *Adapter) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
+	filter := bson.M{"org_id": orgID, "app_id": appID}
 
 	opts := options.Find().SetSort(bson.M{"score": -1})
 	if limit != nil {
@@ -57,12 +51,12 @@ func (a *Adapter) GetScores(orgID *string, appID *string, limit *int, offset *in
 	return results, nil
 }
 
-func (a *Adapter) CreateScore(score model.Score) (*model.Score, error) {
+func (a *Adapter) CreateScore(score model.Score) error {
 	_, err := a.db.scores.InsertOne(a.context, score)
 	if err != nil {
-		return nil, errors.WrapErrorAction(logutils.ActionCreate, model.TypeScore, nil, err)
+		return errors.WrapErrorAction(logutils.ActionCreate, model.TypeScore, nil, err)
 	}
-	return &score, nil
+	return nil
 }
 
 func (a *Adapter) UpdateScore(score model.Score) error {

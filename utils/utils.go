@@ -48,3 +48,21 @@ func SHA256Hash(data []byte) []byte {
 	hash := sha256.Sum256(data)
 	return hash[:]
 }
+
+func IsNextDay(current time.Time, compare time.Time) bool {
+	// Normalize both dates to midnight
+	current = time.Date(current.Year(), current.Month(), current.Day(), 0, 0, 0, 0, current.Location())
+	compare = time.Date(compare.Year(), compare.Month(), compare.Day(), 0, 0, 0, 0, compare.Location())
+
+	// Check if compare is exactly one day after current
+	return compare.Equal(current.AddDate(0, 0, 1))
+}
+
+func IsPrevOrSameDay(current time.Time, compare time.Time) bool {
+	// Normalize both dates to midnight
+	current = time.Date(current.Year(), current.Month(), current.Day(), 0, 0, 0, 0, current.Location())
+	compare = time.Date(compare.Year(), compare.Month(), compare.Day(), 0, 0, 0, 0, compare.Location())
+
+	// Check if compare is exactly current or before
+	return compare.Equal(current) || compare.Before(current)
+}

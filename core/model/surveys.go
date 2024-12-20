@@ -36,6 +36,8 @@ type SurveyResponse struct {
 	Survey      Survey     `json:"survey" bson:"survey"`
 	DateCreated time.Time  `json:"date_created" bson:"date_created"`
 	DateUpdated *time.Time `json:"date_updated" bson:"date_updated"`
+	// TODO: create a map to store mastodonID
+	UnstructuredProperties map[string]interface{}
 }
 
 // Survey wraps the entire record

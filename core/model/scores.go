@@ -39,6 +39,7 @@ type Score struct {
 	ResponseCount          uint32    `json:"response_count" bson:"response_count"`
 	PrevSurveyResponseDate time.Time `json:"prev_survey_response_date" bson:"prev_survey_response_date"`
 	CurrentStreak          uint32    `json:"current_streak" bson:"current_streak"`
+	StreakMultiplier       float32   `json:"streak_multiplier" bson:"streak_multiplier"`
 	AnswerCount            uint32    `json:"answer_count" bson:"answer_count"`
 	CorrectAnswerCount     uint32    `json:"correct_answer_count" bson:"correct_answer_count"`
 }

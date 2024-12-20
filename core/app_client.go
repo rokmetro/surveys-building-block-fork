@@ -198,7 +198,13 @@ func (a appClient) CreateSurveyAlert(surveyAlert model.SurveyAlert) error {
 }
 
 func (a appClient) GetScore(orgID string, appID string, userID string) (*model.Score, error) {
-	return a.app.storage.GetScore(orgID, appID, userID)
+	score, err := a.app.storage.GetScore(orgID, appID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	score.StreakMultiplier = model.ScoreStreakMultiplier
+	return score, err
 }
 
 func (a appClient) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {

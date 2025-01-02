@@ -146,6 +146,8 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 	if err == nil && survey.Type == model.SurveyTypeFashionQuiz {
 		score, err := a.GetScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
 
+		// Create a new score if not present
+		// Otherwise update score
 		if err != nil {
 			err = a.CreateScore(surveyResponse)
 		} else {

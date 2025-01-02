@@ -41,7 +41,7 @@ type database struct {
 	surveys         *collectionWrapper
 	surveyResponses *collectionWrapper
 	alertContacts   *collectionWrapper
-	scores			*collectionWrapper
+	scores          *collectionWrapper
 
 	listeners []interfaces.StorageListener
 }
@@ -185,7 +185,6 @@ func (d *database) applyScoresChecks(scores *collectionWrapper) error {
 	if err != nil {
 		return err
 	}
-
 
 	d.logger.Info("scores passed")
 	return nil

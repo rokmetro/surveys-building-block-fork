@@ -86,4 +86,3 @@ func (a *Adapter) UpdateScore(score model.Score) error {
 
 	return nil
 }
-

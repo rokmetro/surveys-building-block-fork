@@ -221,16 +221,16 @@ func (a appClient) CreateScore(surveyResponse model.SurveyResponse) error {
 	}
 
 	score := model.Score{
-		ID: uuid.NewString(),
-		OrgID: surveyResponse.OrgID,
-		AppID: surveyResponse.AppID,
-		UserID: surveyResponse.UserID,
-		Score: 0,
-		ResponseCount: 0,
-		CurrentStreak: 0,
-		AnswerCount: 0,
+		ID:                 uuid.NewString(),
+		OrgID:              surveyResponse.OrgID,
+		AppID:              surveyResponse.AppID,
+		UserID:             surveyResponse.UserID,
+		Score:              0,
+		ResponseCount:      0,
+		CurrentStreak:      0,
+		AnswerCount:        0,
 		CorrectAnswerCount: 0,
-		SurveyType: model.SurveyTypeFashionQuiz,
+		SurveyType:         model.SurveyTypeFashionQuiz,
 	}
 
 	for i := 0; i < len(surveyResponses); i++ {
@@ -278,7 +278,7 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	}
 	score.PrevSurveyResponseDate = responseTime
 
-	if (score.CurrentStreak >= model.ScoreStreakMinDays) {
+	if score.CurrentStreak >= model.ScoreStreakMinDays {
 		score.Score += uint32(float32(correctAnswers) * model.ScoreStreakMultiplier)
 	} else {
 		score.Score += uint32(float32(correctAnswers))

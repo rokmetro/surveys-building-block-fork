@@ -19,6 +19,8 @@ SurveyResponseAnonymous:
   $ref: "./surveys/SurveyResponseAnonymous.yaml"
 AlertContact:
   $ref: "./surveys/AlertContact.yaml"
+Score:
+  $ref: "./scores/Score.yaml"
 
 # ADMIN section
 

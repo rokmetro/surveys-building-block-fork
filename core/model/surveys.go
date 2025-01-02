@@ -29,14 +29,13 @@ const (
 
 // SurveyResponse wraps the entire survey response
 type SurveyResponse struct {
-	ID                     string                 `json:"id" bson:"_id"`
-	UserID                 string                 `json:"user_id" bson:"user_id"`
-	OrgID                  string                 `json:"org_id" bson:"org_id"`
-	AppID                  string                 `json:"app_id" bson:"app_id"`
-	Survey                 Survey                 `json:"survey" bson:"survey"`
-	DateCreated            time.Time              `json:"date_created" bson:"date_created"`
-	DateUpdated            *time.Time             `json:"date_updated" bson:"date_updated"`
-	UnstructuredProperties map[string]interface{} `json:"unstructured_properties"`
+	ID          string     `json:"id" bson:"_id"`
+	UserID      string     `json:"user_id" bson:"user_id"`
+	OrgID       string     `json:"org_id" bson:"org_id"`
+	AppID       string     `json:"app_id" bson:"app_id"`
+	Survey      Survey     `json:"survey" bson:"survey"`
+	DateCreated time.Time  `json:"date_created" bson:"date_created"`
+	DateUpdated *time.Time `json:"date_updated" bson:"date_updated"`
 }
 
 // Survey wraps the entire record
@@ -69,6 +68,7 @@ type Survey struct {
 	Public                  *bool                  `json:"public" bson:"public"`
 	Archived                *bool                  `json:"archived" bson:"archived"`
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time" bson:"estimated_completion_time"`
+	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties"`
 }
 
 // SurveyResponseAnonymous represents an anonymized survey response

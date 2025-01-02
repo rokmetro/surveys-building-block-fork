@@ -127,6 +127,7 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 	survey.Data = surveyResponse.Survey.Data
 	survey.SurveyStats = surveyResponse.Survey.SurveyStats
 	survey.ResultJSON = surveyResponse.Survey.ResultJSON
+	survey.UnstructuredProperties = surveyResponse.Survey.UnstructuredProperties
 	surveyResponse.Survey = *survey
 
 	if survey.CalendarEventID != "" {
@@ -245,7 +246,7 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	correctAnswers := uint32(survey.SurveyStats.Scores[""])
 	score.CorrectAnswerCount += correctAnswers
 
-	externalProfileIdRaw, exists := surveyResponse.UnstructuredProperties["external_profile_id"]
+	externalProfileIdRaw, exists := survey.UnstructuredProperties["external_profile_id"]
 	if exists {
 		externalProfileIdStr, isString := externalProfileIdRaw.(string)
 		if isString {
@@ -253,12 +254,12 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 		}
 	}
 
-	localResponseTimeRaw, exists := surveyResponse.UnstructuredProperties["local_time"]
+	localResponseTimeRaw, exists := survey.UnstructuredProperties["local_time"]
 	responseTime := surveyResponse.DateCreated
 	if exists {
 		localResponseTimeStr, isString := localResponseTimeRaw.(string)
 		if isString {
-			localResponseTime, err := time.Parse(time.RFC3339, localResponseTimeStr)
+			localResponseTime, err := time.Parse(time.DateTime, localResponseTimeStr)
 
 			if err == nil && time.Since(localResponseTime).Abs().Hours() < 24 {
 				responseTime = localResponseTime

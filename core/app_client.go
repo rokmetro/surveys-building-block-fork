@@ -241,16 +241,16 @@ func (a appClient) CreateScore(surveyResponse model.SurveyResponse) error {
 
 func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyResponse) error {
 	survey := surveyResponse.Survey
-	score.ResponseCount += 1
+	score.ResponseCount++
 	score.AnswerCount += uint32(survey.SurveyStats.Total)
 	correctAnswers := uint32(survey.SurveyStats.Scores[""])
 	score.CorrectAnswerCount += correctAnswers
 
-	externalProfileIdRaw, exists := survey.UnstructuredProperties["external_profile_id"]
+	externalProfileIDRaw, exists := survey.UnstructuredProperties["external_profile_id"]
 	if exists {
-		externalProfileIdStr, isString := externalProfileIdRaw.(string)
+		externalProfileIDStr, isString := externalProfileIDRaw.(string)
 		if isString {
-			score.ExternalProfileID = externalProfileIdStr
+			score.ExternalProfileID = externalProfileIDStr
 		}
 	}
 

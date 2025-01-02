@@ -23,6 +23,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// GetScore finds score object for user
 func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Score, error) {
 	filter := bson.M{"org_id": orgID, "app_id": appID, "user_id": userID}
 	var entry model.Score
@@ -33,6 +34,7 @@ func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Sc
 	return &entry, nil
 }
 
+// GetScores returns a list of scores in descending order
 func (a *Adapter) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
 	filter := bson.M{"org_id": orgID, "app_id": appID}
 
@@ -51,6 +53,7 @@ func (a *Adapter) GetScores(orgID string, appID string, limit *int, offset *int)
 	return results, nil
 }
 
+// CreateScore creates a new score object
 func (a *Adapter) CreateScore(score model.Score) error {
 	_, err := a.db.scores.InsertOne(a.context, score)
 	if err != nil {
@@ -59,6 +62,7 @@ func (a *Adapter) CreateScore(score model.Score) error {
 	return nil
 }
 
+// UpdateScore updates existing score object
 func (a *Adapter) UpdateScore(score model.Score) error {
 	if len(score.ID) == 0 {
 		return nil

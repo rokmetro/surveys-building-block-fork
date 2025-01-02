@@ -21,10 +21,14 @@ import (
 )
 
 const (
-	TypeScore             logutils.MessageDataType = "score"
-	SurveyTypeFashionQuiz string                   = "fashion_quiz"
-	ScoreStreakMultiplier float32                  = 2.0
-	ScoreStreakMinDays    uint32                   = 2
+	// TypeScore is a message type for score
+	TypeScore logutils.MessageDataType = "score"
+	// SurveyTypeFashionQuiz describes type of survey for fashion quizzes
+	SurveyTypeFashionQuiz string = "fashion_quiz"
+	// ScoreStreakMultiplier multiplies score if streak is true
+	ScoreStreakMultiplier float32 = 2.0
+	// ScoreStreakMinDays specifies minimum number of days for a streak
+	ScoreStreakMinDays uint32 = 2
 )
 
 // Score object maintains data of accumulated scores from surveys

@@ -204,7 +204,7 @@ func (a appClient) GetScore(orgID string, appID string, userID string) (*model.S
 	}
 
 	score.StreakMultiplier = model.ScoreStreakMultiplier
-	return score, err
+	return score, nil
 }
 
 func (a appClient) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
@@ -277,6 +277,8 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 
 	if (score.CurrentStreak >= model.ScoreStreakMinDays) {
 		score.Score += uint32(float32(correctAnswers) * model.ScoreStreakMultiplier)
+	} else {
+		score.Score += uint32(float32(correctAnswers))
 	}
 
 	return nil

@@ -176,6 +176,17 @@ func (d *database) applyAlertContactsChecks(alertContacts *collectionWrapper) er
 func (d *database) applyScoresChecks(scores *collectionWrapper) error {
 	d.logger.Info("apply scores checks.....")
 
+	err := scores.AddIndex(nil, bson.D{primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "score", Value: -1}}, false, nil)
+	if err != nil {
+		return err
+	}
+
+	err = scores.AddIndex(nil, bson.D{primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "user_id", Value: 1}}, false, nil)
+	if err != nil {
+		return err
+	}
+
+
 	d.logger.Info("scores passed")
 	return nil
 }

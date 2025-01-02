@@ -47,7 +47,7 @@ paths:
     $ref: "./resources/client/creator/surveys.yaml"
   /api/score:
     $ref: "./resources/client/score.yaml"
-  /api/scores/:
+  /api/scores:
     $ref: "./resources/client/scores.yaml"
 
   # Admin

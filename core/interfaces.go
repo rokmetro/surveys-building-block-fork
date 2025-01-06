@@ -27,6 +27,8 @@ type Shared interface {
 
 	isEventAdmin(orgID string, appID string, eventID string, userID string, externalIDs map[string]string) (bool, error)
 	hasAttendedEvent(orgID string, appID string, eventID string, userID string, externalIDs map[string]string) (bool, error)
+
+	getUserData(orgID string, appID string, userID *string) (*model.UserData, error)
 }
 
 // Core exposes Core APIs for the driver adapters

@@ -35,17 +35,8 @@ func (a appShared) getSurvey(id string, orgID string, appID string) (*model.Surv
 }
 
 func (a appShared) getSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool) ([]model.Survey, []model.SurveyResponse, error) {
-	surveys, err := a.app.storage.GetSurveys(orgID, appID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	matchingSurveyIDs := make([]string, len(surveys))
-	for i, survey := range surveys {
-		matchingSurveyIDs[i] = survey.ID
-	}
-
-	surveysResponse, err := a.app.storage.GetSurveyResponses(&orgID, &appID, userID, matchingSurveyIDs, nil, nil, nil, nil, nil)
+	surveys, surveysResponse, err := a.app.storage.GetSurveysAndSurveyResponses(orgID, appID, creatorID, surveyIDs, surveyTypes, calendarEventID,
+		public, archived, limit, offset, userID, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -159,6 +150,72 @@ func (a appShared) hasAttendedEvent(orgID string, appID string, eventID string, 
 	}
 
 	return false, nil
+}
+
+func (a appShared) getUserData(orgID string, appID string, userID *string) (*model.UserData, error) {
+	var serveyUserData []model.SurveysUserData
+	var surveyResponseUserData []model.SurveysResponseUserData
+
+	// Create channels for data and error handling
+	surveysChan := make(chan []model.Survey, 1)
+	surveysErrChan := make(chan error, 1)
+	surveyResponsesChan := make(chan []model.SurveyResponse, 1)
+	surveyResponsesErrChan := make(chan error, 1)
+
+	// Fetch surveys asynchronously
+	go func() {
+		surveys, err := a.app.storage.GetSurveysLight(orgID, appID, userID)
+		if err != nil {
+			surveysErrChan <- err
+			return
+		}
+		surveysChan <- surveys
+	}()
+
+	// Fetch survey responses asynchronously
+	go func() {
+		surveysResponses, err := a.app.storage.GetSurveyResponses(&orgID, &appID, userID, nil, nil, nil, nil, nil, nil)
+		if err != nil {
+			surveyResponsesErrChan <- err
+			return
+		}
+		surveyResponsesChan <- surveysResponses
+	}()
+
+	// Wait for both operations to complete or return an error
+	var surveys []model.Survey
+	var surveysResponses []model.SurveyResponse
+
+	for i := 0; i < 2; i++ {
+		select {
+		case err := <-surveysErrChan:
+			return nil, err
+		case err := <-surveyResponsesErrChan:
+			return nil, err
+		case surveys = <-surveysChan:
+			// Handle the surveys data when received
+		case surveysResponses = <-surveyResponsesChan:
+			// Handle the survey responses data when received
+		}
+	}
+
+	// Process the surveys data
+	for _, s := range surveys {
+		survey := model.SurveysUserData{ID: s.ID, CreatorID: s.CreatorID, AppID: s.AppID, AccountID: s.CreatorID,
+			OrgID: s.OrgID, Title: s.Title, Type: s.Type}
+		serveyUserData = append(serveyUserData, survey)
+	}
+
+	// Process the survey responses data
+	for _, sr := range surveysResponses {
+		surveyResponse := model.SurveysResponseUserData{ID: sr.ID, UserID: sr.UserID, AppID: sr.AppID, AccountID: sr.UserID,
+			OrgID: sr.OrgID, Title: sr.Survey.Title}
+		surveyResponseUserData = append(surveyResponseUserData, surveyResponse)
+	}
+
+	// Return the user data after all data has been fetched and processed
+	userData := model.UserData{SurveyUserData: &serveyUserData, SurveyResponseUserData: &surveyResponseUserData}
+	return &userData, nil
 }
 
 // newAppShared creates new appShared

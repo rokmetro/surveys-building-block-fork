@@ -525,6 +525,42 @@ func (h ClientAPIsHandler) getCreatorSurveys(l *logs.Log, r *http.Request, claim
 		offset = intParsed
 	}
 
+	publicStr := r.URL.Query().Get("public")
+
+	var public *bool
+
+	if publicStr != "" {
+		valuePublic, err := strconv.ParseBool(publicStr)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
+		}
+		public = &valuePublic
+	}
+
+	archivedStr := r.URL.Query().Get("archived")
+
+	var archived *bool
+
+	if archivedStr != "" {
+		valueArchived, err := strconv.ParseBool(archivedStr)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
+		}
+		archived = &valueArchived
+	}
+
+	completedStr := r.URL.Query().Get("completed")
+
+	var completed *bool
+
+	if completedStr != "" {
+		valueCompleted, err := strconv.ParseBool(completedStr)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
+		}
+		completed = &valueCompleted
+	}
+
 	var timeFilterItems model.SurveyTimeFilterRequest
 	startsBeforeRaw := r.URL.Query().Get("starts_before")
 	if startsBeforeRaw != "" {
@@ -544,7 +580,21 @@ func (h ClientAPIsHandler) getCreatorSurveys(l *logs.Log, r *http.Request, claim
 	}
 	filter := surveyTimeFilter(&timeFilterItems)
 
-	resData, _, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset, filter, nil, nil, nil)
+	resData, _, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset, filter, public, archived, completed)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
+	}
+
+	data, err := json.Marshal(resData)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
+	}
+
+	return l.HTTPResponseSuccessJSON(data)
+}
+
+func (h ClientAPIsHandler) getUserData(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	resData, err := h.app.Client.GetUserData(claims.OrgID, claims.AppID, &claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}

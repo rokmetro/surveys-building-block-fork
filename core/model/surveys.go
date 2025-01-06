@@ -212,14 +212,6 @@ type SurveyTimeFilter struct {
 	EndTimeBefore   *time.Time `json:"end_time_before"`
 }
 
-// SurveyTimeFilterRequest wraps the time filter for surveys
-type SurveyTimeFilterRequest struct {
-	StartTimeAfter  *string `json:"start_time_after"`
-	StartTimeBefore *string `json:"start_time_before"`
-	EndTimeAfter    *string `json:"end_time_after"`
-	EndTimeBefore   *string `json:"end_time_before"`
-}
-
 // SurveysResponseData wraps the entire record
 type SurveysResponseData struct {
 	ID                      string                 `json:"id"`
@@ -251,4 +243,39 @@ type SurveysResponseData struct {
 	Archived                *bool                  `json:"archived"`
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time"`
 	Completed               *bool                  `json:"completed"`
+}
+
+// SurveyTimeFilterRequest wraps the time filter for surveys
+type SurveyTimeFilterRequest struct {
+	StartTimeAfter  *string `json:"start_time_after"`
+	StartTimeBefore *string `json:"start_time_before"`
+	EndTimeAfter    *string `json:"end_time_after"`
+	EndTimeBefore   *string `json:"end_time_before"`
+}
+
+// SurveysUserData represents user data for surveys
+type SurveysUserData struct {
+	ID        string `json:"id" bson:"_id"`
+	CreatorID string `json:"creator_id" bson:"creator_id"`
+	AppID     string `json:"app_id"`
+	AccountID string `json:"account_id"`
+	OrgID     string `json:"org_id"`
+	Title     string `json:"title"`
+	Type      string `json:"type"`
+}
+
+// SurveysResponseUserData represents user data for surveys responses
+type SurveysResponseUserData struct {
+	ID        string `json:"id"`
+	UserID    string `json:"user_id"`
+	AppID     string `json:"app_id"`
+	AccountID string `json:"account_id"`
+	OrgID     string `json:"org_id"`
+	Title     string `json:"title"`
+}
+
+// UserData represents user data
+type UserData struct {
+	SurveyUserData         *[]SurveysUserData         `json:"survey"`
+	SurveyResponseUserData *[]SurveysResponseUserData `json:"survey_responses"`
 }

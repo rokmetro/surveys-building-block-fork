@@ -1,0 +1,21 @@
+get:
+  tags:
+    - Client
+  summary: Retrieves score
+  description: |
+    Retrieves client's score
+  security:
+    - bearerAuth: []
+  responses:
+    200:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/scores/Score.yaml"
+    400:
+      description: Bad request
+    401:
+      description: Unauthorized
+    500:
+      description: Internal error

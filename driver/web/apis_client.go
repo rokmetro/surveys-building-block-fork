@@ -557,6 +557,54 @@ func (h ClientAPIsHandler) getCreatorSurveys(l *logs.Log, r *http.Request, claim
 	return l.HTTPResponseSuccessJSON(data)
 }
 
+func (h ClientAPIsHandler) getScore(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	score, err := h.app.Client.GetScore(claims.OrgID, claims.AppID, claims.Subject)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
+	}
+
+	rdata, err := json.Marshal(score)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
+	}
+
+	return l.HTTPResponseSuccessJSON(rdata)
+}
+
+func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	limitRaw := r.URL.Query().Get("limit")
+	limit := 20
+	if len(limitRaw) > 0 {
+		intParsed, err := strconv.Atoi(limitRaw)
+		if err != nil {
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("limit"), nil, http.StatusBadRequest, false)
+		}
+		limit = intParsed
+	}
+
+	offsetRaw := r.URL.Query().Get("offset")
+	offset := 0
+	if len(offsetRaw) > 0 {
+		intParsed, err := strconv.Atoi(offsetRaw)
+		if err != nil {
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("offset"), nil, http.StatusBadRequest, false)
+		}
+		offset = intParsed
+	}
+
+	scores, err := h.app.Client.GetScores(claims.OrgID, claims.AppID, &limit, &offset)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
+	}
+
+	rdata, err := json.Marshal(scores)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
+	}
+
+	return l.HTTPResponseSuccessJSON(rdata)
+}
+
 // NewClientAPIsHandler creates new client API handler instance
 func NewClientAPIsHandler(app *core.Application) ClientAPIsHandler {
 	return ClientAPIsHandler{app: app}

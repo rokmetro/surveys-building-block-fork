@@ -712,6 +712,69 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error
+  /api/score:
+    get:
+      tags:
+        - Client
+      summary: Retrieves score
+      description: |
+        Retrieves client's score
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Score'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error
+  /api/scores:
+    get:
+      tags:
+        - Client
+      summary: Retrieves scores
+      description: |
+        Retrieves scores sorted descending
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: The number of results to be loaded in one page
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+        - name: offset
+          in: query
+          description: The number of results previously loaded
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Score'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error
   /api/admin/configs:
     get:
       tags:
@@ -1677,6 +1740,8 @@ components:
           type: integer
           format: int64
           nullable: true
+        unstructured_properties:
+          type: object
     SurveyData:
       type: object
       properties:
@@ -1868,6 +1933,47 @@ components:
           type: string
         params:
           type: object
+    Score:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        org_id:
+          type: string
+          readOnly: true
+        app_id:
+          type: string
+          readOnly: true
+        user_id:
+          type: string
+          readOnly: true
+        survey_type:
+          type: string
+          readOnly: true
+        external_profile_id:
+          type: string
+          readOnly: true
+        score:
+          type: number
+          readOnly: true
+        response_count:
+          type: number
+          readOnly: true
+        prev_survey_response_date:
+          type: object
+        current_streak:
+          type: number
+          readOnly: true
+        streak_multiplier:
+          type: number
+          readOnly: true
+        answer_count:
+          type: number
+          readOnly: true
+        correct_answer_count:
+          type: number
+          readOnly: true
     _admin_req_update-configs:
       required:
         - type

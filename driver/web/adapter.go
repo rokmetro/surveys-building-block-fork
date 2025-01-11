@@ -91,6 +91,8 @@ func (a Adapter) Start() {
 	mainRouter.HandleFunc("/survey-responses", a.wrapFunc(a.clientAPIsHandler.deleteSurveyResponses, a.auth.client.User)).Methods("DELETE")
 	mainRouter.HandleFunc("/survey-alerts", a.wrapFunc(a.clientAPIsHandler.createSurveyAlert, a.auth.client.User)).Methods("POST")
 	mainRouter.HandleFunc("/creator/surveys", a.wrapFunc(a.clientAPIsHandler.getCreatorSurveys, a.auth.client.User)).Methods("GET")
+	mainRouter.HandleFunc("/score", a.wrapFunc(a.clientAPIsHandler.getScore, a.auth.client.User)).Methods("GET")
+	mainRouter.HandleFunc("/scores", a.wrapFunc(a.clientAPIsHandler.getScores, a.auth.client.User)).Methods("GET")
 
 	// Admin APIs
 	adminRouter := mainRouter.PathPrefix("/admin").Subrouter()

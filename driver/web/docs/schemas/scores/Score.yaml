@@ -1,0 +1,40 @@
+type: object
+properties:
+  id:
+    type: string
+    readOnly: true
+  org_id:
+    type: string
+    readOnly: true
+  app_id:
+    type: string
+    readOnly: true
+  user_id:
+    type: string
+    readOnly: true
+  survey_type:
+    type: string
+    readOnly: true
+  external_profile_id:
+    type: string
+    readOnly: true
+  score:
+    type: number
+    readOnly: true
+  response_count:
+    type: number
+    readOnly: true
+  prev_survey_response_date:
+    type: object
+  current_streak:
+    type: number
+    readOnly: true
+  streak_multiplier:
+    type: number
+    readOnly: true
+  answer_count:
+    type: number
+    readOnly: true
+  correct_answer_count:
+    type: number
+    readOnly: true

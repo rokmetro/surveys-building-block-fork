@@ -41,6 +41,7 @@ type database struct {
 	surveys         *collectionWrapper
 	surveyResponses *collectionWrapper
 	alertContacts   *collectionWrapper
+	scores          *collectionWrapper
 
 	listeners []interfaces.StorageListener
 }
@@ -93,6 +94,12 @@ func (d *database) start() error {
 		return err
 	}
 
+	scores := &collectionWrapper{database: d, coll: db.Collection("scores")}
+	err = d.applyScoresChecks(scores)
+	if err != nil {
+		return err
+	}
+
 	//assign the db, db client and the collections
 	d.db = db
 	d.dbClient = client
@@ -101,6 +108,7 @@ func (d *database) start() error {
 	d.surveys = surveys
 	d.surveyResponses = surveyResponses
 	d.alertContacts = alertContacts
+	d.scores = scores
 
 	go d.configs.Watch(nil, d.logger)
 
@@ -162,6 +170,23 @@ func (d *database) applyAlertContactsChecks(alertContacts *collectionWrapper) er
 	}
 
 	d.logger.Info("survey alert contacts passed")
+	return nil
+}
+
+func (d *database) applyScoresChecks(scores *collectionWrapper) error {
+	d.logger.Info("apply scores checks.....")
+
+	err := scores.AddIndex(nil, bson.D{primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "score", Value: -1}}, false, nil)
+	if err != nil {
+		return err
+	}
+
+	err = scores.AddIndex(nil, bson.D{primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "user_id", Value: 1}}, false, nil)
+	if err != nil {
+		return err
+	}
+
+	d.logger.Info("scores passed")
 	return nil
 }
 

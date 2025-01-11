@@ -16,6 +16,7 @@ package core
 
 import (
 	"application/core/model"
+	"application/utils"
 	"time"
 
 	"github.com/google/uuid"
@@ -126,6 +127,7 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 	survey.Data = surveyResponse.Survey.Data
 	survey.SurveyStats = surveyResponse.Survey.SurveyStats
 	survey.ResultJSON = surveyResponse.Survey.ResultJSON
+	survey.UnstructuredProperties = surveyResponse.Survey.UnstructuredProperties
 	surveyResponse.Survey = *survey
 
 	if survey.CalendarEventID != "" {
@@ -139,7 +141,23 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 		}
 	}
 
-	return a.app.storage.CreateSurveyResponse(surveyResponse)
+	surveyResponsePtr, err := a.app.storage.CreateSurveyResponse(surveyResponse)
+
+	// If the user completed a fashion quiz, update the score
+	if err == nil && survey.Type == model.SurveyTypeFashionQuiz {
+		score, err := a.GetScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
+
+		// Create a new score if not present
+		// Otherwise update score
+		if err != nil {
+			err = a.CreateScore(surveyResponse)
+		} else {
+			a.UpdateScore(score, surveyResponse)
+			err = a.app.storage.UpdateScore(*score)
+		}
+	}
+
+	return surveyResponsePtr, err
 }
 
 // UpdateSurveyResponse updates the provided survey response
@@ -177,6 +195,93 @@ func (a appClient) CreateSurveyAlert(surveyAlert model.SurveyAlert) error {
 			}
 			a.app.notifications.SendMail(contacts[i].Address, subject, body)
 		}
+	}
+
+	return nil
+}
+
+func (a appClient) GetScore(orgID string, appID string, userID string) (*model.Score, error) {
+	score, err := a.app.storage.GetScore(orgID, appID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	score.StreakMultiplier = model.ScoreStreakMultiplier
+	return score, nil
+}
+
+func (a appClient) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
+	return a.app.storage.GetScores(orgID, appID, limit, offset)
+}
+
+func (a appClient) CreateScore(surveyResponse model.SurveyResponse) error {
+	surveyResponses, err := a.app.storage.GetSurveyResponses(&surveyResponse.OrgID, &surveyResponse.AppID, &surveyResponse.UserID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	score := model.Score{
+		ID:                 uuid.NewString(),
+		OrgID:              surveyResponse.OrgID,
+		AppID:              surveyResponse.AppID,
+		UserID:             surveyResponse.UserID,
+		Score:              0,
+		ResponseCount:      0,
+		CurrentStreak:      0,
+		AnswerCount:        0,
+		CorrectAnswerCount: 0,
+		SurveyType:         model.SurveyTypeFashionQuiz,
+	}
+
+	for i := 0; i < len(surveyResponses); i++ {
+		a.UpdateScore(&score, surveyResponses[i])
+	}
+	return a.app.storage.CreateScore(score)
+}
+
+func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyResponse) error {
+	survey := surveyResponse.Survey
+	score.ResponseCount++
+	score.AnswerCount += uint32(survey.SurveyStats.Total)
+	correctAnswers := uint32(survey.SurveyStats.Scores[""])
+	score.CorrectAnswerCount += correctAnswers
+
+	externalProfileIDRaw, exists := survey.UnstructuredProperties["external_profile_id"]
+	if exists {
+		externalProfileIDStr, isString := externalProfileIDRaw.(string)
+		if isString {
+			score.ExternalProfileID = externalProfileIDStr
+		}
+	}
+
+	localResponseTimeRaw, exists := survey.UnstructuredProperties["local_time"]
+	responseTime := surveyResponse.DateCreated
+	if exists {
+		localResponseTimeStr, isString := localResponseTimeRaw.(string)
+		if isString {
+			localResponseTime, err := time.Parse(time.DateTime, localResponseTimeStr)
+
+			if err == nil && time.Since(localResponseTime).Abs().Hours() < 24 {
+				responseTime = localResponseTime
+			}
+		}
+	}
+
+	if utils.IsPrevOrSameDay(score.PrevSurveyResponseDate, responseTime) {
+		// Don't update streak if day is same or previous
+	} else if utils.IsNextDay(score.PrevSurveyResponseDate, responseTime) {
+		// Update streak
+		score.CurrentStreak++
+	} else {
+		// Reset streak to day 1
+		score.CurrentStreak = 1
+	}
+	score.PrevSurveyResponseDate = responseTime
+
+	if score.CurrentStreak >= model.ScoreStreakMinDays {
+		score.Score += uint32(float32(correctAnswers) * model.ScoreStreakMultiplier)
+	} else {
+		score.Score += uint32(float32(correctAnswers))
 	}
 
 	return nil

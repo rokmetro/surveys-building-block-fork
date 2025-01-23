@@ -181,7 +181,7 @@ func (d *database) applyScoresChecks(scores *collectionWrapper) error {
 		return err
 	}
 
-	err = scores.AddIndex(nil, bson.D{primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "user_id", Value: 1}}, false, nil)
+	err = scores.AddIndex(nil, bson.D{primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "user_id", Value: 1}}, true, nil)
 	if err != nil {
 		return err
 	}

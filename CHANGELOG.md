@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Quiz Leaderboard Data Migration [#11](https://github.com/rokmetro/surveys-building-block-fork/issues/11)
 - Quiz leaderboard feature [#9](https://github.com/rokmetro/surveys-building-block-fork/issues/9)
 - Add CORS support
 - Add validate admin claim flag to environment config

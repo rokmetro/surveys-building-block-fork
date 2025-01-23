@@ -145,12 +145,12 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 
 	// If the user completed a fashion quiz, update the score
 	if err == nil && survey.Type == model.SurveyTypeFashionQuiz {
-		score, err := a.GetScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
+		score, err := a.app.storage.GetScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
 
 		// Create a new score if not present
 		// Otherwise update score
-		if err != nil {
-			err = a.CreateScore(surveyResponse)
+		if score == nil || err != nil {
+			score, err = a.CreateScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
 		} else {
 			a.UpdateScore(score, surveyResponse)
 			err = a.app.storage.UpdateScore(*score)
@@ -200,8 +200,12 @@ func (a appClient) CreateSurveyAlert(surveyAlert model.SurveyAlert) error {
 	return nil
 }
 
+// GetScore gets scores and creates one if it doesn't exist
 func (a appClient) GetScore(orgID string, appID string, userID string) (*model.Score, error) {
 	score, err := a.app.storage.GetScore(orgID, appID, userID)
+	if score == nil {
+		score, err = a.CreateScore(orgID, appID, userID)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -210,21 +214,23 @@ func (a appClient) GetScore(orgID string, appID string, userID string) (*model.S
 	return score, nil
 }
 
+// GetScores returns scores in descending order and removes scores with empty external IDs
 func (a appClient) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
 	return a.app.storage.GetScores(orgID, appID, limit, offset)
 }
 
-func (a appClient) CreateScore(surveyResponse model.SurveyResponse) error {
-	surveyResponses, err := a.app.storage.GetSurveyResponses(&surveyResponse.OrgID, &surveyResponse.AppID, &surveyResponse.UserID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
+// CreateScore Creates a score object by iterating over all previous survey responses
+func (a appClient) CreateScore(orgID string, appID string, userID string) (*model.Score, error) {
+	surveyResponses, err := a.app.storage.GetSurveyResponses(&orgID, &appID, &userID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	score := model.Score{
 		ID:                 uuid.NewString(),
-		OrgID:              surveyResponse.OrgID,
-		AppID:              surveyResponse.AppID,
-		UserID:             surveyResponse.UserID,
+		OrgID:              orgID,
+		AppID:              appID,
+		UserID:             userID,
 		Score:              0,
 		ResponseCount:      0,
 		CurrentStreak:      0,
@@ -236,9 +242,11 @@ func (a appClient) CreateScore(surveyResponse model.SurveyResponse) error {
 	for i := 0; i < len(surveyResponses); i++ {
 		a.UpdateScore(&score, surveyResponses[i])
 	}
-	return a.app.storage.CreateScore(score)
+	return &score, a.app.storage.CreateScore(score)
 }
 
+// UpdateScore updates the score model passed in
+// Assumes that surveyResponse is a fashion quiz
 func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyResponse) error {
 	survey := surveyResponse.Survey
 	score.ResponseCount++

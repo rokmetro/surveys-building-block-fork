@@ -201,7 +201,7 @@ func (a appClient) CreateSurveyAlert(surveyAlert model.SurveyAlert) error {
 }
 
 // GetScore gets scores and creates one if it doesn't exist
-func (a appClient) GetScore(orgID string, appID string, userID string) (*model.Score, error) {
+func (a appClient) GetScore(orgID string, appID string, userID string, externalProfileID *string) (*model.Score, error) {
 	score, err := a.app.storage.GetScore(orgID, appID, userID)
 	if score == nil {
 		score, err = a.CreateScore(orgID, appID, userID)
@@ -210,8 +210,14 @@ func (a appClient) GetScore(orgID string, appID string, userID string) (*model.S
 		return nil, err
 	}
 
+	// If score object doesn't have externalID, store the one that's client-provided
+	if score.ExternalProfileID == "" && externalProfileID != nil {
+		score.ExternalProfileID = *externalProfileID
+		err = a.app.storage.UpdateScore(*score)
+	}
+
 	score.StreakMultiplier = model.ScoreStreakMultiplier
-	return score, nil
+	return score, err
 }
 
 // GetScores returns scores in descending order and removes scores with empty external IDs
@@ -231,6 +237,7 @@ func (a appClient) CreateScore(orgID string, appID string, userID string) (*mode
 		OrgID:              orgID,
 		AppID:              appID,
 		UserID:             userID,
+		ExternalProfileID:  "",
 		Score:              0,
 		ResponseCount:      0,
 		CurrentStreak:      0,

@@ -6,6 +6,15 @@ get:
     Retrieves client's score
   security:
     - bearerAuth: []
+  parameters:
+    - name: external_profile_id
+      in: query
+      description: External Profile ID to update score
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string
   responses:
     200:
       description: Success

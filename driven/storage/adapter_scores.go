@@ -36,7 +36,13 @@ func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Sc
 
 // GetScores returns a list of scores in descending order
 func (a *Adapter) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
-	filter := bson.M{"org_id": orgID, "app_id": appID}
+	filter := bson.M{
+		"org_id": orgID,
+		"app_id": appID,
+		"external_profile_id": bson.M{
+			"$ne": "",
+		},
+	}
 
 	opts := options.Find().SetSort(bson.M{"score": -1})
 	if limit != nil {

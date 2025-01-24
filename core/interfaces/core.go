@@ -48,7 +48,7 @@ type Client interface {
 	CreateSurveyAlert(surveyAlert model.SurveyAlert) error
 
 	// Score
-	GetScore(orgID string, appID string, userID string) (*model.Score, error)
+	GetScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error)
 	GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
 }
 

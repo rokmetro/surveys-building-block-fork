@@ -558,11 +558,7 @@ func (h ClientAPIsHandler) getCreatorSurveys(l *logs.Log, r *http.Request, claim
 }
 
 func (h ClientAPIsHandler) getScore(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
-	var externalProfileID *string
-	externalProfileIDRaw := r.URL.Query().Get("external_profile_id")
-	if len(externalProfileIDRaw) > 0 {
-		externalProfileID = &externalProfileIDRaw
-	}
+	externalProfileID := r.URL.Query().Get("external_profile_id")
 
 	score, err := h.app.Client.GetScore(claims.OrgID, claims.AppID, claims.Subject, externalProfileID)
 	if err != nil {

@@ -145,12 +145,13 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 
 	// If the user completed a fashion quiz, update the score
 	if err == nil && survey.Type == model.SurveyTypeFashionQuiz {
-		score, err := a.app.storage.GetScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
+		var score *model.Score
+		score, err = a.app.storage.GetScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
 
 		// Create a new score if not present
 		// Otherwise update score
 		if score == nil || err != nil {
-			score, err = a.CreateScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
+			_, err = a.CreateScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, "")
 		} else {
 			a.UpdateScore(score, surveyResponse)
 			err = a.app.storage.UpdateScore(*score)
@@ -201,18 +202,18 @@ func (a appClient) CreateSurveyAlert(surveyAlert model.SurveyAlert) error {
 }
 
 // GetScore gets scores and creates one if it doesn't exist
-func (a appClient) GetScore(orgID string, appID string, userID string, externalProfileID *string) (*model.Score, error) {
+func (a appClient) GetScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
 	score, err := a.app.storage.GetScore(orgID, appID, userID)
 	if score == nil {
-		score, err = a.CreateScore(orgID, appID, userID)
+		score, err = a.CreateScore(orgID, appID, userID, externalProfileID)
 	}
-	if err != nil {
+	if err != nil || score == nil {
 		return nil, err
 	}
 
 	// If score object doesn't have externalID, store the one that's client-provided
-	if score.ExternalProfileID == "" && externalProfileID != nil {
-		score.ExternalProfileID = *externalProfileID
+	if score.ExternalProfileID == "" && externalProfileID != "" {
+		score.ExternalProfileID = externalProfileID
 		err = a.app.storage.UpdateScore(*score)
 	}
 
@@ -226,7 +227,7 @@ func (a appClient) GetScores(orgID string, appID string, limit *int, offset *int
 }
 
 // CreateScore Creates a score object by iterating over all previous survey responses
-func (a appClient) CreateScore(orgID string, appID string, userID string) (*model.Score, error) {
+func (a appClient) CreateScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
 	surveyResponses, err := a.app.storage.GetSurveyResponses(&orgID, &appID, &userID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
 	if err != nil {
 		return nil, err
@@ -237,7 +238,7 @@ func (a appClient) CreateScore(orgID string, appID string, userID string) (*mode
 		OrgID:              orgID,
 		AppID:              appID,
 		UserID:             userID,
-		ExternalProfileID:  "",
+		ExternalProfileID:  externalProfileID,
 		Score:              0,
 		ResponseCount:      0,
 		CurrentStreak:      0,

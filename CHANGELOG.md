@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add CORS support
 - Add validate admin claim flag to environment config
 ### Fixed
+- GetSurveys is returning incorrectly sorted data [#13](https://github.com/rokmetro/surveys-building-block-fork/issues/13)
 - Fix survey completed field [#69](https://github.com/rokwire/surveys-building-block/issues/69)
 - Fix GET surveys time filtering
 

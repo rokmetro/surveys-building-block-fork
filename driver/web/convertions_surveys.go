@@ -144,9 +144,9 @@ func getSurveysResData(items []model.Survey, surveyResponses []model.SurveyRespo
 			})
 		}
 	}
-	sort.Slice(list, func(i, j int) bool {
-		return list[i].DateCreated.After(list[j].DateCreated)
-	})
+	// sort.Slice(list, func(i, j int) bool {
+	// 	return list[i].DateCreated.After(list[j].DateCreated)
+	// })
 
 	return list
 }

@@ -42,6 +42,9 @@ func (a *Adapter) GetScores(orgID string, appID string, limit *int, offset *int)
 		"external_profile_id": bson.M{
 			"$ne": "",
 		},
+		"score": bson.M{
+			"$gt": 0,
+		},
 	}
 
 	opts := options.Find().SetSort(bson.M{"score": -1})

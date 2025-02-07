@@ -34,6 +34,8 @@ type Storage interface {
 
 	GetSurvey(id string, orgID string, appID string) (*model.Survey, error)
 	GetSurveys(orgID string, appID string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool) ([]model.Survey, error)
+	GetSurveysLight(orgID string, appID string, creatorID *string) ([]model.Survey, error)
+
 	CreateSurvey(survey model.Survey) (*model.Survey, error)
 	UpdateSurvey(survey model.Survey, admin bool) error
 	DeleteSurvey(id string, orgID string, appID string, creatorID string, admin bool) error
@@ -46,6 +48,8 @@ type Storage interface {
 	DeleteSurveyResponse(id string, orgID string, appID string, userID string) error
 	DeleteSurveyResponses(orgID string, appID string, userID string, surveyIDs []string, surveyTypes []string, startDate *time.Time, endDate *time.Time) error
 	DeleteSurveyResponsesWithIDs(orgID string, appID string, accountsIDs []string) error
+
+	GetSurveysAndSurveyResponses(orgID string, appID string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, public *bool, archived *bool, limit *int, offset *int, userID *string, filter *model.SurveyTimeFilter) ([]model.Survey, []model.SurveyResponse, error)
 
 	GetAlertContacts(orgID string, appID string) ([]model.AlertContact, error)
 	GetAlertContact(id string, orgID string, appID string) (*model.AlertContact, error)

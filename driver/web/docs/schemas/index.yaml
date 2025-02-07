@@ -21,6 +21,8 @@ AlertContact:
   $ref: "./surveys/AlertContact.yaml"
 Score:
   $ref: "./scores/Score.yaml"
+UserData:
+  $ref: "./surveys/UserData.yaml"  
 
 # ADMIN section
 

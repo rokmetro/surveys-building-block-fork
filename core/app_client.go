@@ -303,6 +303,11 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	return nil
 }
 
+// GetUserData returns surveys matching the provided query
+func (a appClient) GetUserData(orgID string, appID string, userID *string) (*model.UserData, error) {
+	return a.app.shared.getUserData(orgID, appID, userID)
+}
+
 // newAppClient creates new appClient
 func newAppClient(app *Application) appClient {
 	return appClient{app: app}

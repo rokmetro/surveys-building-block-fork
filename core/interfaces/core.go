@@ -50,6 +50,9 @@ type Client interface {
 	// Score
 	GetScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error)
 	GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
+
+	// User data
+	GetUserData(orgID string, appID string, userID *string) (*model.UserData, error)
 }
 
 // Admin exposes administrative APIs for the driver adapters

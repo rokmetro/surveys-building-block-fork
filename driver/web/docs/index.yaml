@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Rokwire Surveys Building Block API
   description: Surveys Building Block API Documentation
-  version: 1.10.0
+  version: 1.12.0
 servers:
   - url: 'https://api.rokwire.illinois.edu/surveys'
     description: Production server
@@ -49,6 +49,8 @@ paths:
     $ref: "./resources/client/score.yaml"
   /api/scores:
     $ref: "./resources/client/scores.yaml"
+  /api/user-data:
+    $ref: "./resources/client/user-data.yaml"  
 
   # Admin
   /api/admin/configs:

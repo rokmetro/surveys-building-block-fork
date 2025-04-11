@@ -68,6 +68,7 @@ type Survey struct {
 	Public                  *bool                  `json:"public" bson:"public"`
 	Archived                *bool                  `json:"archived" bson:"archived"`
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time" bson:"estimated_completion_time"`
+	SurveyResponses         []*SurveyResponse      `json:"survey_response" bson:"survey_response"`
 	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties"`
 }
 
@@ -252,4 +253,5 @@ type SurveysResponseData struct {
 	Archived                *bool                  `json:"archived"`
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time"`
 	Completed               *bool                  `json:"completed"`
+	SurveyResponses         []*SurveyResponse      `json:"survey_response"`
 }

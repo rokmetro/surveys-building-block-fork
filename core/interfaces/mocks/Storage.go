@@ -519,6 +519,32 @@ func (_m *Storage) GetSurveys(orgID string, appID string, creatorID *string, sur
 	return r0, r1
 }
 
+// GetSurveysWithResponses provides a mock function with given fields: orgID, appID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses
+func (_m *Storage) GetSurveysWithResponses(orgID string, appID string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool) ([]model.Survey, error) {
+	ret := _m.Called(orgID, appID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses)
+
+	var r0 []model.Survey
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, *string, []string, []string, string, *int, *int, *model.SurveyTimeFilter, *bool, *bool, *bool, *bool) ([]model.Survey, error)); ok {
+		return rf(orgID, appID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, *string, []string, []string, string, *int, *int, *model.SurveyTimeFilter, *bool, *bool, *bool, *bool) []model.Survey); ok {
+		r0 = rf(orgID, appID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.Survey)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, *string, []string, []string, string, *int, *int, *model.SurveyTimeFilter, *bool, *bool, *bool, *bool) error); ok {
+		r1 = rf(orgID, appID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // InsertConfig provides a mock function with given fields: config
 func (_m *Storage) InsertConfig(config model.Config) error {
 	ret := _m.Called(config)

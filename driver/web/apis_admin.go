@@ -248,6 +248,18 @@ func (h AdminAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *token
 		completed = &valueCompleted
 	}
 
+	includeResponsesStr := r.URL.Query().Get("include_responses")
+
+	var includeResponses *bool
+
+	if includeResponsesStr != "" {
+		valueIncludeResponses, err := strconv.ParseBool(includeResponsesStr)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
+		}
+		includeResponses = &valueIncludeResponses
+	}
+
 	var timeFilterItems model.SurveyTimeFilterRequest
 	startsBeforeRaw := r.URL.Query().Get("starts_before")
 	if startsBeforeRaw != "" {
@@ -267,13 +279,13 @@ func (h AdminAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *token
 	}
 	filter := surveyTimeFilter(&timeFilterItems)
 
-	surveys, surverysRsponse, err := h.app.Admin.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
-		&limit, &offset, filter, public, archived, completed)
+	surveys, err := h.app.Admin.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
+		&limit, &offset, filter, public, archived, completed, includeResponses)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}
 
-	resData := getSurveysResData(surveys, surverysRsponse, completed)
+	resData := getSurveysResData(surveys)
 	sort.Slice(resData, func(i, j int) bool {
 		return resData[i].DateCreated.After(resData[j].DateCreated)
 	})

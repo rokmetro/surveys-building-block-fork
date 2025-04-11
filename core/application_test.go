@@ -26,8 +26,8 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/rokwire/core-auth-library-go/v3/authutils"
-	"github.com/rokwire/logging-library-go/v2/logs"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/rokwireutils"
 )
 
 const (
@@ -52,14 +52,14 @@ func TestApplication_Start(t *testing.T) {
 
 func TestApplication_GetEnvConfigs(t *testing.T) {
 	data := model.EnvConfigData{AnalyticsToken: "example"}
-	config := model.Config{Type: model.ConfigTypeEnv, AppID: authutils.AllApps, OrgID: authutils.AllOrgs, Data: data, DateCreated: time.Now(), DateUpdated: nil}
+	config := model.Config{Type: model.ConfigTypeEnv, AppID: rokwireutils.AllApps, OrgID: rokwireutils.AllOrgs, Data: data, DateCreated: time.Now(), DateUpdated: nil}
 
 	storage := mocks.NewStorage(t)
-	storage.On("FindConfig", model.ConfigTypeEnv, authutils.AllApps, authutils.AllOrgs).Return(&config, nil)
+	storage.On("FindConfig", model.ConfigTypeEnv, rokwireutils.AllApps, rokwireutils.AllOrgs).Return(&config, nil)
 	app := buildTestApplication(storage)
 
 	storage2 := mocks.NewStorage(t)
-	storage2.On("FindConfig", model.ConfigTypeEnv, authutils.AllApps, authutils.AllOrgs).Return(nil, errors.New("no config found"))
+	storage2.On("FindConfig", model.ConfigTypeEnv, rokwireutils.AllApps, rokwireutils.AllOrgs).Return(nil, errors.New("no config found"))
 	app2 := buildTestApplication(storage2)
 
 	tests := []struct {

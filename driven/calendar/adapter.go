@@ -7,10 +7,10 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/rokwire/core-auth-library-go/v3/authservice"
-	"github.com/rokwire/logging-library-go/v2/errors"
-	"github.com/rokwire/logging-library-go/v2/logs"
-	"github.com/rokwire/logging-library-go/v2/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/services/core/auth"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 // Adapter implements the Calendar interface
 type Adapter struct {
 	baseURL               string
-	serviceAccountManager *authservice.ServiceAccountManager
+	serviceAccountManager *auth.ServiceAccountManager
 
 	logger *logs.Logger
 }
@@ -48,7 +48,7 @@ type User struct {
 }
 
 // NewCalendarAdapter creates a new Calendar BB adapter instance
-func NewCalendarAdapter(notificationHost string, serviceAccountManager *authservice.ServiceAccountManager, logger *logs.Logger) (*Adapter, error) {
+func NewCalendarAdapter(notificationHost string, serviceAccountManager *auth.ServiceAccountManager, logger *logs.Logger) (*Adapter, error) {
 	return &Adapter{baseURL: notificationHost, serviceAccountManager: serviceAccountManager, logger: logger}, nil
 }
 

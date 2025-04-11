@@ -73,5 +73,7 @@ properties:
     type: integer
     format: int64
     nullable: true       
+  survey_response:
+    $ref: "./SurveyReponse.yaml"
   unstructured_properties:
     type: object

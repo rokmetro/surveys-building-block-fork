@@ -38,7 +38,8 @@ func (a appAdmin) GetSurvey(id string, orgID string, appID string) (*model.Surve
 
 // GetSurvey returns surveys matching the provided query
 func (a appAdmin) GetSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool) ([]model.Survey, error) {
-	return a.app.shared.getSurveys(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed, includeResponses)
+	sortByDateCreated := true
+	return a.app.shared.getSurveys(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed, includeResponses, &sortByDateCreated)
 }
 
 // GetAllSurveyResponses returns survey responses matching the provided query

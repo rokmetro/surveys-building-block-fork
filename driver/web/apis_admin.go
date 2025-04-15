@@ -19,7 +19,6 @@ import (
 	"application/core/model"
 	"encoding/json"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -286,9 +285,6 @@ func (h AdminAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *token
 	}
 
 	resData := getSurveysResData(surveys)
-	sort.Slice(resData, func(i, j int) bool {
-		return resData[i].DateCreated.After(resData[j].DateCreated)
-	})
 
 	rdata, err := json.Marshal(resData)
 	if err != nil {

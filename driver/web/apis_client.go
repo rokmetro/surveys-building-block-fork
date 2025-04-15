@@ -161,7 +161,6 @@ func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *toke
 	}
 
 	respData := getSurveysResData(surveys)
-	// respData := sortIfpublicIsTrue(list, public)
 
 	// Set response to nil to indicate last page and no more results should be loaded
 	if len(surveys) == 0 {

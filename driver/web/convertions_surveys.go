@@ -102,8 +102,6 @@ func getSurveysResData(items []model.Survey) []model.SurveysResponseData {
 	var list []model.SurveysResponseData
 
 	for _, item := range items {
-		completed := len(item.SurveyResponses) > 0
-
 		list = append(list, model.SurveysResponseData{
 			ID:                      item.ID,
 			CreatorID:               item.CreatorID,
@@ -131,7 +129,7 @@ func getSurveysResData(items []model.Survey) []model.SurveysResponseData {
 			Public:                  item.Public,
 			Archived:                item.Archived,
 			EstimatedCompletionTime: item.EstimatedCompletionTime,
-			Completed:               &completed,
+			Completed:               item.Completed,
 			DateCreated:             item.DateCreated,
 			SurveyResponses:         item.SurveyResponses,
 		})

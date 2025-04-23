@@ -303,7 +303,9 @@ func (h AdminAPIsHandler) createSurvey(l *logs.Log, r *http.Request, claims *tok
 	items.CreatorID = claims.Subject
 	items.OrgID = claims.OrgID
 	items.AppID = claims.AppID
-	items.Type = "user"
+	if items.Type == "" {
+		items.Type = "user"
+	}
 
 	item := surveyRequestToSurvey(items)
 
@@ -337,7 +339,9 @@ func (h AdminAPIsHandler) updateSurvey(l *logs.Log, r *http.Request, claims *tok
 	items.CreatorID = claims.Subject
 	items.OrgID = claims.OrgID
 	items.AppID = claims.AppID
-	items.Type = "user"
+	if items.Type == "" {
+		items.Type = "user"
+	}
 
 	item := updateSurveyRequestToSurvey(items, id)
 

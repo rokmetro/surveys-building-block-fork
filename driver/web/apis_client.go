@@ -24,9 +24,9 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/rokwire/core-auth-library-go/v3/tokenauth"
-	"github.com/rokwire/logging-library-go/v2/logs"
-	"github.com/rokwire/logging-library-go/v2/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/services/core/auth/tokenauth"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
 // ClientAPIsHandler handles the client rest APIs implementation
@@ -123,6 +123,18 @@ func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *toke
 		completed = &valueCompleted
 	}
 
+	includeResponsesStr := r.URL.Query().Get("include_responses")
+
+	var includeResponses *bool
+
+	if includeResponsesStr != "" {
+		valueIncludeResponses, err := strconv.ParseBool(includeResponsesStr)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
+		}
+		includeResponses = &valueIncludeResponses
+	}
+
 	var timeFilterItems model.SurveyTimeFilterRequest
 	startsBeforeRaw := r.URL.Query().Get("starts_before")
 	if startsBeforeRaw != "" {
@@ -142,14 +154,13 @@ func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *toke
 	}
 	filter := surveyTimeFilter(&timeFilterItems)
 
-	surveys, surverysRsponse, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
-		&limit, &offset, filter, public, archived, completed)
+	surveys, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
+		&limit, &offset, filter, public, archived, completed, includeResponses)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}
 
-	list := getSurveysResData(surveys, surverysRsponse, completed)
-	respData := sortIfpublicIsTrue(list, public)
+	respData := getSurveysResData(surveys)
 
 	// Set response to nil to indicate last page and no more results should be loaded
 	if len(surveys) == 0 {
@@ -544,7 +555,7 @@ func (h ClientAPIsHandler) getCreatorSurveys(l *logs.Log, r *http.Request, claim
 	}
 	filter := surveyTimeFilter(&timeFilterItems)
 
-	resData, _, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset, filter, nil, nil, nil)
+	resData, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset, filter, nil, nil, nil, nil)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}

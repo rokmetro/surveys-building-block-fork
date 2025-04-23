@@ -24,15 +24,15 @@ import (
 	"application/driver/web"
 	"strings"
 
-	"github.com/rokwire/core-auth-library-go/v3/authutils"
-	"github.com/rokwire/core-auth-library-go/v3/keys"
+	"github.com/rokwire/rokwire-building-block-sdk-go/services/core/auth/keys"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/rokwireutils"
 
-	"github.com/rokwire/core-auth-library-go/v3/authservice"
-	"github.com/rokwire/core-auth-library-go/v3/envloader"
-	"github.com/rokwire/core-auth-library-go/v3/sigauth"
-	"github.com/rokwire/logging-library-go/v2/errors"
-	"github.com/rokwire/logging-library-go/v2/logs"
-	"github.com/rokwire/logging-library-go/v2/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/services/core/auth"
+	"github.com/rokwire/rokwire-building-block-sdk-go/services/core/auth/sigauth"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/envloader"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
 var (
@@ -73,25 +73,25 @@ func main() {
 	baseURL := envLoader.GetAndLogEnvVar(envPrefix+"BASE_URL", true, false)
 	coreBBBaseURL := envLoader.GetAndLogEnvVar(envPrefix+"CORE_BB_BASE_URL", true, false)
 
-	authService := authservice.AuthService{
+	authService := auth.Service{
 		ServiceID:   serviceID,
 		ServiceHost: baseURL,
 		FirstParty:  true,
 		AuthBaseURL: coreBBBaseURL,
 	}
 
-	serviceRegLoader, err := authservice.NewRemoteServiceRegLoader(&authService, []string{"notifications", "calendar"})
+	serviceRegLoader, err := auth.NewRemoteServiceRegLoader(&authService, []string{"notifications", "calendar"})
 	if err != nil {
 		logger.Fatalf("Error initializing remote service registration loader: %v", err)
 	}
 
-	serviceRegManager, err := authservice.NewServiceRegManager(&authService, serviceRegLoader, !strings.HasPrefix(baseURL, "http://localhost"))
+	serviceRegManager, err := auth.NewServiceRegManager(&authService, serviceRegLoader, !strings.HasPrefix(baseURL, "http://localhost"))
 	if err != nil {
 		logger.Fatalf("Error initializing service registration manager: %v", err)
 	}
 
 	// Service account
-	var serviceAccountManager *authservice.ServiceAccountManager
+	var serviceAccountManager *auth.ServiceAccountManager
 
 	serviceAccountID := envLoader.GetAndLogEnvVar(envPrefix+"SERVICE_ACCOUNT_ID", false, false)
 	privKeyRaw := envLoader.GetAndLogEnvVar(envPrefix+"PRIV_KEY", false, true)
@@ -107,12 +107,12 @@ func main() {
 			logger.Fatalf("Error initializing signature auth: %v", err)
 		}
 
-		serviceAccountLoader, err := authservice.NewRemoteServiceAccountLoader(&authService, serviceAccountID, signatureAuth)
+		serviceAccountLoader, err := auth.NewRemoteServiceAccountLoader(&authService, serviceAccountID, signatureAuth)
 		if err != nil {
 			logger.Fatalf("Error initializing remote service account loader: %v", err)
 		}
 
-		serviceAccountManager, err = authservice.NewServiceAccountManager(&authService, serviceAccountLoader)
+		serviceAccountManager, err = auth.NewServiceAccountManager(&authService, serviceAccountLoader)
 		if err != nil {
 			logger.Fatalf("Error initializing service account manager: %v", err)
 		}
@@ -157,7 +157,7 @@ func main() {
 	var corsAllowedHeaders []string
 	var corsAllowedOrigins []string
 	validateAdminClaim := false
-	config, err := storageAdapter.FindConfig(model.ConfigTypeEnv, authutils.AllApps, authutils.AllOrgs)
+	config, err := storageAdapter.FindConfig(model.ConfigTypeEnv, rokwireutils.AllApps, rokwireutils.AllOrgs)
 	if err != nil {
 		logger.Fatal(errors.WrapErrorAction(logutils.ActionFind, model.TypeConfig, nil, err).Error())
 	}

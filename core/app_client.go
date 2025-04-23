@@ -20,8 +20,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rokwire/logging-library-go/v2/errors"
-	"github.com/rokwire/logging-library-go/v2/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
 // appClient contains client implementations
@@ -37,8 +37,8 @@ func (a appClient) GetSurvey(id string, orgID string, appID string) (*model.Surv
 
 // GetSurvey returns surveys matching the provided query
 func (a appClient) GetSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string,
-	limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool) ([]model.Survey, []model.SurveyResponse, error) {
-	return a.app.shared.getSurveys(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed)
+	limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool) ([]model.Survey, error) {
+	return a.app.shared.getSurveys(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed, includeResponses, nil)
 }
 
 // CreateSurvey creates a new survey

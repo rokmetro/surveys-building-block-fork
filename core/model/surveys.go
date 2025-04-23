@@ -17,7 +17,7 @@ package model
 import (
 	"time"
 
-	"github.com/rokwire/logging-library-go/v2/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
 const (
@@ -68,6 +68,8 @@ type Survey struct {
 	Public                  *bool                  `json:"public" bson:"public"`
 	Archived                *bool                  `json:"archived" bson:"archived"`
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time" bson:"estimated_completion_time"`
+	SurveyResponses         []*SurveyResponse      `json:"survey_response" bson:"survey_response"`
+	Completed               *bool                  `json:"completed" bson:"completed"`
 	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties"`
 }
 
@@ -252,4 +254,5 @@ type SurveysResponseData struct {
 	Archived                *bool                  `json:"archived"`
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time"`
 	Completed               *bool                  `json:"completed"`
+	SurveyResponses         []*SurveyResponse      `json:"survey_response"`
 }

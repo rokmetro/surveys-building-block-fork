@@ -18,10 +18,11 @@ import (
 	"application/core/model"
 	"time"
 
-	"github.com/rokwire/logging-library-go/v2/errors"
-	"github.com/rokwire/logging-library-go/v2/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -133,6 +134,228 @@ func (a *Adapter) GetSurveys(orgID string, appID string, creatorID *string, surv
 	}
 
 	return results, nil
+}
+
+// GetSurveysWithResponses gets surveys with optional responses
+func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool) ([]model.Survey, error) {
+	surveyFilter := bson.D{
+		{Key: "org_id", Value: orgID},
+		{Key: "app_id", Value: appID},
+	}
+
+	if creatorID != nil {
+		surveyFilter = append(surveyFilter, bson.E{Key: "creator_id", Value: *creatorID})
+	}
+	if len(surveyIDs) > 0 {
+		surveyFilter = append(surveyFilter, bson.E{Key: "_id", Value: bson.M{"$in": surveyIDs}})
+	}
+	if len(surveyTypes) > 0 {
+		surveyFilter = append(surveyFilter, bson.E{Key: "type", Value: bson.M{"$in": surveyTypes}})
+	}
+	if calendarEventID != "" {
+		surveyFilter = append(surveyFilter, bson.E{Key: "calendar_event_id", Value: calendarEventID})
+	}
+	if timeFilter.StartTimeAfter != nil {
+		surveyFilter = append(surveyFilter, primitive.E{Key: "$or", Value: bson.A{
+			bson.M{"start_date": nil},
+			bson.M{"start_date": primitive.M{"$gte": *timeFilter.StartTimeAfter}},
+		}})
+	}
+	if timeFilter.StartTimeBefore != nil {
+		surveyFilter = append(surveyFilter, primitive.E{Key: "$or", Value: bson.A{
+			bson.M{"start_date": nil},
+			bson.M{"start_date": primitive.M{"$lte": *timeFilter.StartTimeBefore}},
+		}})
+	}
+	if timeFilter.EndTimeAfter != nil {
+		surveyFilter = append(surveyFilter, primitive.E{Key: "$or", Value: bson.A{
+			bson.M{"end_date": nil},
+			bson.M{"end_date": primitive.M{"$gte": *timeFilter.EndTimeAfter}},
+		}})
+	}
+	if timeFilter.EndTimeBefore != nil {
+		surveyFilter = append(surveyFilter, primitive.E{Key: "$or", Value: bson.A{
+			bson.M{"end_date": nil},
+			bson.M{"end_date": primitive.M{"$lte": *timeFilter.EndTimeBefore}},
+		}})
+	}
+	if public != nil {
+		if *public {
+			surveyFilter = append(surveyFilter, bson.E{Key: "public", Value: true})
+		} else {
+			surveyFilter = append(surveyFilter, bson.E{Key: "$or", Value: bson.A{
+				bson.M{"public": false},
+				bson.M{"public": bson.M{"$exists": false}},
+				bson.M{"public": nil},
+			}})
+		}
+	}
+	if archived != nil {
+		if *archived {
+			surveyFilter = append(surveyFilter, bson.E{Key: "archived", Value: true})
+		} else {
+			surveyFilter = append(surveyFilter, bson.E{Key: "$or", Value: bson.A{
+				bson.M{"archived": false},
+				bson.M{"archived": bson.M{"$exists": false}},
+				bson.M{"archived": nil},
+			}})
+		}
+	}
+
+	// Find all surveys matching surveyFilter
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: surveyFilter}},
+	}
+
+	userIDStr := ""
+	if userID != nil {
+		userIDStr = *userID
+	}
+
+	// Lookup survey_responses for each survey matching the survey_id and user_id.
+	lookupStage := bson.D{
+		{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "survey_responses"},
+			// `surveyIdVar` holds the value of the survey's _id
+			{Key: "let", Value: bson.D{{Key: "surveyIdVar", Value: "$_id"}}},
+			{Key: "pipeline", Value: bson.A{
+				bson.D{{Key: "$match", Value: bson.M{
+					"$expr": bson.M{
+						"$and": bson.A{
+							bson.M{"$eq": bson.A{"$survey._id", "$$surveyIdVar"}},
+							bson.M{"$eq": bson.A{"$org_id", orgID}},
+							bson.M{"$eq": bson.A{"$app_id", appID}},
+							bson.M{"$eq": bson.A{"$user_id", userIDStr}},
+						},
+					},
+				}}},
+				bson.D{{Key: "$project", Value: bson.D{
+					{Key: "_id", Value: 1},
+					{Key: "user_id", Value: 1},
+					{Key: "date_created", Value: 1},
+					{Key: "survey", Value: 1},
+				}}},
+			}},
+			{Key: "as", Value: "survey_responses"},
+		}},
+	}
+	pipeline = append(pipeline, lookupStage)
+
+	// Compute a boolean field "Completed" based on whether a response exists
+	addCompletedFieldStage := bson.D{
+		{Key: "$addFields", Value: bson.D{
+			{Key: "completed", Value: bson.D{
+				{Key: "$cond", Value: bson.A{
+					bson.D{{Key: "$gt", Value: bson.A{
+						bson.D{{Key: "$size", Value: "$survey_responses"}},
+						0,
+					}}},
+					true,
+					false,
+				}},
+			}},
+		}},
+	}
+	pipeline = append(pipeline, addCompletedFieldStage)
+
+	// Optionally remove the joined survey responses from the output.
+	if includeResponses != nil && (!*includeResponses) {
+		projectStage := bson.D{
+			{Key: "$project", Value: bson.D{
+				{Key: "survey_responses", Value: 0},
+			}},
+		}
+		pipeline = append(pipeline, projectStage)
+	}
+
+	// Apply completed filter if specified
+	if completed != nil {
+		matchCriteria := bson.D{
+			{Key: "completed", Value: *completed},
+		}
+		pipeline = append(pipeline, bson.D{{Key: "$match", Value: matchCriteria}})
+	}
+
+	// Sort survey results. Branch based on whether public sorting is desired.
+	if public != nil && *public {
+		// Facet the pipeline into three sections:
+		//   - incompleteSurveys: not completed and have a non-null endDate; sorted by endDate ASC.
+		//   - noEndDateSurveys: not completed and endDate is null; sorted by startDate DESC or dateCreated DESC.
+		//   - completedSurveys: completed surveys; sorted by estimatedCompletionTime DESC, then dateCreated DESC.
+		facetStage := bson.D{{Key: "$facet", Value: bson.D{
+			{Key: "incompleteSurveys", Value: bson.A{
+				bson.D{{Key: "$match", Value: bson.D{
+					{Key: "completed", Value: false},
+					{Key: "end_date", Value: bson.D{{Key: "$ne", Value: nil}}},
+				}}},
+				bson.D{{Key: "$sort", Value: bson.D{{Key: "end_date", Value: 1}}}},
+			}},
+			{Key: "noEndDateSurveys", Value: bson.A{
+				bson.D{{Key: "$match", Value: bson.D{
+					{Key: "completed", Value: false},
+					{Key: "end_date", Value: nil},
+				}}},
+				bson.D{{Key: "$sort", Value: bson.D{
+					{Key: "start_date", Value: -1},
+					{Key: "date_created", Value: -1},
+				}}},
+			}},
+			{Key: "completedSurveys", Value: bson.A{
+				bson.D{{Key: "$match", Value: bson.D{
+					{Key: "completed", Value: true},
+				}}},
+				bson.D{{Key: "$sort", Value: bson.D{
+					{Key: "estimated_completion_time", Value: -1},
+					{Key: "date_created", Value: -1},
+				}}},
+			}},
+		}}}
+		pipeline = append(pipeline, facetStage)
+
+		// Combine the three facets into one sorted array.
+		projectFacetStage := bson.D{{Key: "$project", Value: bson.D{
+			{Key: "sortedResults", Value: bson.D{
+				{Key: "$concatArrays", Value: bson.A{
+					"$incompleteSurveys",
+					"$noEndDateSurveys",
+					"$completedSurveys",
+				}},
+			}},
+		}}}
+		pipeline = append(pipeline, projectFacetStage)
+
+		// Unwind the concatenated array and set each element as the new root.
+		unwindStage := bson.D{{Key: "$unwind", Value: "$sortedResults"}}
+		replaceRootStage := bson.D{{Key: "$replaceRoot", Value: bson.D{{Key: "newRoot", Value: "$sortedResults"}}}}
+		pipeline = append(pipeline, unwindStage, replaceRootStage)
+	} else if sortByDateCreated == nil || !*sortByDateCreated {
+		if timeFilter.StartTimeBefore != nil {
+			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "start_date", Value: -1}}}})
+		} else if timeFilter.StartTimeAfter != nil {
+			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "start_date", Value: 1}}}})
+		}
+
+		if timeFilter.EndTimeBefore != nil {
+			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "end_date", Value: -1}}}})
+		} else if timeFilter.EndTimeAfter != nil {
+			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "end_date", Value: 1}}}})
+		}
+	} else {
+		pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "start_date", Value: -1}}}})
+	}
+
+	// Add pagination stages
+	if limit != nil && *limit > 0 {
+		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
+	}
+	if offset != nil && *offset > 0 {
+		pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
+	}
+
+	var surveys []model.Survey
+	err := a.db.surveys.Aggregate(a.context, pipeline, &surveys, nil)
+
+	return surveys, err
 }
 
 // CreateSurvey creates a poll

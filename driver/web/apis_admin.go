@@ -19,16 +19,15 @@ import (
 	"application/core/model"
 	"encoding/json"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/rokwire/core-auth-library-go/v3/authutils"
-	"github.com/rokwire/core-auth-library-go/v3/tokenauth"
-	"github.com/rokwire/logging-library-go/v2/logs"
-	"github.com/rokwire/logging-library-go/v2/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/services/core/auth/tokenauth"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/rokwireutils"
 )
 
 // AdminAPIsHandler handles the rest Admin APIs implementation
@@ -93,11 +92,11 @@ func (h AdminAPIsHandler) createConfig(l *logs.Log, r *http.Request, claims *tok
 
 	appID := claims.AppID
 	if requestData.AllApps != nil && *requestData.AllApps {
-		appID = authutils.AllApps
+		appID = rokwireutils.AllApps
 	}
 	orgID := claims.OrgID
 	if requestData.AllOrgs != nil && *requestData.AllOrgs {
-		orgID = authutils.AllOrgs
+		orgID = rokwireutils.AllOrgs
 	}
 	config := model.Config{Type: requestData.Type, AppID: appID, OrgID: orgID, System: requestData.System, Data: requestData.Data}
 
@@ -129,11 +128,11 @@ func (h AdminAPIsHandler) updateConfig(l *logs.Log, r *http.Request, claims *tok
 
 	appID := claims.AppID
 	if requestData.AllApps != nil && *requestData.AllApps {
-		appID = authutils.AllApps
+		appID = rokwireutils.AllApps
 	}
 	orgID := claims.OrgID
 	if requestData.AllOrgs != nil && *requestData.AllOrgs {
-		orgID = authutils.AllOrgs
+		orgID = rokwireutils.AllOrgs
 	}
 	config := model.Config{ID: id, Type: requestData.Type, AppID: appID, OrgID: orgID, System: requestData.System, Data: requestData.Data}
 
@@ -248,6 +247,18 @@ func (h AdminAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *token
 		completed = &valueCompleted
 	}
 
+	includeResponsesStr := r.URL.Query().Get("include_responses")
+
+	var includeResponses *bool
+
+	if includeResponsesStr != "" {
+		valueIncludeResponses, err := strconv.ParseBool(includeResponsesStr)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
+		}
+		includeResponses = &valueIncludeResponses
+	}
+
 	var timeFilterItems model.SurveyTimeFilterRequest
 	startsBeforeRaw := r.URL.Query().Get("starts_before")
 	if startsBeforeRaw != "" {
@@ -267,16 +278,13 @@ func (h AdminAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *token
 	}
 	filter := surveyTimeFilter(&timeFilterItems)
 
-	surveys, surverysRsponse, err := h.app.Admin.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
-		&limit, &offset, filter, public, archived, completed)
+	surveys, err := h.app.Admin.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
+		&limit, &offset, filter, public, archived, completed, includeResponses)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}
 
-	resData := getSurveysResData(surveys, surverysRsponse, completed)
-	sort.Slice(resData, func(i, j int) bool {
-		return resData[i].DateCreated.After(resData[j].DateCreated)
-	})
+	resData := getSurveysResData(surveys)
 
 	rdata, err := json.Marshal(resData)
 	if err != nil {
@@ -295,7 +303,9 @@ func (h AdminAPIsHandler) createSurvey(l *logs.Log, r *http.Request, claims *tok
 	items.CreatorID = claims.Subject
 	items.OrgID = claims.OrgID
 	items.AppID = claims.AppID
-	items.Type = "user"
+	if items.Type == "" {
+		items.Type = "user"
+	}
 
 	item := surveyRequestToSurvey(items)
 
@@ -329,7 +339,9 @@ func (h AdminAPIsHandler) updateSurvey(l *logs.Log, r *http.Request, claims *tok
 	items.CreatorID = claims.Subject
 	items.OrgID = claims.OrgID
 	items.AppID = claims.AppID
-	items.Type = "user"
+	if items.Type == "" {
+		items.Type = "user"
+	}
 
 	item := updateSurveyRequestToSurvey(items, id)
 

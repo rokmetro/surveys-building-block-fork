@@ -102,6 +102,14 @@ get:
       explode: false
       schema:
         type: string   
+    - name: include_responses
+      in: query
+      description: Whether to include survey responses or not
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string
   responses:
     200:
       description: Success

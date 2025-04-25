@@ -345,11 +345,11 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 	}
 
 	// Add pagination stages
-	if limit != nil && *limit > 0 {
-		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
-	}
 	if offset != nil && *offset > 0 {
 		pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
+	}
+	if limit != nil && *limit > 0 {
+		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
 	}
 
 	var surveys []model.Survey

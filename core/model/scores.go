@@ -39,7 +39,7 @@ type Score struct {
 	UserID                 string    `json:"user_id" bson:"user_id"`
 	SurveyType             string    `json:"survey_type" bson:"survey_type"`
 	ExternalProfileID      string    `json:"external_profile_id" bson:"external_profile_id"`
-	Score                  uint32    `json:"score" bson:"score"`
+	Score                  float32   `json:"score" bson:"score"`
 	ResponseCount          uint32    `json:"response_count" bson:"response_count"`
 	PrevSurveyResponseDate time.Time `json:"prev_survey_response_date" bson:"prev_survey_response_date"`
 	CurrentStreak          uint32    `json:"current_streak" bson:"current_streak"`

@@ -268,7 +268,7 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	if exists {
 		pointsPerQuestionFloat, isFloat := pointsPerQuestionRaw.(float32)
 		if isFloat {
-			correctAnswers := uint32(float32(survey.SurveyStats.Scores[""]) / pointsPerQuestionFloat)
+			correctAnswers := uint32(pointsForResponse / pointsPerQuestionFloat)
 			score.CorrectAnswerCount += correctAnswers
 		}
 	} else {

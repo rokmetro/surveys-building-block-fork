@@ -259,8 +259,22 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	survey := surveyResponse.Survey
 	score.ResponseCount++
 	score.AnswerCount += uint32(survey.SurveyStats.Total)
-	correctAnswers := uint32(survey.SurveyStats.Scores[""])
-	score.CorrectAnswerCount += correctAnswers
+
+	pointsForResponse := float32(survey.SurveyStats.Scores[""])
+
+	// If points_per_question is specified, we use it to calculate the number of correct answers
+	// Otherwise we will assume the points per question is 1
+	pointsPerQuestionRaw, exists := survey.UnstructuredProperties["points_per_question"]
+	if exists {
+		pointsPerQuestionFloat, isFloat := pointsPerQuestionRaw.(float32)
+		if isFloat {
+			correctAnswers := uint32(float32(survey.SurveyStats.Scores[""]) / pointsPerQuestionFloat)
+			score.CorrectAnswerCount += correctAnswers
+		}
+	} else {
+		correctAnswers := uint32(survey.SurveyStats.Scores[""])
+		score.CorrectAnswerCount += correctAnswers
+	}
 
 	externalProfileIDRaw, exists := survey.UnstructuredProperties["external_profile_id"]
 	if exists {
@@ -295,9 +309,9 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	score.PrevSurveyResponseDate = responseTime
 
 	if score.CurrentStreak >= model.ScoreStreakMinDays {
-		score.Score += uint32(float32(correctAnswers) * model.ScoreStreakMultiplier)
+		score.Score += pointsForResponse * model.ScoreStreakMultiplier
 	} else {
-		score.Score += uint32(float32(correctAnswers))
+		score.Score += pointsForResponse
 	}
 
 	return nil

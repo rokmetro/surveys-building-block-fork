@@ -260,7 +260,14 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	score.ResponseCount++
 	score.AnswerCount += uint32(survey.SurveyStats.Total)
 	pointsForResponse := float32(survey.SurveyStats.Scores[""])
-	score.CorrectAnswerCount += uint32(survey.SurveyStats.CorrectAnswerCount)
+
+	if (survey.SurveyStats.CorrectAnswerCount == 0 && pointsForResponse >= 0) {
+		// Handle clients that don't send correct answer count by assuming
+		// pointsForResponse == correct answer count
+		score.CorrectAnswerCount += uint32(pointsForResponse)
+	} else {
+		score.CorrectAnswerCount += uint32(survey.SurveyStats.CorrectAnswerCount)
+	}
 
 	externalProfileIDRaw, exists := survey.UnstructuredProperties["external_profile_id"]
 	if exists {

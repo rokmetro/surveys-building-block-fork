@@ -259,7 +259,7 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	survey := surveyResponse.Survey
 	score.ResponseCount++
 	score.AnswerCount += uint32(survey.SurveyStats.Total)
-	pointsForResponse := float32(survey.SurveyStats.Scores[""])
+	pointsForResponse := float64(survey.SurveyStats.Scores[""])
 
 	if (survey.SurveyStats.CorrectAnswerCount == 0 && pointsForResponse >= 0) {
 		// Handle clients that don't send correct answer count by assuming

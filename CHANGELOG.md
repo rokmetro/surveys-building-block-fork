@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix survey completed field [#69](https://github.com/rokwire/surveys-building-block/issues/69)
 - Fix GET surveys time filtering
 
+## [1.13.0] - 2025-05-07
+### Changed
+- Support Google Trust Services as CA [#90](https://github.com/rokwire/surveys-building-block/issues/90)
+
 ## [1.12.0] - 2025-01-30
 ### Changed
 - Fix consolidate the information, and make it accessible with a single API call [#86](https://github.com/rokwire/surveys-building-block/issues/86)

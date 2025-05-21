@@ -792,6 +792,10 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error
+  /api/v2/score:
+    $ref: '#/paths/~1api~1score'
+  /api/v2/scores:
+    $ref: '#/paths/~1api~1scores'
   /api/admin/configs:
     get:
       tags:
@@ -1865,6 +1869,8 @@ components:
         complete:
           type: integer
         scored:
+          type: integer
+        correct_answer_count:
           type: integer
         scores:
           type: object

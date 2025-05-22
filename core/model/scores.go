@@ -26,7 +26,7 @@ const (
 	// SurveyTypeFashionQuiz describes type of survey for fashion quizzes
 	SurveyTypeFashionQuiz string = "fashion_quiz"
 	// ScoreStreakMultiplier multiplies score if streak is true
-	ScoreStreakMultiplier float32 = 2.0
+	ScoreStreakMultiplier float64 = 2.0
 	// ScoreStreakMinDays specifies minimum number of days for a streak
 	ScoreStreakMinDays uint32 = 2
 )
@@ -39,11 +39,11 @@ type Score struct {
 	UserID                 string    `json:"user_id" bson:"user_id"`
 	SurveyType             string    `json:"survey_type" bson:"survey_type"`
 	ExternalProfileID      string    `json:"external_profile_id" bson:"external_profile_id"`
-	Score                  uint32    `json:"score" bson:"score"`
+	Score                  float64   `json:"score" bson:"score"`
 	ResponseCount          uint32    `json:"response_count" bson:"response_count"`
 	PrevSurveyResponseDate time.Time `json:"prev_survey_response_date" bson:"prev_survey_response_date"`
 	CurrentStreak          uint32    `json:"current_streak" bson:"current_streak"`
-	StreakMultiplier       float32   `json:"streak_multiplier" bson:"streak_multiplier"`
+	StreakMultiplier       float64   `json:"streak_multiplier" bson:"streak_multiplier"`
 	AnswerCount            uint32    `json:"answer_count" bson:"answer_count"`
 	CorrectAnswerCount     uint32    `json:"correct_answer_count" bson:"correct_answer_count"`
 }

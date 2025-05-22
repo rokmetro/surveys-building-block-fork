@@ -18,6 +18,7 @@ import (
 	"application/core"
 	"application/core/model"
 	"encoding/json"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -568,23 +569,23 @@ func (h ClientAPIsHandler) getCreatorSurveys(l *logs.Log, r *http.Request, claim
 	return l.HTTPResponseSuccessJSON(data)
 }
 
-func (h ClientAPIsHandler) getScore(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
-	externalProfileID := r.URL.Query().Get("external_profile_id")
-
-	score, err := h.app.Client.GetScore(claims.OrgID, claims.AppID, claims.Subject, externalProfileID)
-	if err != nil {
-		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
-	}
-
-	rdata, err := json.Marshal(score)
-	if err != nil {
-		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
-	}
-
-	return l.HTTPResponseSuccessJSON(rdata)
+func (h ClientAPIsHandler) getScoreV2(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	return h.getScore(l, r, claims, false)
 }
 
-func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+func (h ClientAPIsHandler) getScoresV2(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	return h.getScores(l, r, claims, false)
+}
+
+func (h ClientAPIsHandler) getScoreV1(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	return h.getScore(l, r, claims, true)
+}
+
+func (h ClientAPIsHandler) getScoresV1(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	return h.getScores(l, r, claims, true)
+}
+
+func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *tokenauth.Claims, roundScores bool) logs.HTTPResponse {
 	limitRaw := r.URL.Query().Get("limit")
 	limit := 20
 	if len(limitRaw) > 0 {
@@ -606,11 +607,38 @@ func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *token
 	}
 
 	scores, err := h.app.Client.GetScores(claims.OrgID, claims.AppID, &limit, &offset)
+
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
 	}
 
+	if (roundScores) {
+		for i := 0; i < len(scores); i++ {
+			scores[i].Score = math.Round(scores[i].Score)
+		}
+	}
+
 	rdata, err := json.Marshal(scores)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
+	}
+
+	return l.HTTPResponseSuccessJSON(rdata)
+}
+
+func (h ClientAPIsHandler) getScore(l *logs.Log, r *http.Request, claims *tokenauth.Claims, roundScore bool) logs.HTTPResponse {
+	externalProfileID := r.URL.Query().Get("external_profile_id")
+
+	score, err := h.app.Client.GetScore(claims.OrgID, claims.AppID, claims.Subject, externalProfileID)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
+	}
+
+	if (roundScore) {
+		score.Score = math.Round(score.Score)
+	}
+
+	rdata, err := json.Marshal(score)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
 	}

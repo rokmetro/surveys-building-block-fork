@@ -6,6 +6,8 @@ properties:
     type: integer
   scored:
     type: integer
+  correct_answer_count:
+    type: integer
   scores:
     type: object
     additionalProperties:

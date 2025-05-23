@@ -88,10 +88,10 @@ type SurveyResponseAnonymous struct {
 
 // SurveyStats are stats of a Survey
 type SurveyStats struct {
-	Total              int `json:"total" bson:"total"`
-	Complete           int `json:"complete" bson:"complete"`
-	Scored             int `json:"scored" bson:"scored"`
-	CorrectAnswerCount int `json:"correct_answer_count" bson:"correct_answer_count"`
+	Total              int                    `json:"total" bson:"total"`
+	Complete           int                    `json:"complete" bson:"complete"`
+	Scored             int                    `json:"scored" bson:"scored"`
+	CorrectAnswerCount int                    `json:"correct_answer_count" bson:"correct_answer_count"`
 	Scores             map[string]float64     `json:"scores" bson:"scores"`
 	MaximumScores      map[string]float64     `json:"maximum_scores" bson:"maximum_scores"`
 	ResponseData       map[string]interface{} `json:"response_data" bson:"response_data"`

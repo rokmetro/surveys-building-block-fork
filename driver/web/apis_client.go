@@ -612,7 +612,7 @@ func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *token
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
 	}
 
-	if (roundScores) {
+	if roundScores {
 		for i := 0; i < len(scores); i++ {
 			scores[i].Score = math.Round(scores[i].Score)
 		}
@@ -634,7 +634,7 @@ func (h ClientAPIsHandler) getScore(l *logs.Log, r *http.Request, claims *tokena
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
 	}
 
-	if (roundScore) {
+	if roundScore {
 		score.Score = math.Round(score.Score)
 	}
 

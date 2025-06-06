@@ -258,17 +258,3 @@ type SurveysResponseData struct {
 	SurveyResponses         []*SurveyResponse      `json:"survey_response"`
 	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties"`
 }
-
-// SurveyTimeFilterRequest wraps the time filter for surveys
-type SurveyTimeFilterRequest struct {
-	StartTimeAfter  *string `json:"start_time_after"`
-	StartTimeBefore *string `json:"start_time_before"`
-	EndTimeAfter    *string `json:"end_time_after"`
-	EndTimeBefore   *string `json:"end_time_before"`
-}
-
-// UserData represents user data
-type UserData struct {
-	SurveyUserData         *[]Survey         `json:"survey"`
-	SurveyResponseUserData *[]SurveyResponse `json:"survey_responses"`
-}

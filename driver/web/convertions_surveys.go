@@ -132,6 +132,7 @@ func getSurveysResData(items []model.Survey) []model.SurveysResponseData {
 			Completed:               item.Completed,
 			DateCreated:             item.DateCreated,
 			SurveyResponses:         item.SurveyResponses,
+			UnstructuredProperties:  item.UnstructuredProperties,
 		})
 	}
 	// sort.Slice(list, func(i, j int) bool {

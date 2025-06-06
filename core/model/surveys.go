@@ -256,4 +256,5 @@ type SurveysResponseData struct {
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time"`
 	Completed               *bool                  `json:"completed"`
 	SurveyResponses         []*SurveyResponse      `json:"survey_response"`
+	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties"`
 }

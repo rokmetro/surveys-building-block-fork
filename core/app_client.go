@@ -226,6 +226,16 @@ func (a appClient) GetScores(orgID string, appID string, limit *int, offset *int
 	return a.app.storage.GetScores(orgID, appID, limit, offset)
 }
 
+// GetScoresWithPivot retrieves scores closest to the user's score
+func (a appClient) GetScoresWithPivot(orgID string, appID string, userID string, aboveLimit *int, equalLimit *int, belowLimit *int) ([]model.Score, error) {
+	scores, err := a.app.storage.GetScoresWithPivot(orgID, appID, userID, aboveLimit, equalLimit, belowLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	return scores, nil
+}
+
 // CreateScore Creates a score object by iterating over all previous survey responses
 func (a appClient) CreateScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
 	surveyResponses, err := a.app.storage.GetSurveyResponses(&orgID, &appID, &userID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)

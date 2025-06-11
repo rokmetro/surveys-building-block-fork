@@ -796,6 +796,8 @@ paths:
     $ref: '#/paths/~1api~1score'
   /api/v2/scores:
     $ref: '#/paths/~1api~1scores'
+  /api/scores/pivot:
+    $ref: '#/paths/~1api~1scores'
   /api/admin/configs:
     get:
       tags:
@@ -2011,6 +2013,9 @@ components:
           type: number
           readOnly: true
         correct_answer_count:
+          type: number
+          readOnly: true
+        rank:
           type: number
           readOnly: true
     _admin_req_update-configs:

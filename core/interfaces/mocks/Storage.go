@@ -47,6 +47,36 @@ func (_m *Storage) CreateAlertContact(alertContact model.AlertContact) (*model.A
 	return r0, r1
 }
 
+// CreateLeaderboard provides a mock function with given fields: lb
+func (_m *Storage) CreateLeaderboard(lb model.Leaderboard) (*model.Leaderboard, error) {
+	ret := _m.Called(lb)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateLeaderboard")
+	}
+
+	var r0 *model.Leaderboard
+	var r1 error
+	if rf, ok := ret.Get(0).(func(model.Leaderboard) (*model.Leaderboard, error)); ok {
+		return rf(lb)
+	}
+	if rf, ok := ret.Get(0).(func(model.Leaderboard) *model.Leaderboard); ok {
+		r0 = rf(lb)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Leaderboard)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(model.Leaderboard) error); ok {
+		r1 = rf(lb)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateScore provides a mock function with given fields: score
 func (_m *Storage) CreateScore(score model.Score) error {
 	ret := _m.Called(score)
@@ -149,6 +179,24 @@ func (_m *Storage) DeleteConfig(id string) error {
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteConfig")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteLeaderboard provides a mock function with given fields: id
+func (_m *Storage) DeleteLeaderboard(id string) error {
+	ret := _m.Called(id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteLeaderboard")
 	}
 
 	var r0 error
@@ -431,6 +479,36 @@ func (_m *Storage) GetAlertContactsByKey(key string, orgID string, appID string)
 	return r0, r1
 }
 
+// GetLeaderboardsForUser provides a mock function with given fields: userID
+func (_m *Storage) GetLeaderboardsForUser(userID string) ([]model.Leaderboard, error) {
+	ret := _m.Called(userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLeaderboardsForUser")
+	}
+
+	var r0 []model.Leaderboard
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]model.Leaderboard, error)); ok {
+		return rf(userID)
+	}
+	if rf, ok := ret.Get(0).(func(string) []model.Leaderboard); ok {
+		r0 = rf(userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.Leaderboard)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetScore provides a mock function with given fields: orgID, appID, userID
 func (_m *Storage) GetScore(orgID string, appID string, userID string) (*model.Score, error) {
 	ret := _m.Called(orgID, appID, userID)
@@ -461,9 +539,9 @@ func (_m *Storage) GetScore(orgID string, appID string, userID string) (*model.S
 	return r0, r1
 }
 
-// GetScores provides a mock function with given fields: orgID, appID, limit, offset
-func (_m *Storage) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
-	ret := _m.Called(orgID, appID, limit, offset)
+// GetScores provides a mock function with given fields: orgID, appID, leaderboardID, limit, offset
+func (_m *Storage) GetScores(orgID string, appID string, leaderboardID *string, limit *int, offset *int) ([]model.Score, error) {
+	ret := _m.Called(orgID, appID, leaderboardID, limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetScores")
@@ -471,19 +549,19 @@ func (_m *Storage) GetScores(orgID string, appID string, limit *int, offset *int
 
 	var r0 []model.Score
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, *int, *int) ([]model.Score, error)); ok {
-		return rf(orgID, appID, limit, offset)
+	if rf, ok := ret.Get(0).(func(string, string, *string, *int, *int) ([]model.Score, error)); ok {
+		return rf(orgID, appID, leaderboardID, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, *int, *int) []model.Score); ok {
-		r0 = rf(orgID, appID, limit, offset)
+	if rf, ok := ret.Get(0).(func(string, string, *string, *int, *int) []model.Score); ok {
+		r0 = rf(orgID, appID, leaderboardID, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Score)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, *int, *int) error); ok {
-		r1 = rf(orgID, appID, limit, offset)
+	if rf, ok := ret.Get(1).(func(string, string, *string, *int, *int) error); ok {
+		r1 = rf(orgID, appID, leaderboardID, limit, offset)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -711,6 +789,24 @@ func (_m *Storage) UpdateConfig(config model.Config) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.Config) error); ok {
 		r0 = rf(config)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateLeaderboard provides a mock function with given fields: lb
+func (_m *Storage) UpdateLeaderboard(lb model.Leaderboard) error {
+	ret := _m.Called(lb)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateLeaderboard")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.Leaderboard) error); ok {
+		r0 = rf(lb)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -14,10 +14,19 @@
 
 package model
 
+import (
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
+)
+
+const (
+	// TypeLeaderboard is a message type for leaderboard
+	TypeLeaderboard logutils.MessageDataType = "leaderboard"
+)
+
 // Leaderboard represents a custom leaderboard.
 type Leaderboard struct {
-	ID           string   `json:"id" bson:"_id"`                      // corresponds to “id”
-	Name         string   `json:"name" bson:"name"`                   // required “name”
+	ID           string   `json:"id" bson:"_id"`                      // corresponds to "id"
+	Name         string   `json:"name" bson:"name"`                   // required "name"
 	AdminUserIDs []string `json:"adminUserIds" bson:"admin_user_ids"` // array of admin user IDs
 	UserIDs      []string `json:"userIds" bson:"user_ids"`            // array of member user IDs
 }

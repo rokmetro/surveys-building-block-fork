@@ -222,8 +222,8 @@ func (a appClient) GetScore(orgID string, appID string, userID string, externalP
 }
 
 // GetScores returns scores in descending order and removes scores with empty external IDs
-func (a appClient) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
-	return a.app.storage.GetScores(orgID, appID, limit, offset)
+func (a appClient) GetScores(orgID string, appID string, leaderboardID *string, limit *int, offset *int) ([]model.Score, error) {
+	return a.app.storage.GetScores(orgID, appID, leaderboardID, limit, offset)
 }
 
 // CreateScore Creates a score object by iterating over all previous survey responses
@@ -308,6 +308,26 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	}
 
 	return nil
+}
+
+// GetLeaderboardsForUser gets all leaderboards for a user
+func (a appClient) GetLeaderboardsForUser(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
+	return a.app.storage.GetLeaderboardsForUser(userID)
+}
+
+// CreateLeaderboard creates a new leaderboard
+func (a appClient) CreateLeaderboard(lb model.Leaderboard) (*model.Leaderboard, error) {
+	return a.app.storage.CreateLeaderboard(lb)
+}
+
+// UpdateLeaderboard updates an existing leaderboard
+func (a appClient) UpdateLeaderboard(lb model.Leaderboard) error {
+	return a.app.storage.UpdateLeaderboard(lb)
+}
+
+// DeleteLeaderboard deletes a leaderboard by ID
+func (a appClient) DeleteLeaderboard(id string, orgID string, appID string) error {
+	return a.app.storage.DeleteLeaderboard(id)
 }
 
 // newAppClient creates new appClient

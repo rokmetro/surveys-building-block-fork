@@ -3,13 +3,13 @@ get:
     - Client
   summary: Retrieves scores
   description: |
-    Retrieves scores sorted descending
+    Retrieves scores sorted descending. If a leaderboard ID is provided, only returns scores for users in that leaderboard. If no leaderboard ID is provided, returns all scores.
   security:
     - bearerAuth: []
   parameters:
     - name: leaderboard_id
       in: query
-      description: ID of the custom leaderboard to filter by
+      description: Optional ID of the custom leaderboard to filter scores by. If provided, only returns scores for users who are members of this leaderboard.
       required: false
       style: simple
       explode: false

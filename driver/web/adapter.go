@@ -96,6 +96,12 @@ func (a Adapter) Start() {
 	mainRouter.HandleFunc("/v2/score", a.wrapFunc(a.clientAPIsHandler.getScoreV2, a.auth.client.User)).Methods("GET")
 	mainRouter.HandleFunc("/v2/scores", a.wrapFunc(a.clientAPIsHandler.getScoresV2, a.auth.client.User)).Methods("GET")
 
+	// Leaderboard endpoints
+	mainRouter.HandleFunc("/leaderboards", a.wrapFunc(a.clientAPIsHandler.getLeaderboardsForUser, a.auth.client.User)).Methods("GET")
+	mainRouter.HandleFunc("/leaderboards", a.wrapFunc(a.clientAPIsHandler.createLeaderboard, a.auth.client.User)).Methods("POST")
+	mainRouter.HandleFunc("/leaderboards/{id}", a.wrapFunc(a.clientAPIsHandler.updateLeaderboard, a.auth.client.User)).Methods("PUT")
+	mainRouter.HandleFunc("/leaderboards/{id}", a.wrapFunc(a.clientAPIsHandler.deleteLeaderboard, a.auth.client.User)).Methods("DELETE")
+
 	// Admin APIs
 	adminRouter := mainRouter.PathPrefix("/admin").Subrouter()
 	adminRouter.HandleFunc("/configs/{id}", a.wrapFunc(a.adminAPIsHandler.getConfig, a.auth.admin.Permissions)).Methods("GET")

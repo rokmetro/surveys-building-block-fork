@@ -49,7 +49,13 @@ type Client interface {
 
 	// Score
 	GetScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error)
-	GetScores(orgID string, appID string, LeaderboardId string, limit *int, offset *int) ([]model.Score, error)
+	GetScores(orgID string, appID string, leaderboardID *string, limit *int, offset *int) ([]model.Score, error)
+
+	// Leaderboards
+	GetLeaderboardsForUser(orgID string, appID string, userID string) ([]model.Leaderboard, error)
+	CreateLeaderboard(leaderboard model.Leaderboard) (*model.Leaderboard, error)
+	UpdateLeaderboard(leaderboard model.Leaderboard) error
+	DeleteLeaderboard(id string, orgID string, appID string) error
 }
 
 // Admin exposes administrative APIs for the driver adapters

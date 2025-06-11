@@ -606,7 +606,13 @@ func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *token
 		offset = intParsed
 	}
 
-	scores, err := h.app.Client.GetScores(claims.OrgID, claims.AppID, &limit, &offset)
+	leaderboardID := r.URL.Query().Get("leaderboard_id")
+	var leaderboardIDPtr *string
+	if leaderboardID != "" {
+		leaderboardIDPtr = &leaderboardID
+	}
+
+	scores, err := h.app.Client.GetScores(claims.OrgID, claims.AppID, leaderboardIDPtr, &limit, &offset)
 
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
@@ -644,6 +650,61 @@ func (h ClientAPIsHandler) getScore(l *logs.Log, r *http.Request, claims *tokena
 	}
 
 	return l.HTTPResponseSuccessJSON(rdata)
+}
+
+func (h ClientAPIsHandler) getLeaderboardsForUser(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	leaderboards, err := h.app.Client.GetLeaderboardsForUser(claims.OrgID, claims.AppID, claims.Subject)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionGet, "leaderboard", nil, err, http.StatusInternalServerError, true)
+	}
+	data, err := json.Marshal(leaderboards)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
+	}
+	return l.HTTPResponseSuccessJSON(data)
+}
+
+func (h ClientAPIsHandler) createLeaderboard(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	var lb model.Leaderboard
+	err := json.NewDecoder(r.Body).Decode(&lb)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionDecode, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, true)
+	}
+	createdLb, err := h.app.Client.CreateLeaderboard(lb)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionCreate, "leaderboard", nil, err, http.StatusInternalServerError, true)
+	}
+	data, err := json.Marshal(createdLb)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
+	}
+	return l.HTTPResponseSuccessJSON(data)
+}
+
+func (h ClientAPIsHandler) updateLeaderboard(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	var lb model.Leaderboard
+	err := json.NewDecoder(r.Body).Decode(&lb)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionDecode, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, true)
+	}
+	err = h.app.Client.UpdateLeaderboard(lb)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionUpdate, "leaderboard", nil, err, http.StatusInternalServerError, true)
+	}
+	return l.HTTPResponseSuccess()
+}
+
+func (h ClientAPIsHandler) deleteLeaderboard(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if len(id) <= 0 {
+		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
+	}
+	err := h.app.Client.DeleteLeaderboard(id, claims.OrgID, claims.AppID)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionDelete, "leaderboard", nil, err, http.StatusInternalServerError, true)
+	}
+	return l.HTTPResponseSuccess()
 }
 
 // NewClientAPIsHandler creates new client API handler instance

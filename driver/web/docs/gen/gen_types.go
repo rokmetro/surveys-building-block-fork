@@ -314,24 +314,6 @@ type GetApiCreatorSurveysParams struct {
 	EndTimeAfter *string `json:"end_time_after,omitempty"`
 }
 
-// GetApiScoreParams defines parameters for GetApiScore.
-type GetApiScoreParams struct {
-	// ExternalProfileId External Profile ID to update score
-	ExternalProfileId *string `json:"external_profile_id,omitempty"`
-}
-
-// GetApiScoresParams defines parameters for GetApiScores.
-type GetApiScoresParams struct {
-	// LeaderboardId ID of the custom leaderboard to filter by
-	LeaderboardId *string `json:"leaderboard_id,omitempty"`
-
-	// Limit The number of results to be loaded in one page
-	Limit *float32 `json:"limit,omitempty"`
-
-	// Offset The number of results previously loaded
-	Offset *float32 `json:"offset,omitempty"`
-}
-
 // DeleteApiSurveyResponsesParams defines parameters for DeleteApiSurveyResponses.
 type DeleteApiSurveyResponsesParams struct {
 	// SurveyIds A comma-separated list of survey IDs to deletes responses for
@@ -433,7 +415,7 @@ type GetApiScoreParams struct {
 
 // GetApiScoresParams defines parameters for GetApiScores.
 type GetApiScoresParams struct {
-	// LeaderboardId ID of the custom leaderboard to filter by
+	// LeaderboardId Optional ID of the custom leaderboard to filter scores by. If provided, only returns scores for users who are members of this leaderboard.
 	LeaderboardId *string `json:"leaderboard_id,omitempty"`
 
 	// Limit The number of results to be loaded in one page

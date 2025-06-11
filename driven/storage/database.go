@@ -42,6 +42,7 @@ type database struct {
 	surveyResponses *collectionWrapper
 	alertContacts   *collectionWrapper
 	scores          *collectionWrapper
+	leaderboards    *collectionWrapper
 
 	listeners []interfaces.StorageListener
 }
@@ -100,6 +101,12 @@ func (d *database) start() error {
 		return err
 	}
 
+	leaderboards := &collectionWrapper{database: d, coll: db.Collection("leaderboards")}
+	err = d.applyLeaderboardsChecks(leaderboards)
+	if err != nil {
+		return err
+	}
+
 	//assign the db, db client and the collections
 	d.db = db
 	d.dbClient = client
@@ -109,6 +116,7 @@ func (d *database) start() error {
 	d.surveyResponses = surveyResponses
 	d.alertContacts = alertContacts
 	d.scores = scores
+	d.leaderboards = leaderboards
 
 	go d.configs.Watch(nil, d.logger)
 
@@ -187,6 +195,23 @@ func (d *database) applyScoresChecks(scores *collectionWrapper) error {
 	}
 
 	d.logger.Info("scores passed")
+	return nil
+}
+
+func (d *database) applyLeaderboardsChecks(leaderboards *collectionWrapper) error {
+	d.logger.Info("apply leaderboards checks.....")
+
+	err := leaderboards.AddIndex(nil, bson.D{primitive.E{Key: "admin_user_ids", Value: 1}}, false, nil)
+	if err != nil {
+		return err
+	}
+
+	err = leaderboards.AddIndex(nil, bson.D{primitive.E{Key: "user_ids", Value: 1}}, false, nil)
+	if err != nil {
+		return err
+	}
+
+	d.logger.Info("leaderboards passed")
 	return nil
 }
 

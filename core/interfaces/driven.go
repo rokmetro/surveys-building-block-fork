@@ -56,9 +56,14 @@ type Storage interface {
 	DeleteAlertContact(id string, orgID string, appID string) error
 
 	GetScore(orgID string, appID string, userID string) (*model.Score, error)
-	GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
+	GetScores(orgID string, appID string, leaderboardID *string, limit *int, offset *int) ([]model.Score, error)
 	CreateScore(score model.Score) error
 	UpdateScore(score model.Score) error
+
+	GetLeaderboardsForUser(userID string) ([]model.Leaderboard, error)
+	CreateLeaderboard(lb model.Leaderboard) (*model.Leaderboard, error)
+	UpdateLeaderboard(lb model.Leaderboard) error
+	DeleteLeaderboard(id string) error
 }
 
 // StorageListener represents storage listener

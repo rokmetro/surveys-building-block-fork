@@ -1,0 +1,16 @@
+required:
+  - name
+type: object
+properties:
+  id:
+    type: string
+  name:
+    type: string
+  adminUserIds:
+    type: array
+    items:
+      type: string
+  userIds:
+    type: array
+    items:
+      type: string

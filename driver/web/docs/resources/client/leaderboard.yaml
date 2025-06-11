@@ -1,0 +1,46 @@
+get:
+  tags:
+    - Client
+  summary: Retrieves custom leaderboards the current user is in
+  description: |
+    Retrieves all custom leaderboards where the authenticated user is a member or admin.
+  security:
+    - bearerAuth: []
+  responses:
+    '200':
+      description: Success
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "../../schemas/scores/Leaderboard.yaml"
+    '401':
+      description: Unauthorized
+    '500':
+      description: Internal error
+
+post:
+  tags:
+    - Client
+  summary: Creates a new custom leaderboard
+  description: |
+    Creates a new custom leaderboard. Only the leaderboard name is required; the requesting user becomes an admin automatically.
+  security:
+    - bearerAuth: []
+  requestBody:
+    description: Custom leaderboard create request
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/scores/Leaderboard.yaml"
+    required: true
+  responses:
+    200:
+      description: Success
+    400:
+      description: Bad request
+    401:
+      description: Unauthorized
+    500:
+      description: Internal error

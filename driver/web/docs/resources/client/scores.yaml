@@ -7,6 +7,14 @@ get:
   security:
     - bearerAuth: []
   parameters:
+    - name: leaderboard_id
+      in: query
+      description: ID of the custom leaderboard to filter by
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string
     - name: limit
       in: query
       description: The number of results to be loaded in one page

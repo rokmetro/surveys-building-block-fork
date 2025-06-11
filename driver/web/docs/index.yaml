@@ -53,6 +53,10 @@ paths:
     $ref: "./resources/client/score.yaml"
   /api/v2/scores:
     $ref: "./resources/client/scores.yaml"
+  /api/leaderboard:
+    $ref: "./resources/client/leaderboard.yaml"
+  /api/leaderboard/{leaderboard_id}:
+    $ref: "./resources/client/leaderboardid.yaml"
 
   # Admin
   /api/admin/configs:

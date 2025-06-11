@@ -646,6 +646,51 @@ func (h ClientAPIsHandler) getScore(l *logs.Log, r *http.Request, claims *tokena
 	return l.HTTPResponseSuccessJSON(rdata)
 }
 
+func (h ClientAPIsHandler) getScoresWithPivot(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	aboveLimitRaw := r.URL.Query().Get("above_limit")
+	aboveLimit := 20
+	if len(aboveLimitRaw) > 0 {
+		intParsed, err := strconv.Atoi(aboveLimitRaw)
+		if err != nil {
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("above_limit"), nil, http.StatusBadRequest, false)
+		}
+		aboveLimit = intParsed
+	}
+
+	equalLimitRaw := r.URL.Query().Get("equal_limit")
+	equalLimit := 20
+	if len(equalLimitRaw) > 0 {
+		intParsed, err := strconv.Atoi(equalLimitRaw)
+		if err != nil {
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("equal_limit"), nil, http.StatusBadRequest, false)
+		}
+		equalLimit = intParsed
+	}
+
+	belowLimitRaw := r.URL.Query().Get("below_limit")
+	belowLimit := 20
+	if len(belowLimitRaw) > 0 {
+		intParsed, err := strconv.Atoi(belowLimitRaw)
+		if err != nil {
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("below_limit"), nil, http.StatusBadRequest, false)
+		}
+		belowLimit = intParsed
+	}
+
+	scores, err := h.app.Client.GetScoresWithPivot(claims.OrgID, claims.AppID, claims.Subject, &aboveLimit, &equalLimit, &belowLimit)
+
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
+	}
+
+	rdata, err := json.Marshal(scores)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
+	}
+
+	return l.HTTPResponseSuccessJSON(rdata)
+}
+
 // NewClientAPIsHandler creates new client API handler instance
 func NewClientAPIsHandler(app *core.Application) ClientAPIsHandler {
 	return ClientAPIsHandler{app: app}

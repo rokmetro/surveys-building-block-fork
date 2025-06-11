@@ -491,6 +491,36 @@ func (_m *Storage) GetScores(orgID string, appID string, limit *int, offset *int
 	return r0, r1
 }
 
+// GetScoresWithPivot provides a mock function with given fields: orgID, appID, userID, aboveLimit, equalLimit, belowLimit
+func (_m *Storage) GetScoresWithPivot(orgID string, appID string, userID string, aboveLimit *int, equalLimit *int, belowLimit *int) ([]model.Score, error) {
+	ret := _m.Called(orgID, appID, userID, aboveLimit, equalLimit, belowLimit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetScoresWithPivot")
+	}
+
+	var r0 []model.Score
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, *int, *int, *int) ([]model.Score, error)); ok {
+		return rf(orgID, appID, userID, aboveLimit, equalLimit, belowLimit)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, *int, *int, *int) []model.Score); ok {
+		r0 = rf(orgID, appID, userID, aboveLimit, equalLimit, belowLimit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.Score)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, *int, *int, *int) error); ok {
+		r1 = rf(orgID, appID, userID, aboveLimit, equalLimit, belowLimit)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSurvey provides a mock function with given fields: id, orgID, appID
 func (_m *Storage) GetSurvey(id string, orgID string, appID string) (*model.Survey, error) {
 	ret := _m.Called(id, orgID, appID)

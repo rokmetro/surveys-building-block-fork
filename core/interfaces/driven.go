@@ -57,7 +57,7 @@ type Storage interface {
 
 	GetScore(orgID string, appID string, userID string) (*model.Score, error)
 	GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
-	GetScoresWithPivot(orgID string, appID string, userID string, aboveLimit *int, equalLimit *int, belowLimit *int) ([]model.Score, error)
+	GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int) ([]model.Score, error)
 	CreateScore(score model.Score) error
 	UpdateScore(score model.Score) error
 }

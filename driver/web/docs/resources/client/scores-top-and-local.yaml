@@ -1,0 +1,64 @@
+get:
+  tags:
+    - Client
+  summary: Retrieves top and local scores
+  description: |
+    Gets top scores and local scores that have the closest value to the user's score. (Includes the user's score)
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: limit
+      in: query
+      description: The number of top scores to be loaded.
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: number
+    - name: offset
+      in: query
+      description: The number of scores previously loaded.
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: number
+    - name: local_limit
+      in: query
+      description: The number of local scores to be in the loaded.
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: number
+    - name: above_pivot_limit
+      in: query
+      description: The number of scores to be loaded above pivot.
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: number
+    - name: below_pivot_limit
+      in: query
+      description: The number of scores to be loaded below pivot.
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: number
+  responses:
+    200:
+      description: Success
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "../../schemas/scores/Score.yaml"
+    400:
+      description: Bad request
+    401:
+      description: Unauthorized
+    500:
+      description: Internal error

@@ -646,38 +646,58 @@ func (h ClientAPIsHandler) getScore(l *logs.Log, r *http.Request, claims *tokena
 	return l.HTTPResponseSuccessJSON(rdata)
 }
 
-func (h ClientAPIsHandler) getScoresWithPivot(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
-	aboveLimitRaw := r.URL.Query().Get("above_limit")
-	aboveLimit := 20
-	if len(aboveLimitRaw) > 0 {
-		intParsed, err := strconv.Atoi(aboveLimitRaw)
+func (h ClientAPIsHandler) getTopAndLocalScores(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	limitRaw := r.URL.Query().Get("limit")
+	limit := 20
+	if len(limitRaw) > 0 {
+		intParsed, err := strconv.Atoi(limitRaw)
 		if err != nil {
-			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("above_limit"), nil, http.StatusBadRequest, false)
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("limit"), nil, http.StatusBadRequest, false)
 		}
-		aboveLimit = intParsed
+		limit = intParsed
 	}
 
-	equalLimitRaw := r.URL.Query().Get("equal_limit")
-	equalLimit := 20
-	if len(equalLimitRaw) > 0 {
-		intParsed, err := strconv.Atoi(equalLimitRaw)
+	offsetRaw := r.URL.Query().Get("offset")
+	offset := 0
+	if len(offsetRaw) > 0 {
+		intParsed, err := strconv.Atoi(offsetRaw)
+		if err != nil {
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("offset"), nil, http.StatusBadRequest, false)
+		}
+		offset = intParsed
+	}
+
+	localLimitRaw := r.URL.Query().Get("local_limit")
+	localLimit := 20
+	if len(localLimitRaw) > 0 {
+		intParsed, err := strconv.Atoi(localLimitRaw)
 		if err != nil {
 			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("equal_limit"), nil, http.StatusBadRequest, false)
 		}
-		equalLimit = intParsed
+		localLimit = intParsed
 	}
 
-	belowLimitRaw := r.URL.Query().Get("below_limit")
-	belowLimit := 20
-	if len(belowLimitRaw) > 0 {
-		intParsed, err := strconv.Atoi(belowLimitRaw)
+	abovePivotLimitRaw := r.URL.Query().Get("above_pivot_limit")
+	abovePivotLimit := 20
+	if len(abovePivotLimitRaw) > 0 {
+		intParsed, err := strconv.Atoi(abovePivotLimitRaw)
+		if err != nil {
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("above_limit"), nil, http.StatusBadRequest, false)
+		}
+		abovePivotLimit = intParsed
+	}
+
+	belowPivotLimitRaw := r.URL.Query().Get("below_pivot_limit")
+	belowPivotLimit := 20
+	if len(belowPivotLimitRaw) > 0 {
+		intParsed, err := strconv.Atoi(belowPivotLimitRaw)
 		if err != nil {
 			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("below_limit"), nil, http.StatusBadRequest, false)
 		}
-		belowLimit = intParsed
+		belowPivotLimit = intParsed
 	}
 
-	scores, err := h.app.Client.GetScoresWithPivot(claims.OrgID, claims.AppID, claims.Subject, &aboveLimit, &equalLimit, &belowLimit)
+	scores, err := h.app.Client.GetTopAndLocalScores(claims.OrgID, claims.AppID, claims.Subject, &limit, &offset, &localLimit, &abovePivotLimit, &belowPivotLimit)
 
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)

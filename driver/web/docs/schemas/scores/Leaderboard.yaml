@@ -4,6 +4,13 @@ type: object
 properties:
   id:
     type: string
+    readOnly: true
+  org_id:
+    type: string
+    readOnly: true
+  app_id:
+    type: string
+    readOnly: true
   name:
     type: string
   adminUserIds:

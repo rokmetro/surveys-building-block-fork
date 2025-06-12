@@ -56,7 +56,11 @@ func (a *Adapter) CreateLeaderboard(lb model.Leaderboard) (*model.Leaderboard, e
 
 // UpdateLeaderboard updates an existing leaderboard
 func (a *Adapter) UpdateLeaderboard(lb model.Leaderboard) error {
-	filter := bson.M{"_id": lb.ID}
+	filter := bson.M{
+		"_id":    lb.ID,
+		"org_id": lb.OrgID,
+		"app_id": lb.AppID,
+	}
 	update := bson.M{
 		"$set": bson.M{
 			"name":           lb.Name,

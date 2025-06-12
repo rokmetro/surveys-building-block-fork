@@ -670,6 +670,8 @@ func (h ClientAPIsHandler) createLeaderboard(l *logs.Log, r *http.Request, claim
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDecode, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, true)
 	}
+	lb.OrgID = claims.OrgID
+	lb.AppID = claims.AppID
 	createdLb, err := h.app.Client.CreateLeaderboard(lb)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionCreate, "leaderboard", nil, err, http.StatusInternalServerError, true)
@@ -687,6 +689,8 @@ func (h ClientAPIsHandler) updateLeaderboard(l *logs.Log, r *http.Request, claim
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDecode, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, true)
 	}
+	lb.OrgID = claims.OrgID
+	lb.AppID = claims.AppID
 	err = h.app.Client.UpdateLeaderboard(lb)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionUpdate, "leaderboard", nil, err, http.StatusInternalServerError, true)

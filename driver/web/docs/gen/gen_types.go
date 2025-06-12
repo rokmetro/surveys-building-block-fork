@@ -57,8 +57,10 @@ type EnvConfigData struct {
 // Leaderboard defines model for Leaderboard.
 type Leaderboard struct {
 	AdminUserIds *[]string `json:"adminUserIds,omitempty"`
+	AppId        *string   `json:"app_id,omitempty"`
 	Id           *string   `json:"id,omitempty"`
 	Name         string    `json:"name"`
+	OrgId        *string   `json:"org_id,omitempty"`
 	UserIds      *[]string `json:"userIds,omitempty"`
 }
 

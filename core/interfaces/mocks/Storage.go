@@ -491,36 +491,6 @@ func (_m *Storage) GetScores(orgID string, appID string, limit *int, offset *int
 	return r0, r1
 }
 
-// GetScoresWithPivot provides a mock function with given fields: orgID, appID, userID, aboveLimit, equalLimit, belowLimit
-func (_m *Storage) GetScoresWithPivot(orgID string, appID string, userID string, aboveLimit *int, equalLimit *int, belowLimit *int) ([]model.Score, error) {
-	ret := _m.Called(orgID, appID, userID, aboveLimit, equalLimit, belowLimit)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetScoresWithPivot")
-	}
-
-	var r0 []model.Score
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, *int, *int, *int) ([]model.Score, error)); ok {
-		return rf(orgID, appID, userID, aboveLimit, equalLimit, belowLimit)
-	}
-	if rf, ok := ret.Get(0).(func(string, string, string, *int, *int, *int) []model.Score); ok {
-		r0 = rf(orgID, appID, userID, aboveLimit, equalLimit, belowLimit)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.Score)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string, string, *int, *int, *int) error); ok {
-		r1 = rf(orgID, appID, userID, aboveLimit, equalLimit, belowLimit)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetSurvey provides a mock function with given fields: id, orgID, appID
 func (_m *Storage) GetSurvey(id string, orgID string, appID string) (*model.Survey, error) {
 	ret := _m.Called(id, orgID, appID)
@@ -664,6 +634,36 @@ func (_m *Storage) GetSurveysWithResponses(orgID string, appID string, userID *s
 
 	if rf, ok := ret.Get(1).(func(string, string, *string, *string, []string, []string, string, *int, *int, *model.SurveyTimeFilter, *bool, *bool, *bool, *bool, *bool) error); ok {
 		r1 = rf(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses, sortByDateCreated)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetTopAndLocalScores provides a mock function with given fields: orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit
+func (_m *Storage) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int) ([]model.Score, error) {
+	ret := _m.Called(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTopAndLocalScores")
+	}
+
+	var r0 []model.Score
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, *int, *int, *int, *int, *int) ([]model.Score, error)); ok {
+		return rf(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, *int, *int, *int, *int, *int) []model.Score); ok {
+		r0 = rf(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.Score)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, *int, *int, *int, *int, *int) error); ok {
+		r1 = rf(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit)
 	} else {
 		r1 = ret.Error(1)
 	}

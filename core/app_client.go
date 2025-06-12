@@ -227,13 +227,85 @@ func (a appClient) GetScores(orgID string, appID string, limit *int, offset *int
 }
 
 // GetScoresWithPivot retrieves scores closest to the user's score
-func (a appClient) GetScoresWithPivot(orgID string, appID string, userID string, aboveLimit *int, equalLimit *int, belowLimit *int) ([]model.Score, error) {
-	scores, err := a.app.storage.GetScoresWithPivot(orgID, appID, userID, aboveLimit, equalLimit, belowLimit)
+func (a appClient) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int) ([]model.Score, error) {
+	// We replace the local limit with the equal limit when getting scores from database
+	scores, err := a.app.storage.GetTopAndLocalScores(orgID, appID, userID, limit, offset, abovePivotLimit, localLimit, belowPivotLimit)
 	if err != nil {
 		return nil, err
 	}
 
+	userScore := scores[0]
+	scores = scores[1:]
+
+	// Insert user's score into section with surrounding local scores
+	if len(scores) > *limit {
+		localScores := a.insertUserScoreIntoLocalScores(scores[*limit:], userScore, *localLimit)
+		scores = scores[:*limit]
+		scores = append(scores, localScores...)
+	}
+
 	return scores, nil
+}
+
+func (a appClient) insertUserScoreIntoLocalScores(scores []model.Score, userScore model.Score, maxNumScores int) []model.Score {
+	insertionIndex := (len(scores) + 1) / 2
+
+	// We take the first and last occurrences of equal scores to the user's
+	firstEqual, lastEqual := -1, -1
+	for i, s := range scores {
+		if s.Score == userScore.Score {
+			firstEqual = i
+			break
+		}
+	}
+	for i := len(scores) - 1; i >= 0; i-- {
+		if scores[i].Score == userScore.Score {
+			lastEqual = i
+			break
+		}
+	}
+
+	if firstEqual == -1 {
+		// We insert the user's score in its obvious place if no other
+		// scores are equal
+		insertionIndex = len(scores)
+		for i, s := range scores {
+			if s.Score < userScore.Score {
+				insertionIndex = i
+				break
+			}
+		}
+	}
+
+	// if there were equal scores, clamp insertionIndex so it
+	// sits beside them
+	if firstEqual != -1 {
+		if insertionIndex < firstEqual {
+			insertionIndex = firstEqual
+		} else if insertionIndex > lastEqual+1 {
+			insertionIndex = lastEqual + 1
+		}
+	}
+
+	// actually insert userScore
+	buf := make([]model.Score, 0, len(scores)+1)
+	buf = append(buf, scores[:insertionIndex]...)
+	buf = append(buf, userScore)
+	buf = append(buf, scores[insertionIndex:]...)
+	scores = buf
+
+	// Take a centered window of length maxNumScores
+	half := int(maxNumScores / 2)
+	start := insertionIndex - half
+	if start < 0 {
+		start = 0
+	}
+	end := start + maxNumScores
+	if end > len(scores) {
+		end = len(scores)
+	}
+
+	return scores[start:end]
 }
 
 // CreateScore Creates a score object by iterating over all previous survey responses

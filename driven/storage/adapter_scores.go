@@ -80,8 +80,8 @@ func (a *Adapter) GetScores(orgID string, appID string, limit *int, offset *int)
 	return scores, err
 }
 
-// GetScoresWithPivot retrieves scores closest to the user's score
-func (a *Adapter) GetScoresWithPivot(orgID string, appID string, userID string, aboveLimit *int, equalLimit *int, belowLimit *int) ([]model.Score, error) {
+// GetTopAndLocalScores retrieves top and local scores closest to the user's score
+func (a *Adapter) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, abovePivotLimit *int, equalPivotLimit *int, belowPivotLimit *int) ([]model.Score, error) {
 	scoreFilter := bson.M{
 		"org_id": orgID,
 		"app_id": appID,
@@ -113,20 +113,42 @@ func (a *Adapter) GetScoresWithPivot(orgID string, appID string, userID string, 
 	// build the facet map only for non‐nil, positive limits
 	facets := bson.M{}
 	concatArrays := bson.A{}
+	filters := bson.M{
+		"topScores": 1,
+		"userScore": 1,
+	}
 
-	if aboveLimit != nil && *aboveLimit > 0 {
+	facets["userScore"] = bson.A{
+		bson.D{{Key: "$match", Value: bson.M{"user_id": userID}}},
+	}
+	concatArrays = append(concatArrays, "$userScore")
+
+	if limit != nil && *limit > 0 {
+		facets["topScores"] = bson.A{
+			bson.D{{Key: "$skip", Value: *offset}},
+			bson.D{{Key: "$limit", Value: *limit}},
+		}
+		concatArrays = append(concatArrays, "$topScores")
+	}
+
+	if abovePivotLimit != nil && *abovePivotLimit > 0 {
 		facets["aboveScores"] = bson.A{
 			bson.D{{Key: "$match", Value: bson.M{
 				"$expr": bson.M{"$gt": bson.A{"$score", "$pivotScore"}},
 			}}},
 			bson.D{{Key: "$sort", Value: bson.M{"score": 1}}},
-			bson.D{{Key: "$limit", Value: *aboveLimit}},
+			bson.D{{Key: "$limit", Value: *abovePivotLimit}},
 			bson.D{{Key: "$sort", Value: bson.M{"score": -1}}},
 		}
 		concatArrays = append(concatArrays, "$aboveScores")
+		filters["aboveScores"] = bson.M{"$filter": bson.M{
+			"input": "$aboveScores",
+			"as":    "s",
+			"cond":  bson.M{"$not": bson.M{"$in": bson.A{"$$s.user_id", "$topScores.user_id"}}},
+		}}
 	}
 
-	if equalLimit != nil && *equalLimit > 0 {
+	if equalPivotLimit != nil && *equalPivotLimit > 0 {
 		facets["equalScores"] = bson.A{
 			bson.D{{Key: "$match", Value: bson.M{
 				"$expr": bson.M{"$and": bson.A{
@@ -134,26 +156,36 @@ func (a *Adapter) GetScoresWithPivot(orgID string, appID string, userID string, 
 					bson.M{"$ne": bson.A{"$user_id", userID}},
 				}},
 			}}},
-			bson.D{{Key: "$limit", Value: *equalLimit}},
+			bson.D{{Key: "$limit", Value: *equalPivotLimit}},
 		}
 		concatArrays = append(concatArrays, "$equalScores")
+		filters["equalScores"] = bson.M{"$filter": bson.M{
+			"input": "$equalScores",
+			"as":    "s",
+			"cond":  bson.M{"$not": bson.M{"$in": bson.A{"$$s.user_id", "$topScores.user_id"}}},
+		}}
 	}
 
-	if belowLimit != nil && *belowLimit > 0 {
+	if belowPivotLimit != nil && *belowPivotLimit > 0 {
 		facets["belowScores"] = bson.A{
 			bson.D{{Key: "$match", Value: bson.M{
 				"$expr": bson.M{"$lt": bson.A{"$score", "$pivotScore"}},
 			}}},
 			bson.D{{Key: "$sort", Value: bson.M{"score": -1}}},
-			bson.D{{Key: "$limit", Value: *belowLimit}},
+			bson.D{{Key: "$limit", Value: *belowPivotLimit}},
 		}
 		concatArrays = append(concatArrays, "$belowScores")
+		filters["belowScores"] = bson.M{"$filter": bson.M{
+			"input": "$belowScores",
+			"as":    "s",
+			"cond":  bson.M{"$not": bson.M{"$in": bson.A{"$$s.user_id", "$topScores.user_id"}}},
+		}}
 	}
 
-	// only append a $facet if we have at least one bucket
-	if len(facets) > 0 {
-		pipeline = append(pipeline, bson.D{{Key: "$facet", Value: facets}})
-	}
+	pipeline = append(pipeline, bson.D{{Key: "$facet", Value: facets}})
+
+	// filter out anything in topScores from the other buckets
+	pipeline = append(pipeline, bson.D{{Key: "$project", Value: filters}})
 
 	// Combine the three facets into one sorted array.
 	projectFacetStage := bson.D{{Key: "$project", Value: bson.D{

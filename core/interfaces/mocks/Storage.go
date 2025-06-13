@@ -191,17 +191,17 @@ func (_m *Storage) DeleteConfig(id string) error {
 	return r0
 }
 
-// DeleteLeaderboard provides a mock function with given fields: id
-func (_m *Storage) DeleteLeaderboard(id string) error {
-	ret := _m.Called(id)
+// DeleteLeaderboard provides a mock function with given fields: id, orgID, appID, userID
+func (_m *Storage) DeleteLeaderboard(id string, orgID string, appID string, userID string) error {
+	ret := _m.Called(id, orgID, appID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteLeaderboard")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(string, string, string, string) error); ok {
+		r0 = rf(id, orgID, appID, userID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -479,9 +479,9 @@ func (_m *Storage) GetAlertContactsByKey(key string, orgID string, appID string)
 	return r0, r1
 }
 
-// GetLeaderboardsForUser provides a mock function with given fields: userID
-func (_m *Storage) GetLeaderboardsForUser(userID string) ([]model.Leaderboard, error) {
-	ret := _m.Called(userID)
+// GetLeaderboardsForUser provides a mock function with given fields: userID, orgID, appID
+func (_m *Storage) GetLeaderboardsForUser(userID string, orgID string, appID string) ([]model.Leaderboard, error) {
+	ret := _m.Called(userID, orgID, appID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetLeaderboardsForUser")
@@ -489,19 +489,19 @@ func (_m *Storage) GetLeaderboardsForUser(userID string) ([]model.Leaderboard, e
 
 	var r0 []model.Leaderboard
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) ([]model.Leaderboard, error)); ok {
-		return rf(userID)
+	if rf, ok := ret.Get(0).(func(string, string, string) ([]model.Leaderboard, error)); ok {
+		return rf(userID, orgID, appID)
 	}
-	if rf, ok := ret.Get(0).(func(string) []model.Leaderboard); ok {
-		r0 = rf(userID)
+	if rf, ok := ret.Get(0).(func(string, string, string) []model.Leaderboard); ok {
+		r0 = rf(userID, orgID, appID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Leaderboard)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(userID)
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(userID, orgID, appID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -796,17 +796,17 @@ func (_m *Storage) UpdateConfig(config model.Config) error {
 	return r0
 }
 
-// UpdateLeaderboard provides a mock function with given fields: lb
-func (_m *Storage) UpdateLeaderboard(lb model.Leaderboard) error {
-	ret := _m.Called(lb)
+// UpdateLeaderboard provides a mock function with given fields: lb, userID
+func (_m *Storage) UpdateLeaderboard(lb model.Leaderboard, userID string) error {
+	ret := _m.Called(lb, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateLeaderboard")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.Leaderboard) error); ok {
-		r0 = rf(lb)
+	if rf, ok := ret.Get(0).(func(model.Leaderboard, string) error); ok {
+		r0 = rf(lb, userID)
 	} else {
 		r0 = ret.Error(0)
 	}

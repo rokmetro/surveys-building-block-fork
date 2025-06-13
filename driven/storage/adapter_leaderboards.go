@@ -77,9 +77,13 @@ func (a *Adapter) UpdateLeaderboard(lb model.Leaderboard) error {
 	return err
 }
 
-// DeleteLeaderboard deletes a leaderboard by ID
-func (a *Adapter) DeleteLeaderboard(id string) error {
-	filter := bson.M{"_id": id}
+// DeleteLeaderboard deletes a leaderboard by ID, scoped to org_id and app_id
+func (a *Adapter) DeleteLeaderboard(id, orgID, appID string) error {
+	filter := bson.M{
+		"_id":    id,
+		"org_id": orgID,
+		"app_id": appID,
+	}
 	_, err := a.db.leaderboards.DeleteOne(context.Background(), filter, nil)
 	return err
 }

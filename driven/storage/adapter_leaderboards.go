@@ -23,11 +23,15 @@ import (
 )
 
 // GetLeaderboardsForUser gets all leaderboards for a user
-func (a *Adapter) GetLeaderboardsForUser(userID string) ([]model.Leaderboard, error) {
+func (a *Adapter) GetLeaderboardsForUser(userID, orgID, appID string) ([]model.Leaderboard, error) {
 	filter := bson.M{
-		"$or": []bson.M{
-			{"admin_user_ids": userID},
-			{"user_ids": userID},
+		"$and": []bson.M{
+			{"org_id": orgID},
+			{"app_id": appID},
+			{"$or": []bson.M{
+				{"admin_user_ids": userID},
+				{"user_ids": userID},
+			}},
 		},
 	}
 

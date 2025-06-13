@@ -32,9 +32,10 @@ type Leaderboard struct {
 }
 
 type LeaderboardEntry struct {
-	ID      string `json:"id" bson:"_id"`
-	OrgID   string `json:"org_id" bson:"org_id"`
-	AppID   string `json:"app_id" bson:"app_id"`
-	UserID  string `json:"user_id" bson:"user_id"`
-	isAdmin bool   `json:"is_admin" bson:"is_admin"`
+	ID            string `json:"id" bson:"_id"`
+	LeaderboardID string `json:"leaderboard_id" bson:"leaderboard_id"`
+	OrgID         string `json:"org_id" bson:"org_id"`
+	AppID         string `json:"app_id" bson:"app_id"`
+	UserID        string `json:"user_id" bson:"user_id"`
+	isAdmin       bool   `json:"is_admin" bson:"is_admin"`
 }

@@ -25,10 +25,16 @@ const (
 
 // Leaderboard represents a custom leaderboard.
 type Leaderboard struct {
-	ID           string   `json:"id" bson:"_id"`                      // corresponds to "id"
-	OrgID        string   `json:"org_id" bson:"org_id"`               // organization ID
-	AppID        string   `json:"app_id" bson:"app_id"`               // application ID
-	Name         string   `json:"name" bson:"name"`                   // required "name"
-	AdminUserIDs []string `json:"adminUserIds" bson:"admin_user_ids"` // array of admin user IDs
-	UserIDs      []string `json:"userIds" bson:"user_ids"`            // array of member user IDs
+	ID    string `json:"id" bson:"_id"`        // corresponds to "id"
+	OrgID string `json:"org_id" bson:"org_id"` // organization ID
+	AppID string `json:"app_id" bson:"app_id"` // application ID
+	Name  string `json:"name" bson:"name"`     // required "name"
+}
+
+type LeaderboardEntry struct {
+	ID      string `json:"id" bson:"_id"`
+	OrgID   string `json:"org_id" bson:"org_id"`
+	AppID   string `json:"app_id" bson:"app_id"`
+	UserID  string `json:"user_id" bson:"user_id"`
+	isAdmin bool   `json:"is_admin" bson:"is_admin"`
 }

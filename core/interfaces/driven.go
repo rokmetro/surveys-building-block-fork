@@ -60,10 +60,10 @@ type Storage interface {
 	CreateScore(score model.Score) error
 	UpdateScore(score model.Score) error
 
-	GetLeaderboardsForUser(userID string) ([]model.Leaderboard, error)
+	GetLeaderboardsForUser(userID string, orgID string, appID string) ([]model.Leaderboard, error)
 	CreateLeaderboard(lb model.Leaderboard) (*model.Leaderboard, error)
-	UpdateLeaderboard(lb model.Leaderboard) error
-	DeleteLeaderboard(id string) error
+	UpdateLeaderboard(lb model.Leaderboard, userID string) error
+	DeleteLeaderboard(id string, orgID string, appID string, userID string) error
 }
 
 // StorageListener represents storage listener

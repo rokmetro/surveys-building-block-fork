@@ -691,7 +691,7 @@ func (h ClientAPIsHandler) updateLeaderboard(l *logs.Log, r *http.Request, claim
 	}
 	lb.OrgID = claims.OrgID
 	lb.AppID = claims.AppID
-	err = h.app.Client.UpdateLeaderboard(lb)
+	err = h.app.Client.UpdateLeaderboard(lb, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionUpdate, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}
@@ -704,7 +704,7 @@ func (h ClientAPIsHandler) deleteLeaderboard(l *logs.Log, r *http.Request, claim
 	if len(id) <= 0 {
 		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
 	}
-	err := h.app.Client.DeleteLeaderboard(id, claims.OrgID, claims.AppID)
+	err := h.app.Client.DeleteLeaderboard(id, claims.OrgID, claims.AppID, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDelete, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}

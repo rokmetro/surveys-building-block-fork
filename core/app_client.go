@@ -312,7 +312,7 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 
 // GetLeaderboardsForUser gets all leaderboards for a user
 func (a appClient) GetLeaderboardsForUser(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
-	return a.app.storage.GetLeaderboardsForUser(userID)
+	return a.app.storage.GetLeaderboardsForUser(userID, orgID, appID)
 }
 
 // CreateLeaderboard creates a new leaderboard
@@ -321,13 +321,13 @@ func (a appClient) CreateLeaderboard(lb model.Leaderboard) (*model.Leaderboard, 
 }
 
 // UpdateLeaderboard updates an existing leaderboard
-func (a appClient) UpdateLeaderboard(lb model.Leaderboard) error {
-	return a.app.storage.UpdateLeaderboard(lb)
+func (a appClient) UpdateLeaderboard(lb model.Leaderboard, userID string) error {
+	return a.app.storage.UpdateLeaderboard(lb, userID)
 }
 
 // DeleteLeaderboard deletes a leaderboard by ID
-func (a appClient) DeleteLeaderboard(id string, orgID string, appID string) error {
-	return a.app.storage.DeleteLeaderboard(id)
+func (a appClient) DeleteLeaderboard(id string, orgID string, appID string, userID string) error {
+	return a.app.storage.DeleteLeaderboard(id, orgID, appID, userID)
 }
 
 // newAppClient creates new appClient

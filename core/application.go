@@ -66,6 +66,8 @@ func (a *Application) Start() {
 	storageListener := storageListener{app: a}
 	a.storage.RegisterStorageListener(&storageListener)
 	a.deleteDataLogic.start()
+	//TODO: create timer to send streak reminder notifications
+	// Streak reminder notification: search scores collection for users who have not played the fashion quiz yet today (and have streak > 0?). Should user timezone be considered?
 }
 
 // GetEnvConfigs retrieves the cached database env configs

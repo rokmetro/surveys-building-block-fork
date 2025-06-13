@@ -146,16 +146,28 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 	// If the user completed a fashion quiz, update the score
 	if err == nil && survey.Type == model.SurveyTypeFashionQuiz {
 		var score *model.Score
+		var oldScore model.Score
+
 		score, err = a.app.storage.GetScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
 
 		// Create a new score if not present
 		// Otherwise update score
 		if score == nil || err != nil {
-			_, err = a.CreateScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, "")
+			score, err = a.CreateScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, "")
+			oldScore = *score
 		} else {
+			// make copy of score before modifying for loaderboard notifications
+			oldScore = *score
+
 			a.UpdateScore(score, surveyResponse)
 			err = a.app.storage.UpdateScore(*score)
 		}
+
+		//TODO: First daily quiz play notification
+		// get all leaderboards for this user, notify each user in each leaderboard the user has played the fashion quiz (if have not notified for that leaderboard yet today)
+
+		//TODO: User's score eclipsed notification
+		// get all leaderboards for this user, notify each user in each leaderboard that has userScore.Score >= oldScore.Score and < score.Score (any other conditions?)
 	}
 
 	return surveyResponsePtr, err

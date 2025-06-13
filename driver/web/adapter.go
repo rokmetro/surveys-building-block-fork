@@ -101,6 +101,10 @@ func (a Adapter) Start() {
 	mainRouter.HandleFunc("/leaderboards", a.wrapFunc(a.clientAPIsHandler.createLeaderboard, a.auth.client.User)).Methods("POST")
 	mainRouter.HandleFunc("/leaderboards/{id}", a.wrapFunc(a.clientAPIsHandler.updateLeaderboard, a.auth.client.User)).Methods("PUT")
 	mainRouter.HandleFunc("/leaderboards/{id}", a.wrapFunc(a.clientAPIsHandler.deleteLeaderboard, a.auth.client.User)).Methods("DELETE")
+	//TODO: add join leaderboard API for non-admins to use (link to location in client that calls this API when sharing, may be completed by #28)
+	//TODO: add notifications
+	// User joined leaderboard admin notification: find leaderboard, send notification to admins containing the leaderboard and joining user's info
+	// User joined leaderboard non-admin notification: find leaderboard, send notification to all non-admin users containing the leaderboard and joining user's info
 
 	// Admin APIs
 	adminRouter := mainRouter.PathPrefix("/admin").Subrouter()

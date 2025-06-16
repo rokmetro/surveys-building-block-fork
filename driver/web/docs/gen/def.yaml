@@ -799,6 +799,8 @@ paths:
     $ref: '#/paths/~1api~1score'
   /api/v2/scores:
     $ref: '#/paths/~1api~1scores'
+  /api/scores/pivot:
+    $ref: '#/paths/~1api~1scores'
   /api/leaderboard:
     get:
       tags:
@@ -2155,6 +2157,9 @@ components:
           type: array
           items:
             type: string
+        rank:
+          type: number
+          readOnly: true
     _admin_req_update-configs:
       required:
         - type

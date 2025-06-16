@@ -20,18 +20,30 @@ import (
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // GetScore finds score object for user
 func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Score, error) {
-	filter := bson.M{"org_id": orgID, "app_id": appID, "user_id": userID}
-	var entry model.Score
-	err := a.db.scores.FindOne(a.context, filter, &entry, nil)
-	if err != nil {
-		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeScore, filterArgs(filter), err)
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.M{"org_id": orgID, "app_id": appID}}},
+		// add rank
+		bson.D{{Key: "$setWindowFields", Value: bson.M{
+			"sortBy": bson.M{"score": -1},
+			"output": bson.M{
+				"rank": bson.M{"$rank": bson.M{}},
+			},
+		}}},
+		bson.D{{Key: "$match", Value: bson.M{"user_id": userID}}},
 	}
-	return &entry, nil
+
+	var scores []model.Score
+	err := a.db.scores.Aggregate(a.context, pipeline, &scores, nil)
+	if len(scores) > 0 {
+		score := scores[0]
+		return &score, err
+	}
+	return nil, errors.ErrorData(logutils.StatusMissing, model.TypeScore, &logutils.FieldArgs{"user_id": userID})
 }
 
 // GetScores returns a list of scores in descending order
@@ -47,34 +59,166 @@ func (a *Adapter) GetScores(orgID string, appID string, leaderboardID *string, l
 		},
 	}
 
-	// If leaderboard ID is provided, get the leaderboard and filter scores by its members
-	if leaderboardID != nil && *leaderboardID != "" {
-		var leaderboard model.Leaderboard
-		err := a.db.leaderboards.FindOne(a.context, bson.M{"_id": *leaderboardID}, &leaderboard, nil)
-		if err != nil {
-			return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeLeaderboard, nil, err)
-		}
+	// // If leaderboard ID is provided, get the leaderboard and filter scores by its members
+	// if leaderboardID != nil && *leaderboardID != "" {
+	// 	var leaderboard model.Leaderboard
+	// 	err := a.db.leaderboards.FindOne(a.context, bson.M{"_id": *leaderboardID}, &leaderboard, nil)
+	// 	if err != nil {
+	// 		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeLeaderboard, nil, err)
+	// 	}
 
-		// Combine admin and regular user IDs
-		userIDs := append(leaderboard.AdminUserIDs, leaderboard.UserIDs...)
-		if len(userIDs) > 0 {
-			filter["user_id"] = bson.M{"$in": userIDs}
-		}
+	// 	// Combine admin and regular user IDs
+	// 	userIDs := append(leaderboard.AdminUserIDs, leaderboard.UserIDs...)
+	// 	if len(userIDs) > 0 {
+	// 		filter["user_id"] = bson.M{"$in": userIDs}
+	// 	}
+	// }
+
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: filter}},
+
+		// add rank
+		bson.D{{Key: "$setWindowFields", Value: bson.M{
+			"sortBy": bson.M{"score": -1},
+			"output": bson.M{
+				"rank": bson.M{"$rank": bson.M{}},
+			},
+		}}},
+
+		bson.D{{Key: "$skip", Value: *offset}},
+		bson.D{{Key: "$limit", Value: *limit}},
 	}
 
-	opts := options.Find().SetSort(bson.M{"score": -1})
-	if limit != nil {
-		opts.SetLimit(int64(*limit))
+	var scores []model.Score
+	err := a.db.scores.Aggregate(a.context, pipeline, &scores, nil)
+
+	return scores, err
+}
+
+// GetTopAndLocalScores retrieves top and local scores closest to the user's score
+func (a *Adapter) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, abovePivotLimit *int, equalPivotLimit *int, belowPivotLimit *int) ([]model.Score, error) {
+	scoreFilter := bson.M{
+		"org_id": orgID,
+		"app_id": appID,
+		"external_profile_id": bson.M{
+			"$ne": "",
+		},
 	}
-	if offset != nil {
-		opts.SetSkip(int64(*offset))
+
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: scoreFilter}},
+
+		// Add rank + pivotScore via window
+		bson.D{{Key: "$setWindowFields", Value: bson.M{
+			"sortBy": bson.M{"score": -1},
+			"output": bson.M{
+				"rank": bson.M{"$rank": bson.M{}},
+				"pivotScore": bson.M{"$max": bson.M{
+					"$cond": bson.A{
+						bson.M{"$eq": bson.A{"$user_id", userID}},
+						"$score",
+						nil,
+					},
+				}},
+			},
+		}}},
 	}
-	var results []model.Score
-	err := a.db.scores.Find(a.context, filter, &results, opts)
-	if err != nil {
-		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeScore, filterArgs(filter), err)
+
+	// facet into above/equal/below
+	// build the facet map only for non‐nil, positive limits
+	facets := bson.M{}
+	concatArrays := bson.A{}
+	filters := bson.M{
+		"topScores": 1,
+		"userScore": 1,
 	}
-	return results, nil
+
+	facets["userScore"] = bson.A{
+		bson.D{{Key: "$match", Value: bson.M{"user_id": userID}}},
+	}
+	concatArrays = append(concatArrays, "$userScore")
+
+	if limit != nil && *limit > 0 {
+		facets["topScores"] = bson.A{
+			bson.D{{Key: "$skip", Value: *offset}},
+			bson.D{{Key: "$limit", Value: *limit}},
+		}
+		concatArrays = append(concatArrays, "$topScores")
+	}
+
+	if abovePivotLimit != nil && *abovePivotLimit > 0 {
+		facets["aboveScores"] = bson.A{
+			bson.D{{Key: "$match", Value: bson.M{
+				"$expr": bson.M{"$gt": bson.A{"$score", "$pivotScore"}},
+			}}},
+			bson.D{{Key: "$sort", Value: bson.M{"score": 1}}},
+			bson.D{{Key: "$limit", Value: *abovePivotLimit}},
+			bson.D{{Key: "$sort", Value: bson.M{"score": -1}}},
+		}
+		concatArrays = append(concatArrays, "$aboveScores")
+		filters["aboveScores"] = bson.M{"$filter": bson.M{
+			"input": "$aboveScores",
+			"as":    "s",
+			"cond":  bson.M{"$not": bson.M{"$in": bson.A{"$$s.user_id", "$topScores.user_id"}}},
+		}}
+	}
+
+	if equalPivotLimit != nil && *equalPivotLimit > 0 {
+		facets["equalScores"] = bson.A{
+			bson.D{{Key: "$match", Value: bson.M{
+				"$expr": bson.M{"$and": bson.A{
+					bson.M{"$eq": bson.A{"$score", "$pivotScore"}},
+					bson.M{"$ne": bson.A{"$user_id", userID}},
+				}},
+			}}},
+			bson.D{{Key: "$limit", Value: *equalPivotLimit}},
+		}
+		concatArrays = append(concatArrays, "$equalScores")
+		filters["equalScores"] = bson.M{"$filter": bson.M{
+			"input": "$equalScores",
+			"as":    "s",
+			"cond":  bson.M{"$not": bson.M{"$in": bson.A{"$$s.user_id", "$topScores.user_id"}}},
+		}}
+	}
+
+	if belowPivotLimit != nil && *belowPivotLimit > 0 {
+		facets["belowScores"] = bson.A{
+			bson.D{{Key: "$match", Value: bson.M{
+				"$expr": bson.M{"$lt": bson.A{"$score", "$pivotScore"}},
+			}}},
+			bson.D{{Key: "$sort", Value: bson.M{"score": -1}}},
+			bson.D{{Key: "$limit", Value: *belowPivotLimit}},
+		}
+		concatArrays = append(concatArrays, "$belowScores")
+		filters["belowScores"] = bson.M{"$filter": bson.M{
+			"input": "$belowScores",
+			"as":    "s",
+			"cond":  bson.M{"$not": bson.M{"$in": bson.A{"$$s.user_id", "$topScores.user_id"}}},
+		}}
+	}
+
+	pipeline = append(pipeline, bson.D{{Key: "$facet", Value: facets}})
+
+	// filter out anything in topScores from the other buckets
+	pipeline = append(pipeline, bson.D{{Key: "$project", Value: filters}})
+
+	// Combine the three facets into one sorted array.
+	projectFacetStage := bson.D{{Key: "$project", Value: bson.D{
+		{Key: "results", Value: bson.D{
+			{Key: "$concatArrays", Value: concatArrays},
+		}},
+	}}}
+	pipeline = append(pipeline, projectFacetStage)
+
+	// Unwind the concatenated array and set each element as the new root.
+	unwindStage := bson.D{{Key: "$unwind", Value: "$results"}}
+	replaceRootStage := bson.D{{Key: "$replaceRoot", Value: bson.D{{Key: "newRoot", Value: "$results"}}}}
+	pipeline = append(pipeline, unwindStage, replaceRootStage)
+
+	var scores []model.Score
+	err := a.db.scores.Aggregate(a.context, pipeline, &scores, nil)
+
+	return scores, err
 }
 
 // CreateScore creates a new score object

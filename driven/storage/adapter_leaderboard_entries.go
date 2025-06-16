@@ -34,10 +34,10 @@ func (a *Adapter) CreateLeaderboardEntry(leaderboardEntry model.LeaderboardEntry
 
 func (a *Adapter) DeleteLeaderboardEntry(id string, orgID string, appID string, userID string) error {
 	filter := bson.M{
-		"_id":            id,
-		"org_id":        orgID,
-		"app_id":        appID,
-		"user_id":       userID,
+		"_id":     id,
+		"org_id":  orgID,
+		"app_id":  appID,
+		"user_id": userID,
 	}
 
 	result, err := a.db.leaderboardEntries.DeleteOne(a.context, filter)

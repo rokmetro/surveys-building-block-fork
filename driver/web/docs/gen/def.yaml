@@ -148,6 +148,14 @@ paths:
           explode: false
           schema:
             type: string
+        - name: include_responses
+          in: query
+          description: Whether to include survey responses or not
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -784,6 +792,10 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error
+  /api/v2/score:
+    $ref: '#/paths/~1api~1score'
+  /api/v2/scores:
+    $ref: '#/paths/~1api~1scores'
   /api/user-data:
     get:
       tags:
@@ -1150,6 +1162,14 @@ paths:
         - name: end_time_after
           in: query
           description: Only include surveys ending after this UTC timestamp
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: include_responses
+          in: query
+          description: Whether to include survey responses or not
           required: false
           style: simple
           explode: false
@@ -1773,6 +1793,14 @@ components:
           type: integer
           format: int64
           nullable: true
+        survey_responses:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyResponse'
+          nullable: true
+        completed:
+          type: boolean
+          nullable: true
         unstructured_properties:
           type: object
     SurveyData:
@@ -1865,6 +1893,8 @@ components:
         complete:
           type: integer
         scored:
+          type: integer
+        correct_answer_count:
           type: integer
         scores:
           type: object

@@ -23,7 +23,7 @@ The API documentation is available here: https://api-dev.rokwire.illinois.edu/su
 ### Prerequisites
 MongoDB v4.4+
 
-Go v1.22+
+Go v1.24+
 
 ### Environment variables
 The following Environment variables are supported. The service will not start unless those marked as Required are supplied.

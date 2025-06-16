@@ -18,15 +18,16 @@ import (
 	"application/core"
 	"application/core/model"
 	"encoding/json"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/rokwire/core-auth-library-go/v3/tokenauth"
-	"github.com/rokwire/logging-library-go/v2/logs"
-	"github.com/rokwire/logging-library-go/v2/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/services/core/auth/tokenauth"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
 // ClientAPIsHandler handles the client rest APIs implementation
@@ -123,6 +124,18 @@ func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *toke
 		completed = &valueCompleted
 	}
 
+	includeResponsesStr := r.URL.Query().Get("include_responses")
+
+	var includeResponses *bool
+
+	if includeResponsesStr != "" {
+		valueIncludeResponses, err := strconv.ParseBool(includeResponsesStr)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
+		}
+		includeResponses = &valueIncludeResponses
+	}
+
 	var timeFilterItems model.SurveyTimeFilterRequest
 	startsBeforeRaw := r.URL.Query().Get("starts_before")
 	if startsBeforeRaw != "" {
@@ -142,21 +155,20 @@ func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *toke
 	}
 	filter := surveyTimeFilter(&timeFilterItems)
 
-	surveys, surverysRsponse, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
-		&limit, &offset, filter, public, archived, completed)
+	surveys, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
+		&limit, &offset, filter, public, archived, completed, includeResponses)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}
 
-	list := getSurveysResData(surveys, surverysRsponse, completed)
-	respData := sortIfpublicIsTrue(list, public)
+	respData := getSurveysResData(surveys)
 
-	// Set response to nil to indicate last page and no more results should be loaded
-	if len(surveys) == 0 {
-		respData = nil
-	} else if respData == nil {
-		respData = []model.SurveysResponseData{}
-	}
+	// // Set response to nil to indicate last page and no more results should be loaded
+	// if len(surveys) == 0 {
+	// 	respData = nil
+	// } else if respData == nil {
+	// 	respData = []model.SurveysResponseData{}
+	// }
 
 	rdata, err := json.Marshal(respData)
 	if err != nil {
@@ -580,7 +592,7 @@ func (h ClientAPIsHandler) getCreatorSurveys(l *logs.Log, r *http.Request, claim
 	}
 	filter := surveyTimeFilter(&timeFilterItems)
 
-	resData, _, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset, filter, public, archived, completed)
+	resData, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset, filter, public, archived, completed, nil)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}
@@ -607,23 +619,23 @@ func (h ClientAPIsHandler) getUserData(l *logs.Log, r *http.Request, claims *tok
 	return l.HTTPResponseSuccessJSON(data)
 }
 
-func (h ClientAPIsHandler) getScore(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
-	externalProfileID := r.URL.Query().Get("external_profile_id")
-
-	score, err := h.app.Client.GetScore(claims.OrgID, claims.AppID, claims.Subject, externalProfileID)
-	if err != nil {
-		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
-	}
-
-	rdata, err := json.Marshal(score)
-	if err != nil {
-		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
-	}
-
-	return l.HTTPResponseSuccessJSON(rdata)
+func (h ClientAPIsHandler) getScoreV2(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	return h.getScore(l, r, claims, false)
 }
 
-func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+func (h ClientAPIsHandler) getScoresV2(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	return h.getScores(l, r, claims, false)
+}
+
+func (h ClientAPIsHandler) getScoreV1(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	return h.getScore(l, r, claims, true)
+}
+
+func (h ClientAPIsHandler) getScoresV1(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	return h.getScores(l, r, claims, true)
+}
+
+func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *tokenauth.Claims, roundScores bool) logs.HTTPResponse {
 	limitRaw := r.URL.Query().Get("limit")
 	limit := 20
 	if len(limitRaw) > 0 {
@@ -645,11 +657,38 @@ func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *token
 	}
 
 	scores, err := h.app.Client.GetScores(claims.OrgID, claims.AppID, &limit, &offset)
+
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
 	}
 
+	if roundScores {
+		for i := 0; i < len(scores); i++ {
+			scores[i].Score = math.Round(scores[i].Score)
+		}
+	}
+
 	rdata, err := json.Marshal(scores)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
+	}
+
+	return l.HTTPResponseSuccessJSON(rdata)
+}
+
+func (h ClientAPIsHandler) getScore(l *logs.Log, r *http.Request, claims *tokenauth.Claims, roundScore bool) logs.HTTPResponse {
+	externalProfileID := r.URL.Query().Get("external_profile_id")
+
+	score, err := h.app.Client.GetScore(claims.OrgID, claims.AppID, claims.Subject, externalProfileID)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
+	}
+
+	if roundScore {
+		score.Score = math.Round(score.Score)
+	}
+
+	rdata, err := json.Marshal(score)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
 	}

@@ -22,8 +22,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rokwire/logging-library-go/v2/errors"
-	"github.com/rokwire/logging-library-go/v2/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
 // appShared contains shared implementations
@@ -35,14 +35,8 @@ func (a appShared) getSurvey(id string, orgID string, appID string) (*model.Surv
 	return a.app.storage.GetSurvey(id, orgID, appID)
 }
 
-func (a appShared) getSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool) ([]model.Survey, []model.SurveyResponse, error) {
-	surveys, surveysResponse, err := a.app.storage.GetSurveysAndSurveyResponses(orgID, appID, creatorID, surveyIDs, surveyTypes, calendarEventID,
-		public, archived, limit, offset, userID, filter)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return surveys, surveysResponse, nil
+func (a appShared) getSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool) ([]model.Survey, error) {
+	return a.app.storage.GetSurveysWithResponses(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed, includeResponses, sortByDateCreated)
 }
 
 func (a appShared) createSurvey(survey model.Survey, externalIDs map[string]string) (*model.Survey, error) {

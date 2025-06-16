@@ -17,7 +17,7 @@ package model
 import (
 	"time"
 
-	"github.com/rokwire/logging-library-go/v2/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
 const (
@@ -68,6 +68,8 @@ type Survey struct {
 	Public                  *bool                  `json:"public" bson:"public"`
 	Archived                *bool                  `json:"archived" bson:"archived"`
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time" bson:"estimated_completion_time"`
+	SurveyResponses         []*SurveyResponse      `json:"survey_response" bson:"survey_response"`
+	Completed               *bool                  `json:"completed" bson:"completed"`
 	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties"`
 }
 
@@ -86,12 +88,13 @@ type SurveyResponseAnonymous struct {
 
 // SurveyStats are stats of a Survey
 type SurveyStats struct {
-	Total         int                    `json:"total" bson:"total"`
-	Complete      int                    `json:"complete" bson:"complete"`
-	Scored        int                    `json:"scored" bson:"scored"`
-	Scores        map[string]float64     `json:"scores" bson:"scores"`
-	MaximumScores map[string]float64     `json:"maximum_scores" bson:"maximum_scores"`
-	ResponseData  map[string]interface{} `json:"response_data" bson:"response_data"`
+	Total              int                    `json:"total" bson:"total"`
+	Complete           int                    `json:"complete" bson:"complete"`
+	Scored             int                    `json:"scored" bson:"scored"`
+	CorrectAnswerCount int                    `json:"correct_answer_count" bson:"correct_answer_count"`
+	Scores             map[string]float64     `json:"scores" bson:"scores"`
+	MaximumScores      map[string]float64     `json:"maximum_scores" bson:"maximum_scores"`
+	ResponseData       map[string]interface{} `json:"response_data" bson:"response_data"`
 }
 
 // SurveyData is data stored for a Survey
@@ -244,6 +247,8 @@ type SurveysResponseData struct {
 	Archived                *bool                  `json:"archived"`
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time"`
 	Completed               *bool                  `json:"completed"`
+	SurveyResponses         []*SurveyResponse      `json:"survey_response"`
+	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties"`
 }
 
 // SurveyTimeFilterRequest wraps the time filter for surveys

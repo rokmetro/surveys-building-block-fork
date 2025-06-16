@@ -25,12 +25,12 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/gorilla/mux"
-	"github.com/rokwire/core-auth-library-go/v3/authservice"
-	"github.com/rokwire/core-auth-library-go/v3/tokenauth"
-	"github.com/rokwire/core-auth-library-go/v3/webauth"
+	"github.com/rokwire/rokwire-building-block-sdk-go/services/core/auth"
+	"github.com/rokwire/rokwire-building-block-sdk-go/services/core/auth/tokenauth"
+	"github.com/rokwire/rokwire-building-block-sdk-go/services/core/auth/webauth"
 
-	"github.com/rokwire/logging-library-go/v2/logs"
-	"github.com/rokwire/logging-library-go/v2/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
@@ -91,8 +91,10 @@ func (a Adapter) Start() {
 	mainRouter.HandleFunc("/survey-responses", a.wrapFunc(a.clientAPIsHandler.deleteSurveyResponses, a.auth.client.User)).Methods("DELETE")
 	mainRouter.HandleFunc("/survey-alerts", a.wrapFunc(a.clientAPIsHandler.createSurveyAlert, a.auth.client.User)).Methods("POST")
 	mainRouter.HandleFunc("/creator/surveys", a.wrapFunc(a.clientAPIsHandler.getCreatorSurveys, a.auth.client.User)).Methods("GET")
-	mainRouter.HandleFunc("/score", a.wrapFunc(a.clientAPIsHandler.getScore, a.auth.client.User)).Methods("GET")
-	mainRouter.HandleFunc("/scores", a.wrapFunc(a.clientAPIsHandler.getScores, a.auth.client.User)).Methods("GET")
+	mainRouter.HandleFunc("/score", a.wrapFunc(a.clientAPIsHandler.getScoreV1, a.auth.client.User)).Methods("GET")
+	mainRouter.HandleFunc("/scores", a.wrapFunc(a.clientAPIsHandler.getScoresV1, a.auth.client.User)).Methods("GET")
+	mainRouter.HandleFunc("/v2/score", a.wrapFunc(a.clientAPIsHandler.getScoreV2, a.auth.client.User)).Methods("GET")
+	mainRouter.HandleFunc("/v2/scores", a.wrapFunc(a.clientAPIsHandler.getScoresV2, a.auth.client.User)).Methods("GET")
 	mainRouter.HandleFunc("/user-data", a.wrapFunc(a.clientAPIsHandler.getUserData, a.auth.client.User)).Methods("GET")
 
 	// Admin APIs
@@ -209,7 +211,7 @@ func (a Adapter) wrapFunc(handler handlerFunc, authorization tokenauth.Handler) 
 }
 
 // NewWebAdapter creates new WebAdapter instance
-func NewWebAdapter(baseURL string, port string, serviceID string, app *core.Application, serviceRegManager *authservice.ServiceRegManager,
+func NewWebAdapter(baseURL string, port string, serviceID string, app *core.Application, serviceRegManager *auth.ServiceRegManager,
 	corsAllowedOrigins []string, corsAllowedHeaders []string, validateAdminClaim bool, logger *logs.Logger) Adapter {
 	yamlDoc, err := loadDocsYAML(baseURL)
 	if err != nil {

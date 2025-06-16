@@ -20,8 +20,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rokwire/logging-library-go/v2/errors"
-	"github.com/rokwire/logging-library-go/v2/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
 // appClient contains client implementations
@@ -37,8 +37,8 @@ func (a appClient) GetSurvey(id string, orgID string, appID string) (*model.Surv
 
 // GetSurvey returns surveys matching the provided query
 func (a appClient) GetSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string,
-	limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool) ([]model.Survey, []model.SurveyResponse, error) {
-	return a.app.shared.getSurveys(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed)
+	limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool) ([]model.Survey, error) {
+	return a.app.shared.getSurveys(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed, includeResponses, nil)
 }
 
 // CreateSurvey creates a new survey
@@ -259,8 +259,15 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	survey := surveyResponse.Survey
 	score.ResponseCount++
 	score.AnswerCount += uint32(survey.SurveyStats.Total)
-	correctAnswers := uint32(survey.SurveyStats.Scores[""])
-	score.CorrectAnswerCount += correctAnswers
+	pointsForResponse := float64(survey.SurveyStats.Scores[""])
+
+	if survey.SurveyStats.CorrectAnswerCount == 0 && pointsForResponse >= 0 {
+		// Handle clients that don't send correct answer count by assuming
+		// pointsForResponse == correct answer count
+		score.CorrectAnswerCount += uint32(pointsForResponse)
+	} else {
+		score.CorrectAnswerCount += uint32(survey.SurveyStats.CorrectAnswerCount)
+	}
 
 	externalProfileIDRaw, exists := survey.UnstructuredProperties["external_profile_id"]
 	if exists {
@@ -295,9 +302,9 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	score.PrevSurveyResponseDate = responseTime
 
 	if score.CurrentStreak >= model.ScoreStreakMinDays {
-		score.Score += uint32(float32(correctAnswers) * model.ScoreStreakMultiplier)
+		score.Score += pointsForResponse * model.ScoreStreakMultiplier
 	} else {
-		score.Score += uint32(float32(correctAnswers))
+		score.Score += pointsForResponse
 	}
 
 	return nil

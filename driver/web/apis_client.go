@@ -617,7 +617,7 @@ func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *token
 	if userOnlyStr != "" {
 		valueUserOnly, err := strconv.ParseBool(userOnlyStr)
 		if err != nil {
-			return l.HTTPResponseErrorAction(logutils.ActionGet, model.Score, logutils.StringArgs("user_only"), err, http.StatusBadRequest, false)
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, logutils.StringArgs("user_only"), err, http.StatusBadRequest, false)
 		}
 		userOnly = &valueUserOnly
 	}
@@ -737,7 +737,7 @@ func (h ClientAPIsHandler) getLeaderboards(l *logs.Log, r *http.Request, claims 
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
 	}
-	
+
 	return l.HTTPResponseSuccessJSON(data)
 }
 
@@ -804,7 +804,7 @@ func (h ClientAPIsHandler) joinLeaderboard(l *logs.Log, r *http.Request, claims 
 
 	err := h.app.Client.JoinLeaderboard(id, claims.OrgID, claims.AppID, claims.Subject)
 	if err != nil {
-		return l.HTTPResponseErrorAction(logutils.ActionJoin, "leaderboard", nil, err, http.StatusInternalServerError, true)
+		return l.HTTPResponseErrorAction(logutils.ActionInsert, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}
 
 	return l.HTTPResponseSuccess()
@@ -817,9 +817,15 @@ func (h ClientAPIsHandler) leaveLeaderboard(l *logs.Log, r *http.Request, claims
 		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
 	}
 
-	err := h.app.Client.LeaveLeaderboard(id, claims.OrgID, claims.AppID, claims.Subject)
+	leavingUserIDsRaw := r.URL.Query().Get("user_ids")
+	var leavingUserIDs []string
+	if len(leavingUserIDsRaw) > 0 {
+		leavingUserIDs = strings.Split(leavingUserIDsRaw, ",")
+	}
+
+	err := h.app.Client.LeaveLeaderboard(id, claims.OrgID, claims.AppID, claims.Subject, leavingUserIDs)
 	if err != nil {
-		return l.HTTPResponseErrorAction(logutils.ActionLeave, "leaderboard", nil, err, http.StatusInternalServerError, true)
+		return l.HTTPResponseErrorAction(logutils.ActionDelete, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}
 
 	return l.HTTPResponseSuccess()

@@ -672,7 +672,7 @@ func (h ClientAPIsHandler) getTopAndLocalScores(l *logs.Log, r *http.Request, cl
 	if len(localLimitRaw) > 0 {
 		intParsed, err := strconv.Atoi(localLimitRaw)
 		if err != nil {
-			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("equal_limit"), nil, http.StatusBadRequest, false)
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("local_limit"), nil, http.StatusBadRequest, false)
 		}
 		localLimit = intParsed
 	}

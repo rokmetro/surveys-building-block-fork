@@ -234,8 +234,8 @@ func (a appClient) GetScore(orgID string, appID string, userID string, externalP
 }
 
 // GetScores returns scores in descending order and removes scores with empty external IDs
-func (a appClient) GetScores(orgID string, appID string, leaderboardID *string, limit *int, offset *int) ([]model.Score, error) {
-	return a.app.storage.GetScores(orgID, appID, leaderboardID, limit, offset)
+func (a appClient) GetScores(orgID string, appID string, leaderboardIDs []string, userOnly *bool, limit *int, offset *int) ([]model.Score, error) {
+	return a.app.storage.GetScores(orgID, appID, leaderboardIDs, userOnly, limit, offset)
 }
 
 // GetScoresWithPivot retrieves scores closest to the user's score
@@ -404,24 +404,49 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	return nil
 }
 
-// GetLeaderboardsForUser gets all leaderboards for a user
-func (a appClient) GetLeaderboardsForUser(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
-	return a.app.storage.GetLeaderboardsForUser(userID, orgID, appID)
+// GetLeaderboards gets all leaderboards for a user
+func (a appClient) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
+	return a.app.storage.GetLeaderboards(orgID, appID, userID)
 }
 
 // CreateLeaderboard creates a new leaderboard
-func (a appClient) CreateLeaderboard(lb model.Leaderboard) (*model.Leaderboard, error) {
-	return a.app.storage.CreateLeaderboard(lb)
+func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID string) (*model.Leaderboard, error) {
+	leaderboardPtr, err := a.app.storage.CreateLeaderboard(leaderboard, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	leaderboardPtr.ID = uuid.NewString()
+	leaderboardPtr.IsAdmin = true
+
+	return a.app.storage.CreateLeaderboard(leaderboard, userID)
 }
 
 // UpdateLeaderboard updates an existing leaderboard
-func (a appClient) UpdateLeaderboard(lb model.Leaderboard, userID string) error {
-	return a.app.storage.UpdateLeaderboard(lb, userID)
+func (a appClient) UpdateLeaderboard(leaderboard model.Leaderboard, userID string) error {
+	return a.app.storage.UpdateLeaderboard(leaderboard, userID)
 }
 
 // DeleteLeaderboard deletes a leaderboard by ID
 func (a appClient) DeleteLeaderboard(id string, orgID string, appID string, userID string) error {
 	return a.app.storage.DeleteLeaderboard(id, orgID, appID, userID)
+}
+
+func (a appClient) JoinLeaderboard(id string, orgID string, appID string, userID string) error {
+	leaderboardEntry := model.LeaderboardEntry{
+		ID:            uuid.NewString(),
+		LeaderboardID: id,
+		OrgID:         orgID,
+		AppID:         appID,
+		UserID:        userID,
+		IsAdmin:       false,
+	}
+
+	return a.app.storage.CreateLeaderboardEntry(leaderboardEntry)
+}
+
+func (a appClient) LeaveLeaderboard(leaderboardID string, orgID string, appID string, userID string, leavingUserIDs []string) error {
+	return a.app.storage.DeleteLeaderboardEntries(leaderboardID, orgID, appID, userID, leavingUserIDs)
 }
 
 // newAppClient creates new appClient

@@ -150,3 +150,7 @@ func (a *Adapter) DeleteLeaderboard(id, orgID, appID, userID string) error {
 	_, err := a.db.leaderboards.DeleteOne(context.Background(), filter, nil)
 	return err
 }
+
+func (a *Adapter) JoinLeaderboard(id string, orgID string, appID string, userID string) error {
+
+}

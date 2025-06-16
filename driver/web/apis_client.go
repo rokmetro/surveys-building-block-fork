@@ -606,13 +606,23 @@ func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *token
 		offset = intParsed
 	}
 
-	leaderboardID := r.URL.Query().Get("leaderboard_id")
-	var leaderboardIDPtr *string
-	if leaderboardID != "" {
-		leaderboardIDPtr = &leaderboardID
+	leaderboardIDsRaw := r.URL.Query().Get("leaderboard_ids")
+	var leaderboardIDs []string
+	if len(leaderboardIDsRaw) > 0 {
+		leaderboardIDs = strings.Split(leaderboardIDsRaw, ",")
 	}
 
-	scores, err := h.app.Client.GetScores(claims.OrgID, claims.AppID, leaderboardIDPtr, &limit, &offset)
+	userOnlyStr := r.URL.Query().Get("user_only")
+	var userOnly *bool
+	if userOnlyStr != "" {
+		valueUserOnly, err := strconv.ParseBool(userOnlyStr)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, logutils.StringArgs("user_only"), err, http.StatusBadRequest, false)
+		}
+		userOnly = &valueUserOnly
+	}
+
+	scores, err := h.app.Client.GetScores(claims.OrgID, claims.AppID, leaderboardIDs, userOnly, &limit, &offset)
 
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
@@ -717,15 +727,17 @@ func (h ClientAPIsHandler) getTopAndLocalScores(l *logs.Log, r *http.Request, cl
 	return l.HTTPResponseSuccessJSON(rdata)
 }
 
-func (h ClientAPIsHandler) getLeaderboardsForUser(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
-	leaderboards, err := h.app.Client.GetLeaderboardsForUser(claims.OrgID, claims.AppID, claims.Subject)
+func (h ClientAPIsHandler) getLeaderboards(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	leaderboards, err := h.app.Client.GetLeaderboards(claims.OrgID, claims.AppID, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}
+
 	data, err := json.Marshal(leaderboards)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
 	}
+
 	return l.HTTPResponseSuccessJSON(data)
 }
 
@@ -735,16 +747,19 @@ func (h ClientAPIsHandler) createLeaderboard(l *logs.Log, r *http.Request, claim
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDecode, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, true)
 	}
+
 	lb.OrgID = claims.OrgID
 	lb.AppID = claims.AppID
-	createdLb, err := h.app.Client.CreateLeaderboard(lb)
+	createdLb, err := h.app.Client.CreateLeaderboard(lb, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionCreate, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}
+
 	data, err := json.Marshal(createdLb)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
 	}
+
 	return l.HTTPResponseSuccessJSON(data)
 }
 
@@ -754,12 +769,14 @@ func (h ClientAPIsHandler) updateLeaderboard(l *logs.Log, r *http.Request, claim
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDecode, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, true)
 	}
-	lb.OrgID = claims.OrgID
-	lb.AppID = claims.AppID
-	err = h.app.Client.UpdateLeaderboard(lb, claims.Subject)
+
+	lb.OrgID = claims.OrgID // TODO: figure if we need this
+	lb.AppID = claims.AppID // TODO: figure if we need this
+	err = h.app.Client.UpdateLeaderboard(lb, claims.OrgID, claims.AppID, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionUpdate, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}
+
 	return l.HTTPResponseSuccess()
 }
 
@@ -769,10 +786,48 @@ func (h ClientAPIsHandler) deleteLeaderboard(l *logs.Log, r *http.Request, claim
 	if len(id) <= 0 {
 		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
 	}
+
 	err := h.app.Client.DeleteLeaderboard(id, claims.OrgID, claims.AppID, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDelete, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}
+
+	return l.HTTPResponseSuccess()
+}
+
+func (h ClientAPIsHandler) joinLeaderboard(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if len(id) <= 0 {
+		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
+	}
+
+	err := h.app.Client.JoinLeaderboard(id, claims.OrgID, claims.AppID, claims.Subject)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionInsert, "leaderboard", nil, err, http.StatusInternalServerError, true)
+	}
+
+	return l.HTTPResponseSuccess()
+}
+
+func (h ClientAPIsHandler) leaveLeaderboard(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if len(id) <= 0 {
+		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
+	}
+
+	leavingUserIDsRaw := r.URL.Query().Get("user_ids")
+	var leavingUserIDs []string
+	if len(leavingUserIDsRaw) > 0 {
+		leavingUserIDs = strings.Split(leavingUserIDsRaw, ",")
+	}
+
+	err := h.app.Client.LeaveLeaderboard(id, claims.OrgID, claims.AppID, claims.Subject, leavingUserIDs)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionDelete, "leaderboard", nil, err, http.StatusInternalServerError, true)
+	}
+
 	return l.HTTPResponseSuccess()
 }
 

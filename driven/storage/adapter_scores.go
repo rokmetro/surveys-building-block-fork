@@ -31,7 +31,7 @@ func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Sc
 		bson.D{{Key: "$setWindowFields", Value: bson.M{
 			"sortBy": bson.M{"score": -1},
 			"output": bson.M{
-				"rank": bson.M{"$rank": bson.M{}},
+				"rank": bson.M{"$denseRank": bson.M{}},
 			},
 		}}},
 		bson.D{{Key: "$match", Value: bson.M{"user_id": userID}}},
@@ -81,7 +81,7 @@ func (a *Adapter) GetScores(orgID string, appID string, leaderboardID *string, l
 		bson.D{{Key: "$setWindowFields", Value: bson.M{
 			"sortBy": bson.M{"score": -1},
 			"output": bson.M{
-				"rank": bson.M{"$rank": bson.M{}},
+				"rank": bson.M{"$denseRank": bson.M{}},
 			},
 		}}},
 
@@ -112,7 +112,7 @@ func (a *Adapter) GetTopAndLocalScores(orgID string, appID string, userID string
 		bson.D{{Key: "$setWindowFields", Value: bson.M{
 			"sortBy": bson.M{"score": -1},
 			"output": bson.M{
-				"rank": bson.M{"$rank": bson.M{}},
+				"rank": bson.M{"$denseRank": bson.M{}},
 				"pivotScore": bson.M{"$max": bson.M{
 					"$cond": bson.A{
 						bson.M{"$eq": bson.A{"$user_id", userID}},

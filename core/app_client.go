@@ -249,8 +249,16 @@ func (a appClient) GetTopAndLocalScores(orgID string, appID string, userID strin
 	userScore := scores[0]
 	scores = scores[1:]
 
-	// Insert user's score into section with surrounding local scores
-	if len(scores) > *limit {
+	userInTopScoresIdx := -1
+	for i, score := range scores {
+		if score.UserID == userID {
+			userInTopScoresIdx = i
+			break
+		}
+	}
+
+	// Insert user's score into section with surrounding local scores if user is not in top scores
+	if len(scores) > *limit && userInTopScoresIdx == -1 {
 		localScores := a.insertUserScoreIntoLocalScores(scores[*limit:], userScore, *localLimit)
 		scores = scores[:*limit]
 		scores = append(scores, localScores...)

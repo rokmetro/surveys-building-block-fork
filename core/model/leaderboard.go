@@ -25,10 +25,11 @@ const (
 
 // Leaderboard represents a custom leaderboard.
 type Leaderboard struct {
-	ID    string `json:"id" bson:"_id"`        // corresponds to "id"
-	OrgID string `json:"org_id" bson:"org_id"` // organization ID
-	AppID string `json:"app_id" bson:"app_id"` // application ID
-	Name  string `json:"name" bson:"name"`     // required "name"
+	ID      string `json:"id" bson:"_id"`            // corresponds to "id"
+	OrgID   string `json:"org_id" bson:"org_id"`     // organization ID
+	AppID   string `json:"app_id" bson:"app_id"`     // application ID
+	Name    string `json:"name" bson:"name"`         // required "name"
+	isAdmin bool   `json:"is_admin"`
 }
 
 type LeaderboardEntry struct {

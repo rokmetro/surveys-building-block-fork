@@ -49,7 +49,7 @@ type Client interface {
 
 	// Score
 	GetScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error)
-	GetScores(orgID string, appID string, leaderboardIDs string[], limit *int, offset *int) ([]model.Score, error)
+	GetScores(orgID string, appID string, leaderboardIDs string[], userOnly *bool, limit *int, offset *int) ([]model.Score, error)
 	GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int) ([]model.Score, error)
 
 	// Leaderboards

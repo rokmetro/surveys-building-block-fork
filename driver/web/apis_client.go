@@ -612,7 +612,17 @@ func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *token
 		leaderboardIDs = strings.Split(leaderboardIDsRaw, ",")
 	}
 
-	scores, err := h.app.Client.GetScores(claims.OrgID, claims.AppID, leaderboardIDs, &limit, &offset)
+	userOnlyStr := r.URL.Query().Get("user_only")
+	var userOnly *bool
+	if userOnlyStr != "" {
+		valueUserOnly, err := strconv.ParseBool(userOnlyStr)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.Score, logutils.StringArgs("user_only"), err, http.StatusBadRequest, false)
+		}
+		userOnly = &valueUserOnly
+	}
+
+	scores, err := h.app.Client.GetScores(claims.OrgID, claims.AppID, leaderboardIDs, userOnly, &limit, &offset)
 
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)

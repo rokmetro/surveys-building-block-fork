@@ -46,4 +46,5 @@ type Score struct {
 	StreakMultiplier       float64   `json:"streak_multiplier" bson:"streak_multiplier"`
 	AnswerCount            uint32    `json:"answer_count" bson:"answer_count"`
 	CorrectAnswerCount     uint32    `json:"correct_answer_count" bson:"correct_answer_count"`
+	Rank                   uint32    `json:"rank" bson:"rank"`
 }

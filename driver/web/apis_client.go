@@ -717,15 +717,17 @@ func (h ClientAPIsHandler) getTopAndLocalScores(l *logs.Log, r *http.Request, cl
 	return l.HTTPResponseSuccessJSON(rdata)
 }
 
-func (h ClientAPIsHandler) getLeaderboardsForUser(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
-	leaderboards, err := h.app.Client.GetLeaderboardsForUser(claims.OrgID, claims.AppID, claims.Subject)
+func (h ClientAPIsHandler) getLeaderboards(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	leaderboards, err := h.app.Client.GetLeaderboards(claims.OrgID, claims.AppID, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}
+
 	data, err := json.Marshal(leaderboards)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
 	}
+	
 	return l.HTTPResponseSuccessJSON(data)
 }
 
@@ -735,16 +737,20 @@ func (h ClientAPIsHandler) createLeaderboard(l *logs.Log, r *http.Request, claim
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDecode, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, true)
 	}
+
 	lb.OrgID = claims.OrgID
 	lb.AppID = claims.AppID
+
 	createdLb, err := h.app.Client.CreateLeaderboard(lb)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionCreate, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}
+
 	data, err := json.Marshal(createdLb)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
 	}
+
 	return l.HTTPResponseSuccessJSON(data)
 }
 
@@ -754,12 +760,14 @@ func (h ClientAPIsHandler) updateLeaderboard(l *logs.Log, r *http.Request, claim
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDecode, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, true)
 	}
-	lb.OrgID = claims.OrgID
-	lb.AppID = claims.AppID
-	err = h.app.Client.UpdateLeaderboard(lb, claims.Subject)
+
+	lb.OrgID = claims.OrgID // TODO: figure if we need this
+	lb.AppID = claims.AppID // TODO: figure if we need this
+	err = h.app.Client.UpdateLeaderboard(lb, claims.OrgID, claims.AppID, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionUpdate, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}
+
 	return l.HTTPResponseSuccess()
 }
 
@@ -769,10 +777,42 @@ func (h ClientAPIsHandler) deleteLeaderboard(l *logs.Log, r *http.Request, claim
 	if len(id) <= 0 {
 		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
 	}
+
 	err := h.app.Client.DeleteLeaderboard(id, claims.OrgID, claims.AppID, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDelete, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}
+
+	return l.HTTPResponseSuccess()
+}
+
+func (h ClientAPIsHandler) joinLeaderboard(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if len(id) <= 0 {
+		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
+	}
+
+	err := h.app.Client.JoinLeaderboard(id, claims.OrgID, claims.AppID, claims.Subject)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionJoin, "leaderboard", nil, err, http.StatusInternalServerError, true)
+	}
+
+	return l.HTTPResponseSuccess()
+}
+
+func (h ClientAPIsHandler) leaveLeaderboard(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if len(id) <= 0 {
+		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
+	}
+
+	err := h.app.Client.LeaveLeaderboard(id, claims.OrgID, claims.AppID, claims.Subject)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionLeave, "leaderboard", nil, err, http.StatusInternalServerError, true)
+	}
+
 	return l.HTTPResponseSuccess()
 }
 

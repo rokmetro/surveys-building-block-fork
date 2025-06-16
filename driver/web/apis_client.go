@@ -606,13 +606,13 @@ func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *token
 		offset = intParsed
 	}
 
-	leaderboardID := r.URL.Query().Get("leaderboard_id")
-	var leaderboardIDPtr *string
-	if leaderboardID != "" {
-		leaderboardIDPtr = &leaderboardID
+	leaderboardIDsRaw := r.URL.Query().Get("leaderboard_ids")
+	var leaderboardIDs []string
+	if len(leaderboardIDsRaw) > 0 {
+		leaderboardIDs = strings.Split(leaderboardIDsRaw, ",")
 	}
 
-	scores, err := h.app.Client.GetScores(claims.OrgID, claims.AppID, leaderboardIDPtr, &limit, &offset)
+	scores, err := h.app.Client.GetScores(claims.OrgID, claims.AppID, leaderboardIDs, &limit, &offset)
 
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)

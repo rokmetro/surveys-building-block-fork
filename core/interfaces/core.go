@@ -53,10 +53,12 @@ type Client interface {
 	GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int) ([]model.Score, error)
 
 	// Leaderboards
-	GetLeaderboardsForUser(orgID string, appID string, userID string) ([]model.Leaderboard, error)
-	CreateLeaderboard(leaderboard model.Leaderboard) (*model.Leaderboard, error)
-	UpdateLeaderboard(leaderboard model.Leaderboard, userID string) error
+	GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error)
+	CreateLeaderboard(leaderboard model.Leaderboard, userID string) (*model.Leaderboard, error)
+	UpdateLeaderboard(leaderboard model.Leaderboard, orgID string, appID string, userID string) error
 	DeleteLeaderboard(id string, orgID string, appID string, userID string) error
+	JoinLeaderboard(id string, orgID string, appID string, userID string) error
+	LeaveLeaderboard(id string, orgID string, appID string, userID string) error
 }
 
 // Admin exposes administrative APIs for the driver adapters

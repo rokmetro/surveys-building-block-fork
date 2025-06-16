@@ -750,8 +750,7 @@ func (h ClientAPIsHandler) createLeaderboard(l *logs.Log, r *http.Request, claim
 
 	lb.OrgID = claims.OrgID
 	lb.AppID = claims.AppID
-
-	createdLb, err := h.app.Client.CreateLeaderboard(lb)
+	createdLb, err := h.app.Client.CreateLeaderboard(lb, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionCreate, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}

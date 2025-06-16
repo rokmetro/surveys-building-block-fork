@@ -682,7 +682,7 @@ func (h ClientAPIsHandler) getTopAndLocalScores(l *logs.Log, r *http.Request, cl
 	if len(abovePivotLimitRaw) > 0 {
 		intParsed, err := strconv.Atoi(abovePivotLimitRaw)
 		if err != nil {
-			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("above_limit"), nil, http.StatusBadRequest, false)
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("above_pivot_limit"), nil, http.StatusBadRequest, false)
 		}
 		abovePivotLimit = intParsed
 	}
@@ -692,7 +692,7 @@ func (h ClientAPIsHandler) getTopAndLocalScores(l *logs.Log, r *http.Request, cl
 	if len(belowPivotLimitRaw) > 0 {
 		intParsed, err := strconv.Atoi(belowPivotLimitRaw)
 		if err != nil {
-			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("below_limit"), nil, http.StatusBadRequest, false)
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("below_pivot_limit"), nil, http.StatusBadRequest, false)
 		}
 		belowPivotLimit = intParsed
 	}

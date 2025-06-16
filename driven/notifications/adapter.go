@@ -14,6 +14,13 @@ import (
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
+const (
+	// SubjectVogue is a subject type for vogue
+	SubjectVogue string = "Vogue"
+	// BaseURLVogue is a base url used for vogue deep links
+	BaseURLVogue string = "https://vogue.com"
+)
+
 // Adapter implements the Notifications interface
 type Adapter struct {
 	baseURL               string

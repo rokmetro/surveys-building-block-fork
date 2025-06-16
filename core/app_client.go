@@ -16,7 +16,9 @@ package core
 
 import (
 	"application/core/model"
+	"application/driven/notifications"
 	"application/utils"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -166,8 +168,49 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 		//TODO: First daily quiz play notification
 		// get all leaderboards for this user, notify each user in each leaderboard the user has played the fashion quiz (if have not notified for that leaderboard yet today)
 
-		//TODO: User's score eclipsed notification
-		// get all leaderboards for this user, notify each user in each leaderboard that has userScore.Score >= oldScore.Score and < score.Score (any other conditions?)
+		// User's score eclipsed notification
+		// get all leaderboards for this user
+		//TODO: implement as aggregation pipeline?
+		leaderboards, err := a.app.storage.GetLeaderboards(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
+		if err != nil {
+			a.app.logger.WarnWithFields("failed to find leaderboards", logutils.Fields{"user_id": surveyResponse.UserID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
+		}
+
+		userOnly := false
+		for i := range leaderboards {
+			lb := leaderboards[i]
+			scores, err := a.app.storage.GetScores(surveyResponse.OrgID, surveyResponse.AppID, []string{lb.ID}, &userOnly, nil, nil)
+			if err != nil {
+				a.app.logger.WarnWithFields("failed to find scores for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
+			}
+
+			for _, userScore := range scores {
+				if userScore.UserID != surveyResponse.UserID {
+					// current user's score has eclipsed this user's score in the leaderboard by completing the fashion quiz
+					if userScore.Score >= oldScore.Score && userScore.Score < score.Score {
+						// notify each user in each leaderboard that has userScore.Score >= oldScore.Score and < score.Score (any other conditions?)
+
+						//TODO: how to get user's username? ExternalProfileID is not human-readable (string of digits) - Use username field in token claims
+						body := fmt.Sprintf("%s is Now the Runway Genius of your group. Can you reclaim the top spot?", userScore.ExternalProfileID)
+						// body := fmt.Sprintf("%s is Now the Runway Genius of your %s leaderboard. Can you reclaim the top spot?", userScore.ExternalProfileID, lb.Name)
+						data := map[string]string{
+							"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, lb.ID),
+						}
+
+						message := model.NotificationMessage{
+							OrgID: surveyResponse.OrgID,
+							AppID: surveyResponse.AppID,
+
+							Subject:    notifications.SubjectVogue,
+							Body:       body,
+							Data:       data,
+							Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
+						}
+						a.app.notifications.SendNotification(message)
+					}
+				}
+			}
+		}
 	}
 
 	return surveyResponsePtr, err
@@ -451,6 +494,11 @@ func (a appClient) JoinLeaderboard(id string, orgID string, appID string, userID
 	}
 
 	return a.app.storage.CreateLeaderboardEntry(leaderboardEntry)
+
+	//TODO: add join leaderboard API for non-admins to use (link to location in client that calls this API when sharing, may be completed by #28)
+	//TODO: add notifications
+	// User joined leaderboard admin notification: find leaderboard, send notification to admins containing the leaderboard and joining user's info
+	// User joined leaderboard non-admin notification: find leaderboard, send notification to all non-admin users containing the leaderboard and joining user's info
 }
 
 func (a appClient) LeaveLeaderboard(leaderboardID string, orgID string, appID string, userID string, leavingUserIDs []string) error {

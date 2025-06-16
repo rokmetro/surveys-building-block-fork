@@ -84,9 +84,12 @@ func (a *Adapter) GetScores(orgID string, appID string, leaderboardID *string, l
 				"rank": bson.M{"$denseRank": bson.M{}},
 			},
 		}}},
-
-		bson.D{{Key: "$skip", Value: *offset}},
-		bson.D{{Key: "$limit", Value: *limit}},
+	}
+	if offset != nil {
+		pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
+	}
+	if limit != nil {
+		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
 	}
 
 	var scores []model.Score

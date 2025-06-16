@@ -236,7 +236,11 @@ func (collWrapper *collectionWrapper) CountDocuments(ctx context.Context, filter
 	return count, nil
 }
 
-func (collWrapper *collectionWrapper) Aggregate(ctx context.Context, pipeline interface{}, result interface{}, ops *options.AggregateOptions) error {
+func (collWrapper *collectionWrapper) Aggregate(pipeline interface{}, result interface{}, ops *options.AggregateOptions) error {
+	return collWrapper.AggregateWithContext(context.Background(), pipeline, result, ops)
+}
+
+func (collWrapper *collectionWrapper) AggregateWithContext(ctx context.Context, pipeline interface{}, result interface{}, ops *options.AggregateOptions) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}

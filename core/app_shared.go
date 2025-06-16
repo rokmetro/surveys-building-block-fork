@@ -18,6 +18,7 @@ import (
 	"application/core/interfaces"
 	"application/core/model"
 	"application/driven/calendar"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -144,6 +145,51 @@ func (a appShared) hasAttendedEvent(orgID string, appID string, eventID string, 
 	}
 
 	return false, nil
+}
+
+func (a appShared) getUserData(orgID string, appID string, userID *string) (*model.UserData, error) {
+	var (
+		surveys          []model.Survey
+		surveysResponses []model.SurveyResponse
+		surveysErr       error
+		responsesErr     error
+	)
+
+	// Create a WaitGroup to wait for goroutines to finish
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// Fetch surveys asynchronously
+	go func() {
+		defer wg.Done()
+		surveys, surveysErr = a.app.storage.GetSurveysLight(orgID, appID, userID)
+	}()
+
+	// Fetch survey responses asynchronously
+	go func() {
+		defer wg.Done()
+		surveysResponses, responsesErr = a.app.storage.GetSurveyResponses(&orgID, &appID, userID, nil, nil, nil, nil, nil, nil)
+	}()
+
+	// Wait for both goroutines to complete
+	wg.Wait()
+
+	// Check for errors from either function
+	if surveysErr != nil {
+		return nil, surveysErr
+	}
+
+	if responsesErr != nil {
+		return nil, responsesErr
+	}
+
+	// If surveys or surveyResponses are nil, initialize them to nil (already nil by default in Go)
+	userData := model.UserData{
+		SurveyUserData:         &surveys,
+		SurveyResponseUserData: &surveysResponses,
+	}
+
+	return &userData, nil
 }
 
 // newAppShared creates new appShared

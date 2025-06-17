@@ -420,9 +420,10 @@ func (a appClient) GetLeaderboards(orgID string, appID string, userID string) ([
 // CreateLeaderboard creates a new leaderboard
 func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID string) (*model.Leaderboard, error) {
 	leaderboard.ID = uuid.NewString()
-	leaderboard.IsAdmin = true
 
-	return a.app.storage.CreateLeaderboard(leaderboard)
+	leaderboardEntry := a.createLeaderboardEntry(leaderboard.ID, leaderboard.OrgID, leaderboard.AppID, userID, true)
+
+	return a.app.storage.CreateLeaderboardAndEntry(leaderboard, leaderboardEntry)
 }
 
 // UpdateLeaderboard updates an existing leaderboard
@@ -448,16 +449,19 @@ func (a appClient) DeleteLeaderboard(leaderboardID string, orgID string, appID s
 }
 
 func (a appClient) JoinLeaderboard(leaderboardID string, orgID string, appID string, userID string) error {
-	leaderboardEntry := model.LeaderboardEntry{
+	return a.app.storage.CreateLeaderboardEntry(a.createLeaderboardEntry(leaderboardID, orgID, appID, userID, false))
+}
+
+// createLeaderboardEntry creates a model.LeaderboardEntry with the provided parameters
+func (a appClient) createLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string, isAdmin bool) model.LeaderboardEntry {
+	return model.LeaderboardEntry{
 		ID:            uuid.NewString(),
 		LeaderboardID: leaderboardID,
 		OrgID:         orgID,
 		AppID:         appID,
 		UserID:        userID,
-		IsAdmin:       false,
+		IsAdmin:       isAdmin,
 	}
-
-	return a.app.storage.CreateLeaderboardEntry(leaderboardEntry)
 }
 
 func (a appClient) LeaveLeaderboard(leaderboardID string, orgID string, appID string, userID string, leavingUserIDs []string) error {

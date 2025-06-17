@@ -64,12 +64,27 @@ func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string) ([]
 }
 
 // CreateLeaderboard creates a new leaderboard
-func (a *Adapter) CreateLeaderboard(leaderboard model.Leaderboard) (*model.Leaderboard, error) {
-	_, err := a.db.leaderboards.InsertOne(a.context, leaderboard)
+func (a *Adapter) CreateLeaderboardAndEntry(leaderboard model.Leaderboard, leaderboardEntry model.LeaderboardEntry) (*model.Leaderboard, error) {
+	transaction := func(storage interfaces.Storage) error {
+		//1. Create leaderboard
+		_, err := a.db.leaderboards.InsertOne(a.context, leaderboard)
+		if err != nil {
+			return errors.WrapErrorAction(logutils.ActionCreate, model.TypeLeaderboard, nil, err)
+		}
+
+		//2. Create corresponding leaderboard entry
+		_, err = a.db.leaderboardEntries.InsertOne(a.context, leaderboardEntry)
+		if err != nil {
+			return errors.WrapErrorAction(logutils.ActionCreate, model.TypeLeaderboardEntry, nil, err)
+		}
+
+		return nil
+	}
+
+	err := a.PerformTransaction(transaction)
 	if err != nil {
 		return nil, err
 	}
-
 	return &leaderboard, nil
 }
 

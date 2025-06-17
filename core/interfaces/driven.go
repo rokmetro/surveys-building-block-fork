@@ -62,7 +62,7 @@ type Storage interface {
 	UpdateScore(score model.Score) error
 
 	GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error)
-	CreateLeaderboard(leaderboard model.Leaderboard) (*model.Leaderboard, error)
+	CreateLeaderboardAndEntry(leaderboard model.Leaderboard, leaderboardEntry model.LeaderboardEntry) (*model.Leaderboard, error)
 	UpdateLeaderboard(leaderboard model.Leaderboard) error
 	DeleteLeaderboard(leaderboardID string, orgID string, appID string, userID string) error
 

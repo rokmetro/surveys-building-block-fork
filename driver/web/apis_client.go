@@ -742,20 +742,20 @@ func (h ClientAPIsHandler) getLeaderboards(l *logs.Log, r *http.Request, claims 
 }
 
 func (h ClientAPIsHandler) createLeaderboard(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
-	var lb model.Leaderboard
-	err := json.NewDecoder(r.Body).Decode(&lb)
+	var leaderboard model.Leaderboard
+	err := json.NewDecoder(r.Body).Decode(&leaderboard)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDecode, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, true)
 	}
 
-	lb.OrgID = claims.OrgID
-	lb.AppID = claims.AppID
-	createdLb, err := h.app.Client.CreateLeaderboard(lb, claims.Subject)
+	leaderboard.OrgID = claims.OrgID
+	leaderboard.AppID = claims.AppID
+	createdLeaderboard, err := h.app.Client.CreateLeaderboard(leaderboard, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionCreate, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}
 
-	data, err := json.Marshal(createdLb)
+	data, err := json.Marshal(createdLeaderboard)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
 	}

@@ -92,7 +92,7 @@ func (a *Adapter) UpdateLeaderboard(leaderboard model.Leaderboard, userID string
 	return err
 }
 
-// DeleteLeaderboard deletes a leaderboard by ID alnog with corresponding leaderboard entries
+// DeleteLeaderboard deletes a leaderboard by ID along with corresponding leaderboard entries
 func (a *Adapter) DeleteLeaderboard(leaderboardID, orgID, appID, userID string) error {
 	transaction := func(storage interfaces.Storage) error {
 		//1. Delete leaderboard

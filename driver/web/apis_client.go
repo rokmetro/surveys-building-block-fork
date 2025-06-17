@@ -742,20 +742,20 @@ func (h ClientAPIsHandler) getLeaderboards(l *logs.Log, r *http.Request, claims 
 }
 
 func (h ClientAPIsHandler) createLeaderboard(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
-	var lb model.Leaderboard
-	err := json.NewDecoder(r.Body).Decode(&lb)
+	var leaderboard model.Leaderboard
+	err := json.NewDecoder(r.Body).Decode(&leaderboard)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDecode, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, true)
 	}
 
-	lb.OrgID = claims.OrgID
-	lb.AppID = claims.AppID
-	createdLb, err := h.app.Client.CreateLeaderboard(lb, claims.Subject)
+	leaderboard.OrgID = claims.OrgID
+	leaderboard.AppID = claims.AppID
+	createdLeaderboard, err := h.app.Client.CreateLeaderboard(leaderboard, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionCreate, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}
 
-	data, err := json.Marshal(createdLb)
+	data, err := json.Marshal(createdLeaderboard)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
 	}
@@ -772,7 +772,7 @@ func (h ClientAPIsHandler) updateLeaderboard(l *logs.Log, r *http.Request, claim
 
 	lb.OrgID = claims.OrgID // TODO: figure if we need this
 	lb.AppID = claims.AppID // TODO: figure if we need this
-	err = h.app.Client.UpdateLeaderboard(lb, claims.OrgID, claims.AppID, claims.Subject)
+	err = h.app.Client.UpdateLeaderboard(lb, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionUpdate, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}

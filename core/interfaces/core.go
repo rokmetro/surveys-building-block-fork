@@ -55,7 +55,7 @@ type Client interface {
 	// Leaderboards
 	GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error)
 	CreateLeaderboard(leaderboard model.Leaderboard, userID string) (*model.Leaderboard, error)
-	UpdateLeaderboard(leaderboard model.Leaderboard, orgID string, appID string, userID string) error
+	UpdateLeaderboard(leaderboard model.Leaderboard, userID string) error
 	DeleteLeaderboard(leaderboardID string, orgID string, appID string, userID string) error
 	JoinLeaderboard(leaderboardID string, orgID string, appID string, userID string) error
 	LeaveLeaderboard(leaderboardID string, orgID string, appID string, userID string, leavingUserIDs []string) error

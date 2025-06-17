@@ -47,34 +47,52 @@ func (_m *Storage) CreateAlertContact(alertContact model.AlertContact) (*model.A
 	return r0, r1
 }
 
-// CreateLeaderboard provides a mock function with given fields: leaderboard, userID
-func (_m *Storage) CreateLeaderboard(leaderboard model.Leaderboard, userID string) (*model.Leaderboard, error) {
-	ret := _m.Called(leaderboard, userID)
+// CreateLeaderboardAndEntry provides a mock function with given fields: leaderboard, leaderboardEntry
+func (_m *Storage) CreateLeaderboardAndEntry(leaderboard model.Leaderboard, leaderboardEntry model.LeaderboardEntry) (*model.Leaderboard, error) {
+	ret := _m.Called(leaderboard, leaderboardEntry)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateLeaderboard")
+		panic("no return value specified for CreateLeaderboardAndEntry")
 	}
 
 	var r0 *model.Leaderboard
 	var r1 error
-	if rf, ok := ret.Get(0).(func(model.Leaderboard, string) (*model.Leaderboard, error)); ok {
-		return rf(leaderboard, userID)
+	if rf, ok := ret.Get(0).(func(model.Leaderboard, model.LeaderboardEntry) (*model.Leaderboard, error)); ok {
+		return rf(leaderboard, leaderboardEntry)
 	}
-	if rf, ok := ret.Get(0).(func(model.Leaderboard, string) *model.Leaderboard); ok {
-		r0 = rf(leaderboard, userID)
+	if rf, ok := ret.Get(0).(func(model.Leaderboard, model.LeaderboardEntry) *model.Leaderboard); ok {
+		r0 = rf(leaderboard, leaderboardEntry)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Leaderboard)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(model.Leaderboard, string) error); ok {
-		r1 = rf(leaderboard, userID)
+	if rf, ok := ret.Get(1).(func(model.Leaderboard, model.LeaderboardEntry) error); ok {
+		r1 = rf(leaderboard, leaderboardEntry)
 	} else {
 		r1 = ret.Error(1)
 	}
 
 	return r0, r1
+}
+
+// CreateLeaderboardEntry provides a mock function with given fields: leaderboardEntry
+func (_m *Storage) CreateLeaderboardEntry(leaderboardEntry model.LeaderboardEntry) error {
+	ret := _m.Called(leaderboardEntry)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateLeaderboardEntry")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.LeaderboardEntry) error); ok {
+		r0 = rf(leaderboardEntry)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // CreateScore provides a mock function with given fields: score
@@ -191,9 +209,9 @@ func (_m *Storage) DeleteConfig(id string) error {
 	return r0
 }
 
-// DeleteLeaderboard provides a mock function with given fields: id, orgID, appID, userID
-func (_m *Storage) DeleteLeaderboard(id string, orgID string, appID string, userID string) error {
-	ret := _m.Called(id, orgID, appID, userID)
+// DeleteLeaderboard provides a mock function with given fields: leaderboardID, orgID, appID, userID
+func (_m *Storage) DeleteLeaderboard(leaderboardID string, orgID string, appID string, userID string) error {
+	ret := _m.Called(leaderboardID, orgID, appID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteLeaderboard")
@@ -201,7 +219,25 @@ func (_m *Storage) DeleteLeaderboard(id string, orgID string, appID string, user
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string, string, string, string) error); ok {
-		r0 = rf(id, orgID, appID, userID)
+		r0 = rf(leaderboardID, orgID, appID, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteLeaderboardEntries provides a mock function with given fields: leaderboardID, orgID, appID, leavingUserIDs
+func (_m *Storage) DeleteLeaderboardEntries(leaderboardID string, orgID string, appID string, leavingUserIDs []string) error {
+	ret := _m.Called(leaderboardID, orgID, appID, leavingUserIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteLeaderboardEntries")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, string, []string) error); ok {
+		r0 = rf(leaderboardID, orgID, appID, leavingUserIDs)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -472,6 +508,36 @@ func (_m *Storage) GetAlertContactsByKey(key string, orgID string, appID string)
 
 	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
 		r1 = rf(key, orgID, appID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetLeaderboardEntry provides a mock function with given fields: leaderboardID, orgID, appID, userID
+func (_m *Storage) GetLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string) (*model.LeaderboardEntry, error) {
+	ret := _m.Called(leaderboardID, orgID, appID, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLeaderboardEntry")
+	}
+
+	var r0 *model.LeaderboardEntry
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, string) (*model.LeaderboardEntry, error)); ok {
+		return rf(leaderboardID, orgID, appID, userID)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, string) *model.LeaderboardEntry); ok {
+		r0 = rf(leaderboardID, orgID, appID, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.LeaderboardEntry)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
+		r1 = rf(leaderboardID, orgID, appID, userID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -767,42 +833,6 @@ func (_m *Storage) InsertConfig(config model.Config) error {
 	return r0
 }
 
-// JoinLeaderboard provides a mock function with given fields: id, orgID, appID, userID
-func (_m *Storage) JoinLeaderboard(id string, orgID string, appID string, userID string) error {
-	ret := _m.Called(id, orgID, appID, userID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for JoinLeaderboard")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) error); ok {
-		r0 = rf(id, orgID, appID, userID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// LeaveLeaderboard provides a mock function with given fields: id, orgID, appID, userID
-func (_m *Storage) LeaveLeaderboard(id string, orgID string, appID string, userID string) error {
-	ret := _m.Called(id, orgID, appID, userID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for LeaveLeaderboard")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) error); ok {
-		r0 = rf(id, orgID, appID, userID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // PerformTransaction provides a mock function with given fields: _a0
 func (_m *Storage) PerformTransaction(_a0 func(interfaces.Storage) error) error {
 	ret := _m.Called(_a0)
@@ -862,17 +892,17 @@ func (_m *Storage) UpdateConfig(config model.Config) error {
 	return r0
 }
 
-// UpdateLeaderboard provides a mock function with given fields: leaderboard, userID
-func (_m *Storage) UpdateLeaderboard(leaderboard model.Leaderboard, userID string) error {
-	ret := _m.Called(leaderboard, userID)
+// UpdateLeaderboard provides a mock function with given fields: leaderboard
+func (_m *Storage) UpdateLeaderboard(leaderboard model.Leaderboard) error {
+	ret := _m.Called(leaderboard)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateLeaderboard")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.Leaderboard, string) error); ok {
-		r0 = rf(leaderboard, userID)
+	if rf, ok := ret.Get(0).(func(model.Leaderboard) error); ok {
+		r0 = rf(leaderboard)
 	} else {
 		r0 = ret.Error(0)
 	}

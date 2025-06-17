@@ -300,11 +300,23 @@ func (a appClient) GetTopAndLocalScores(orgID string, appID string, userID strin
 		}
 	}
 
-	// Insert user's score into section with surrounding local scores if user is not in top scores
-	if len(scores) > *limit && userInTopScoresIdx == -1 {
-		localScores := a.insertUserScoreIntoLocalScores(scores[*limit:], userScore, *localLimit)
-		scores = scores[:*limit]
-		scores = append(scores, localScores...)
+	if len(scores) > *limit {
+		if userInTopScoresIdx == -1 {
+			// Insert user's score into section with surrounding local scores if user is not in top scores
+			localScores := a.insertUserScoreIntoLocalScores(scores[*limit:], userScore, *localLimit)
+			scores = scores[:*limit]
+			scores = append(scores, localScores...)
+		} else if userInTopScoresIdx >= *limit-*belowPivotLimit {
+			// If user is in top scores, but close to the bottom, we append scores according to the local and belowPivot limits
+			scoresLength := userInTopScoresIdx + *belowPivotLimit + 1
+			if scoresLength > len(scores) {
+				scoresLength = len(scores)
+			}
+			scores = scores[:scoresLength]
+		} else {
+			// If user is in top scores, but not close to the bottom, we trim the scores to the limit
+			scores = scores[:*limit]
+		}
 	}
 
 	return scores, nil
@@ -462,15 +474,11 @@ func (a appClient) GetLeaderboards(orgID string, appID string, userID string) ([
 
 // CreateLeaderboard creates a new leaderboard
 func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID string) (*model.Leaderboard, error) {
-	leaderboardPtr, err := a.app.storage.CreateLeaderboard(leaderboard, userID)
-	if err != nil {
-		return nil, err
-	}
+	leaderboard.ID = uuid.NewString()
 
-	leaderboardPtr.ID = uuid.NewString()
-	leaderboardPtr.IsAdmin = true
+	leaderboardEntry := a.createLeaderboardEntry(leaderboard.ID, leaderboard.OrgID, leaderboard.AppID, userID, true)
 
-	return a.app.storage.CreateLeaderboard(leaderboard, userID)
+	return a.app.storage.CreateLeaderboardAndEntry(leaderboard, leaderboardEntry)
 }
 
 // UpdateLeaderboard updates an existing leaderboard
@@ -481,7 +489,7 @@ func (a appClient) UpdateLeaderboard(leaderboard model.Leaderboard, userID strin
 		return err
 	}
 
-	return a.app.storage.UpdateLeaderboard(leaderboard, userID)
+	return a.app.storage.UpdateLeaderboard(leaderboard)
 }
 
 // DeleteLeaderboard deletes a leaderboard by ID
@@ -496,21 +504,19 @@ func (a appClient) DeleteLeaderboard(leaderboardID string, orgID string, appID s
 }
 
 func (a appClient) JoinLeaderboard(leaderboardID string, orgID string, appID string, userID string) error {
-	leaderboardEntry := model.LeaderboardEntry{
+	return a.app.storage.CreateLeaderboardEntry(a.createLeaderboardEntry(leaderboardID, orgID, appID, userID, false))
+}
+
+// createLeaderboardEntry creates a model.LeaderboardEntry with the provided parameters
+func (a appClient) createLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string, isAdmin bool) model.LeaderboardEntry {
+	return model.LeaderboardEntry{
 		ID:            uuid.NewString(),
 		LeaderboardID: leaderboardID,
 		OrgID:         orgID,
 		AppID:         appID,
 		UserID:        userID,
-		IsAdmin:       false,
+		IsAdmin:       isAdmin,
 	}
-
-	return a.app.storage.CreateLeaderboardEntry(leaderboardEntry)
-
-	//TODO: add join leaderboard API for non-admins to use (link to location in client that calls this API when sharing, may be completed by #28)
-	//TODO: add notifications
-	// User joined leaderboard admin notification: find leaderboard, send notification to admins containing the leaderboard and joining user's info
-	// User joined leaderboard non-admin notification: find leaderboard, send notification to all non-admin users containing the leaderboard and joining user's info
 }
 
 func (a appClient) LeaveLeaderboard(leaderboardID string, orgID string, appID string, userID string, leavingUserIDs []string) error {

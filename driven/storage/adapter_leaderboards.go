@@ -63,7 +63,7 @@ func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string) ([]
 	return leaderboards, err
 }
 
-// CreateLeaderboard creates a new leaderboard
+// CreateLeaderboardAndEntry creates a new leaderboard and corresponding leaderboard entry
 func (a *Adapter) CreateLeaderboardAndEntry(leaderboard model.Leaderboard, leaderboardEntry model.LeaderboardEntry) (*model.Leaderboard, error) {
 	transaction := func(storage interfaces.Storage) error {
 		//1. Create leaderboard

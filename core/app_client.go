@@ -223,7 +223,11 @@ func (a appClient) GetScore(orgID string, appID string, userID string, externalP
 
 // GetScores returns scores in descending order and removes scores with empty external IDs
 func (a appClient) GetScores(orgID string, appID string, leaderboardIDs []string, userOnly *bool, limit *int, offset *int) ([]model.Score, error) {
-	return a.app.storage.GetScores(orgID, appID, leaderboardIDs, userOnly, limit, offset)
+	if leaderboardIDs != nil && len(leaderboardIDs) > 0 {
+		return a.app.storage.GetScoresFromLeaderboards(orgID, appID, leaderboardIDs, userOnly, limit, offset)
+	}
+
+	return a.app.storage.GetScores(orgID, appID, limit, offset)
 }
 
 // GetScoresWithPivot retrieves scores closest to the user's score

@@ -475,18 +475,30 @@ func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID strin
 
 // UpdateLeaderboard updates an existing leaderboard
 func (a appClient) UpdateLeaderboard(leaderboard model.Leaderboard, userID string) error {
+	// Check if user is an admin of the leaderboard
+	err := a.requireLeaderboardAdmin(leaderboard.ID, leaderboard.OrgID, leaderboard.AppID, userID)
+	if err != nil {
+		return err
+	}
+
 	return a.app.storage.UpdateLeaderboard(leaderboard, userID)
 }
 
 // DeleteLeaderboard deletes a leaderboard by ID
-func (a appClient) DeleteLeaderboard(id string, orgID string, appID string, userID string) error {
-	return a.app.storage.DeleteLeaderboard(id, orgID, appID, userID)
+func (a appClient) DeleteLeaderboard(leaderboardID string, orgID string, appID string, userID string) error {
+	// Check if user is an admin of the leaderboard
+	err := a.requireLeaderboardAdmin(leaderboardID, orgID, appID, userID)
+	if err != nil {
+		return err
+	}
+
+	return a.app.storage.DeleteLeaderboard(leaderboardID, orgID, appID, userID)
 }
 
-func (a appClient) JoinLeaderboard(id string, orgID string, appID string, userID string) error {
+func (a appClient) JoinLeaderboard(leaderboardID string, orgID string, appID string, userID string) error {
 	leaderboardEntry := model.LeaderboardEntry{
 		ID:            uuid.NewString(),
-		LeaderboardID: id,
+		LeaderboardID: leaderboardID,
 		OrgID:         orgID,
 		AppID:         appID,
 		UserID:        userID,
@@ -502,7 +514,31 @@ func (a appClient) JoinLeaderboard(id string, orgID string, appID string, userID
 }
 
 func (a appClient) LeaveLeaderboard(leaderboardID string, orgID string, appID string, userID string, leavingUserIDs []string) error {
-	return a.app.storage.DeleteLeaderboardEntries(leaderboardID, orgID, appID, userID, leavingUserIDs)
+	if len(leavingUserIDs) == 0 {
+		// If leavingUserIDs aren't provided, remove the current user from the leaderboard
+		leavingUserIDs = append(leavingUserIDs, userID)
+	} else {
+		// If leavingUserIDs are provided, remove specified users if the current user is an admin
+		err := a.requireLeaderboardAdmin(leaderboardID, orgID, appID, userID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return a.app.storage.DeleteLeaderboardEntries(leaderboardID, orgID, appID, leavingUserIDs)
+}
+
+func (a appClient) requireLeaderboardAdmin(leaderboardID string, orgID string, appID string, userID string) error {
+	leaderboardEntry, err := a.app.storage.GetLeaderboardEntry(leaderboardID, orgID, appID, userID)
+	if err != nil {
+		return errors.WrapErrorData(logutils.StatusMissing, model.TypeLeaderboardEntry, &logutils.FieldArgs{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID, "user_id": userID}, err)
+	}
+
+	if !leaderboardEntry.IsAdmin {
+		return errors.Newf("User %s is not an admin of leaderboard %s", userID, leaderboardID)
+	}
+
+	return nil
 }
 
 // newAppClient creates new appClient

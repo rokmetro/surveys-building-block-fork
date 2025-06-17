@@ -764,15 +764,15 @@ func (h ClientAPIsHandler) createLeaderboard(l *logs.Log, r *http.Request, claim
 }
 
 func (h ClientAPIsHandler) updateLeaderboard(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
-	var lb model.Leaderboard
-	err := json.NewDecoder(r.Body).Decode(&lb)
+	var leaderboard model.Leaderboard
+	err := json.NewDecoder(r.Body).Decode(&leaderboard)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionDecode, logutils.TypeRequestBody, nil, err, http.StatusBadRequest, true)
 	}
 
-	lb.OrgID = claims.OrgID // TODO: figure if we need this
-	lb.AppID = claims.AppID // TODO: figure if we need this
-	err = h.app.Client.UpdateLeaderboard(lb, claims.Subject)
+	leaderboard.OrgID = claims.OrgID
+	leaderboard.AppID = claims.AppID
+	err = h.app.Client.UpdateLeaderboard(leaderboard, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionUpdate, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}

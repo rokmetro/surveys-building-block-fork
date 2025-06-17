@@ -56,8 +56,9 @@ type Storage interface {
 	DeleteAlertContact(id string, orgID string, appID string) error
 
 	GetScore(orgID string, appID string, userID string) (*model.Score, error)
-	GetScores(orgID string, appID string, leaderboardIDs []string, userOnly *bool, limit *int, offset *int) ([]model.Score, error)
+	GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
 	GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int) ([]model.Score, error)
+	GetScoresFromLeaderboards(orgID string, appID string, leaderboardIDs []string, userID *bool, limit *int, offset *int) ([]model.Score, error)
 	CreateScore(score model.Score) error
 	UpdateScore(score model.Score) error
 

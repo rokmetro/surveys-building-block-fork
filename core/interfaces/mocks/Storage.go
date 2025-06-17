@@ -605,9 +605,9 @@ func (_m *Storage) GetScore(orgID string, appID string, userID string) (*model.S
 	return r0, r1
 }
 
-// GetScores provides a mock function with given fields: orgID, appID, leaderboardIDs, userOnly, limit, offset
-func (_m *Storage) GetScores(orgID string, appID string, leaderboardIDs []string, userOnly *bool, limit *int, offset *int) ([]model.Score, error) {
-	ret := _m.Called(orgID, appID, leaderboardIDs, userOnly, limit, offset)
+// GetScores provides a mock function with given fields: orgID, appID, limit, offset
+func (_m *Storage) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
+	ret := _m.Called(orgID, appID, limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetScores")
@@ -615,11 +615,41 @@ func (_m *Storage) GetScores(orgID string, appID string, leaderboardIDs []string
 
 	var r0 []model.Score
 	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, *int, *int) ([]model.Score, error)); ok {
+		return rf(orgID, appID, limit, offset)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, *int, *int) []model.Score); ok {
+		r0 = rf(orgID, appID, limit, offset)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.Score)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, *int, *int) error); ok {
+		r1 = rf(orgID, appID, limit, offset)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetScoresFromLeaderboards provides a mock function with given fields: orgID, appID, leaderboardIDs, userID, limit, offset
+func (_m *Storage) GetScoresFromLeaderboards(orgID string, appID string, leaderboardIDs []string, userID *bool, limit *int, offset *int) ([]model.Score, error) {
+	ret := _m.Called(orgID, appID, leaderboardIDs, userID, limit, offset)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetScoresFromLeaderboards")
+	}
+
+	var r0 []model.Score
+	var r1 error
 	if rf, ok := ret.Get(0).(func(string, string, []string, *bool, *int, *int) ([]model.Score, error)); ok {
-		return rf(orgID, appID, leaderboardIDs, userOnly, limit, offset)
+		return rf(orgID, appID, leaderboardIDs, userID, limit, offset)
 	}
 	if rf, ok := ret.Get(0).(func(string, string, []string, *bool, *int, *int) []model.Score); ok {
-		r0 = rf(orgID, appID, leaderboardIDs, userOnly, limit, offset)
+		r0 = rf(orgID, appID, leaderboardIDs, userID, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Score)
@@ -627,7 +657,7 @@ func (_m *Storage) GetScores(orgID string, appID string, leaderboardIDs []string
 	}
 
 	if rf, ok := ret.Get(1).(func(string, string, []string, *bool, *int, *int) error); ok {
-		r1 = rf(orgID, appID, leaderboardIDs, userOnly, limit, offset)
+		r1 = rf(orgID, appID, leaderboardIDs, userID, limit, offset)
 	} else {
 		r1 = ret.Error(1)
 	}

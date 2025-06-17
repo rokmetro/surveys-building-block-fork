@@ -47,17 +47,16 @@ func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Sc
 }
 
 // GetScores returns a list of scores in descending order
-func (a *Adapter) GetScores(orgID string, appID string, leaderboardIDs []string, userOnly *bool, limit *int, offset *int) ([]model.Score, error) {
+func (a *Adapter) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
 	filter := bson.M{
 		"org_id": orgID,
 		"app_id": appID,
 		"external_profile_id": bson.M{
 			"$ne": "",
 		},
-		// TODO: see if this is needed
-		// "score": bson.M{
-		// 	"$gt": 0,
-		// },
+		"score": bson.M{
+			"$gt": 0,
+		},
 	}
 
 	pipeline := mongo.Pipeline{
@@ -80,6 +79,95 @@ func (a *Adapter) GetScores(orgID string, appID string, leaderboardIDs []string,
 
 	var scores []model.Score
 	err := a.db.scores.Aggregate(a.context, pipeline, &scores, nil)
+
+	return scores, err
+}
+
+// GetScoresFromLeaderboards retrieves scores from specified leaderboards
+func (a *Adapter) GetScoresFromLeaderboards(orgID string, appID string, leaderboardIDs []string, userID *bool, limit *int, offset *int) ([]model.Score, error) {
+	leaderboardEntryFilter := bson.M{
+		"org_id": orgID,
+		"app_id": appID,
+	}
+	if leaderboardIDs != nil && len(leaderboardIDs) > 0 {
+		leaderboardEntryFilter["leaderboard_id"] = bson.M{
+			"$in": leaderboardIDs,
+		}
+	}
+
+	leaderboardEntryMatch := bson.D{{
+		Key: "$match", Value: leaderboardEntryFilter,
+	}}
+
+	setWindow := bson.D{{
+		Key: "$setWindowFields", Value: bson.D{
+			{Key: "partitionBy", Value: "$leaderboard_id"},
+			{Key: "sortBy", Value: bson.M{"score": -1}},
+			{Key: "output", Value: bson.M{
+				"rank": bson.M{"$denseRank": bson.M{}},
+			}},
+		},
+	}}
+
+	filterByUserID := bson.D{}
+	if userID != nil {
+		filterByUserID = append(filterByUserID,
+			bson.E{
+				Key: "$match",
+				Value: bson.D{
+					{Key: "user_id", Value: *userID},
+				},
+			},
+		)
+	}
+
+	groupStage := bson.D{{
+		Key: "$group", Value: bson.D{
+			{Key: "_id", Value: "$user_id"},
+			{Key: "scores", Value: bson.D{
+				{Key: "$push", Value: bson.M{
+					"_id":                       "$_id",
+					"org_id":                    "$org_id",
+					"app_id":                    "$app_id",
+					"user_id":                   "$user_id",
+					"survey_type":               "$survey_type",
+					"external_profile_id":       "$external_profile_id",
+					"score":                     "$score",
+					"response_count":            "$response_count",
+					"prev_survey_response_date": "$prev_survey_response_date",
+					"current_streak":            "$current_streak",
+					"streak_multiplier":         "$streak_multiplier",
+					"answer_count":              "$answer_count",
+					"correct_answer_count":      "$correct_answer_count",
+					"rank":                      "$rank",
+				}},
+			}},
+		}},
+	}
+
+	projectStage := bson.D{{
+		Key: "$project", Value: bson.D{
+			{Key: "user_id", Value: "$_id"},
+			{Key: "scores", Value: 1},
+			{Key: "_id", Value: 0},
+		},
+	}}
+
+	skipStage := bson.D{{Key: "$skip", Value: offset}}
+	limitStage := bson.D{{Key: "$limit", Value: limit}}
+
+	pipeline := mongo.Pipeline{
+		leaderboardEntryMatch,
+		setWindow,
+		filterByUserID,
+		groupStage,
+		projectStage,
+		skipStage,
+		limitStage,
+	}
+
+	var scores []model.Score
+	err := a.db.leaderboardEntries.Aggregate(a.context, pipeline, &scores, nil)
 
 	return scores, err
 }

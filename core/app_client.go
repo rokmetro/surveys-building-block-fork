@@ -245,11 +245,23 @@ func (a appClient) GetTopAndLocalScores(orgID string, appID string, userID strin
 		}
 	}
 
-	// Insert user's score into section with surrounding local scores if user is not in top scores
-	if len(scores) > *limit && userInTopScoresIdx == -1 {
-		localScores := a.insertUserScoreIntoLocalScores(scores[*limit:], userScore, *localLimit)
-		scores = scores[:*limit]
-		scores = append(scores, localScores...)
+	if len(scores) > *limit {
+		if userInTopScoresIdx == -1 {
+			// Insert user's score into section with surrounding local scores if user is not in top scores
+			localScores := a.insertUserScoreIntoLocalScores(scores[*limit:], userScore, *localLimit)
+			scores = scores[:*limit]
+			scores = append(scores, localScores...)
+		} else if userInTopScoresIdx >= *limit-*belowPivotLimit {
+			// If user is in top scores, but close to the bottom, we append scores according to the local and belowPivot limits
+			scoresLength := userInTopScoresIdx + *belowPivotLimit + 1
+			if scoresLength > len(scores) {
+				scoresLength = len(scores)
+			}
+			scores = scores[:scoresLength]
+		} else {
+			// If user is in top scores, but not close to the bottom, we trim the scores to the limit
+			scores = scores[:*limit]
+		}
 	}
 
 	return scores, nil

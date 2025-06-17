@@ -472,8 +472,8 @@ func (a appClient) LeaveLeaderboard(leaderboardID string, orgID string, appID st
 	if len(leavingUserIDs) == 0 {
 		// If leavingUserIDs aren't provided, remove the current user from the leaderboard
 		leavingUserIDs = append(leavingUserIDs, userID)
-	} else {
-		// If leavingUserIDs are provided, remove specified users if the current user is an admin
+	} else if !(len(leavingUserIDs) == 1 && leavingUserIDs[0] == userID) {
+		// Only remove specified users other than the user if the current user is an admin
 		err := a.requireLeaderboardAdmin(leaderboardID, orgID, appID, userID)
 		if err != nil {
 			return err

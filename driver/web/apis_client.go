@@ -396,7 +396,7 @@ func (h ClientAPIsHandler) createSurveyResponse(l *logs.Log, r *http.Request, cl
 	item.AppID = claims.AppID
 	item.CreatorID = claims.Subject
 
-	createdItem, err := h.app.Client.CreateSurveyResponse(model.SurveyResponse{UserID: claims.Subject, AppID: claims.AppID, OrgID: claims.OrgID, Survey: item}, claims.ExternalIDs)
+	createdItem, err := h.app.Client.CreateSurveyResponse(model.SurveyResponse{UserID: claims.Subject, AppID: claims.AppID, OrgID: claims.OrgID, Survey: item}, claims.ExternalIDs, claims.Username)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionCreate, model.TypeSurveyResponse, nil, err, http.StatusInternalServerError, true)
 	}
@@ -802,7 +802,7 @@ func (h ClientAPIsHandler) joinLeaderboard(l *logs.Log, r *http.Request, claims 
 		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
 	}
 
-	err := h.app.Client.JoinLeaderboard(id, claims.OrgID, claims.AppID, claims.Subject)
+	err := h.app.Client.JoinLeaderboard(id, claims.OrgID, claims.AppID, claims.Subject, claims.Username)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionInsert, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}

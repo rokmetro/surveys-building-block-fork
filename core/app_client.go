@@ -115,7 +115,7 @@ func (a appClient) GetAllSurveyResponses(orgID string, appID string, userID stri
 }
 
 // CreateSurveyResponse creates a new survey response
-func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, externalIDs map[string]string) (*model.SurveyResponse, error) {
+func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, externalIDs map[string]string, username string) (*model.SurveyResponse, error) {
 	surveyResponse.ID = uuid.NewString()
 	surveyResponse.DateCreated = time.Now().UTC()
 	surveyResponse.DateUpdated = nil
@@ -171,7 +171,7 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 		// User's score eclipsed notification
 		// get all leaderboards for this user
 		//TODO: implement as aggregation pipeline?
-		leaderboards, err := a.app.storage.GetLeaderboards(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
+		leaderboards, err := a.app.storage.GetLeaderboards(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, nil)
 		if err != nil {
 			a.app.logger.WarnWithFields("failed to find leaderboards", logutils.Fields{"user_id": surveyResponse.UserID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
 		}
@@ -190,9 +190,7 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 					if userScore.Score >= oldScore.Score && userScore.Score < score.Score {
 						// notify each user in each leaderboard that has userScore.Score >= oldScore.Score and < score.Score (any other conditions?)
 
-						//TODO: how to get user's username? ExternalProfileID is not human-readable (string of digits) - Use username field in token claims
-						body := fmt.Sprintf("%s is Now the Runway Genius of your group. Can you reclaim the top spot?", userScore.ExternalProfileID)
-						// body := fmt.Sprintf("%s is Now the Runway Genius of your %s leaderboard. Can you reclaim the top spot?", userScore.ExternalProfileID, lb.Name)
+						body := fmt.Sprintf("@%s is Now the Runway Genius of your group %s. Can you reclaim the top spot?", username, lb.Name)
 						data := map[string]string{
 							"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, lb.ID),
 						}
@@ -469,7 +467,7 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 
 // GetLeaderboards gets all leaderboards for a user
 func (a appClient) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
-	return a.app.storage.GetLeaderboards(orgID, appID, userID)
+	return a.app.storage.GetLeaderboards(orgID, appID, userID, nil)
 }
 
 // CreateLeaderboard creates a new leaderboard
@@ -503,8 +501,57 @@ func (a appClient) DeleteLeaderboard(leaderboardID string, orgID string, appID s
 	return a.app.storage.DeleteLeaderboard(leaderboardID, orgID, appID, userID)
 }
 
-func (a appClient) JoinLeaderboard(leaderboardID string, orgID string, appID string, userID string) error {
-	return a.app.storage.CreateLeaderboardEntry(a.createLeaderboardEntry(leaderboardID, orgID, appID, userID, false))
+func (a appClient) JoinLeaderboard(leaderboardID string, orgID string, appID string, userID string, username string) error {
+	lbEntry := a.createLeaderboardEntry(leaderboardID, orgID, appID, userID, false)
+	err := a.app.storage.CreateLeaderboardEntry(lbEntry)
+	if err != nil {
+		return errors.WrapErrorAction(logutils.ActionCreate, model.TypeLeaderboardEntry, nil, err)
+	}
+
+	// send notifications to users already in leaderboard
+	leaderboards, err := a.app.storage.GetLeaderboards(orgID, appID, userID, []string{leaderboardID})
+	if err != nil {
+		a.app.logger.Warnf("error getting leaderboard: %v", err)
+		return nil
+	}
+	if len(leaderboards) == 0 {
+		a.app.logger.WarnWithFields("missing leaderboard", logutils.Fields{"id": leaderboardID, "user_id": userID, "app_id": appID, "org_id": orgID})
+		return nil
+	}
+	leaderboard := leaderboards[0]
+
+	leaderboardEntries, err := a.app.storage.GetLeaderboardEntries(leaderboardID, orgID, appID, nil)
+	if err != nil {
+		a.app.logger.WarnWithFields("error getting leaderboard entries", logutils.Fields{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID})
+		return nil
+	}
+	for _, entry := range leaderboardEntries {
+		if entry.UserID != userID {
+			body := ""
+			if entry.IsAdmin {
+				body = fmt.Sprintf("@%s accepted your invite and joined the %s leaderboard.", username, leaderboard.Name)
+			} else {
+				body = fmt.Sprintf("@%s just joined the %s leaderboard. Want to see how they stack up?", username, leaderboard.Name)
+			}
+
+			data := map[string]string{
+				"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, leaderboardID),
+			}
+
+			message := model.NotificationMessage{
+				OrgID: orgID,
+				AppID: appID,
+
+				Subject:    notifications.SubjectVogue,
+				Body:       body,
+				Data:       data,
+				Recipients: []model.NotificationMessageRecipient{{UserID: entry.UserID}},
+			}
+			a.app.notifications.SendNotification(message)
+		}
+	}
+
+	return nil
 }
 
 // createLeaderboardEntry creates a model.LeaderboardEntry with the provided parameters
@@ -535,12 +582,15 @@ func (a appClient) LeaveLeaderboard(leaderboardID string, orgID string, appID st
 }
 
 func (a appClient) requireLeaderboardAdmin(leaderboardID string, orgID string, appID string, userID string) error {
-	leaderboardEntry, err := a.app.storage.GetLeaderboardEntry(leaderboardID, orgID, appID, userID)
+	leaderboardEntries, err := a.app.storage.GetLeaderboardEntries(leaderboardID, orgID, appID, &userID)
 	if err != nil {
+		return errors.WrapErrorAction(logutils.ActionGet, model.TypeLeaderboardEntry, &logutils.FieldArgs{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID, "user_id": userID}, err)
+	}
+	if len(leaderboardEntries) == 0 {
 		return errors.WrapErrorData(logutils.StatusMissing, model.TypeLeaderboardEntry, &logutils.FieldArgs{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID, "user_id": userID}, err)
 	}
 
-	if !leaderboardEntry.IsAdmin {
+	if !leaderboardEntries[0].IsAdmin {
 		return errors.Newf("User %s is not an admin of leaderboard %s", userID, leaderboardID)
 	}
 

@@ -17,6 +17,7 @@ package storage
 import (
 	"application/core/interfaces"
 	"application/core/model"
+
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -136,22 +137,25 @@ func (a *Adapter) DeleteLeaderboard(leaderboardID, orgID, appID, userID string) 
 	return a.PerformTransaction(transaction)
 }
 
-// GetLeaderboardEntry retrieves a leaderboard entry
-func (a *Adapter) GetLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string) (*model.LeaderboardEntry, error) {
+// GetLeaderboardEntries retrieves a list of leaderboard entry
+func (a *Adapter) GetLeaderboardEntries(leaderboardID string, orgID string, appID string, userID *string) ([]model.LeaderboardEntry, error) {
 	filter := bson.M{
 		"leaderboard_id": leaderboardID,
 		"org_id":         orgID,
 		"app_id":         appID,
-		"user_id":        userID,
 	}
 
-	var entry model.LeaderboardEntry
-	err := a.db.leaderboardEntries.FindOne(a.context, filter, &entry, nil)
+	if userID != nil && *userID != "" {
+		filter["user_id"] = *userID
+	}
+
+	var results []model.LeaderboardEntry
+	err := a.db.leaderboardEntries.Find(a.context, filter, &results, nil)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeSurvey, filterArgs(filter), err)
 	}
 
-	return &entry, nil
+	return results, nil
 }
 
 // CreateLeaderboardEntry creates a new leaderboardEntry object

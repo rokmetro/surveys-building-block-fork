@@ -515,28 +515,28 @@ func (_m *Storage) GetAlertContactsByKey(key string, orgID string, appID string)
 	return r0, r1
 }
 
-// GetLeaderboardEntry provides a mock function with given fields: leaderboardID, orgID, appID, userID
-func (_m *Storage) GetLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string) (*model.LeaderboardEntry, error) {
+// GetLeaderboardEntries provides a mock function with given fields: leaderboardID, orgID, appID, userID
+func (_m *Storage) GetLeaderboardEntries(leaderboardID string, orgID string, appID string, userID *string) ([]model.LeaderboardEntry, error) {
 	ret := _m.Called(leaderboardID, orgID, appID, userID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetLeaderboardEntry")
+		panic("no return value specified for GetLeaderboardEntries")
 	}
 
-	var r0 *model.LeaderboardEntry
+	var r0 []model.LeaderboardEntry
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) (*model.LeaderboardEntry, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, *string) ([]model.LeaderboardEntry, error)); ok {
 		return rf(leaderboardID, orgID, appID, userID)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) *model.LeaderboardEntry); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, *string) []model.LeaderboardEntry); ok {
 		r0 = rf(leaderboardID, orgID, appID, userID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.LeaderboardEntry)
+			r0 = ret.Get(0).([]model.LeaderboardEntry)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
+	if rf, ok := ret.Get(1).(func(string, string, string, *string) error); ok {
 		r1 = rf(leaderboardID, orgID, appID, userID)
 	} else {
 		r1 = ret.Error(1)
@@ -545,9 +545,9 @@ func (_m *Storage) GetLeaderboardEntry(leaderboardID string, orgID string, appID
 	return r0, r1
 }
 
-// GetLeaderboards provides a mock function with given fields: orgID, appID, userID
-func (_m *Storage) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
-	ret := _m.Called(orgID, appID, userID)
+// GetLeaderboards provides a mock function with given fields: orgID, appID, userID, ids
+func (_m *Storage) GetLeaderboards(orgID string, appID string, userID string, ids []string) ([]model.Leaderboard, error) {
+	ret := _m.Called(orgID, appID, userID, ids)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetLeaderboards")
@@ -555,19 +555,19 @@ func (_m *Storage) GetLeaderboards(orgID string, appID string, userID string) ([
 
 	var r0 []model.Leaderboard
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) ([]model.Leaderboard, error)); ok {
-		return rf(orgID, appID, userID)
+	if rf, ok := ret.Get(0).(func(string, string, string, []string) ([]model.Leaderboard, error)); ok {
+		return rf(orgID, appID, userID, ids)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) []model.Leaderboard); ok {
-		r0 = rf(orgID, appID, userID)
+	if rf, ok := ret.Get(0).(func(string, string, string, []string) []model.Leaderboard); ok {
+		r0 = rf(orgID, appID, userID, ids)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Leaderboard)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(orgID, appID, userID)
+	if rf, ok := ret.Get(1).(func(string, string, string, []string) error); ok {
+		r1 = rf(orgID, appID, userID, ids)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -176,10 +176,9 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 			a.app.logger.WarnWithFields("failed to find leaderboards", logutils.Fields{"user_id": surveyResponse.UserID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
 		}
 
-		userOnly := false
 		for i := range leaderboards {
 			lb := leaderboards[i]
-			scores, err := a.app.storage.GetScores(surveyResponse.OrgID, surveyResponse.AppID, []string{lb.ID}, &userOnly, nil, nil)
+			scores, err := a.app.storage.GetScoresFromLeaderboards(surveyResponse.OrgID, surveyResponse.AppID, []string{lb.ID}, nil, nil, nil)
 			if err != nil {
 				a.app.logger.WarnWithFields("failed to find scores for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
 			}

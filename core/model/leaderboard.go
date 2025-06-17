@@ -15,6 +15,8 @@
 package model
 
 import (
+	"time"
+
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
@@ -33,6 +35,8 @@ type Leaderboard struct {
 	AppID   string `json:"app_id" bson:"app_id"`     // application ID
 	Name    string `json:"name" bson:"name"`         // required "name"
 	IsAdmin bool   `json:"is_admin" bson:"is_admin"` // indicates if the user is an admin of the leaderboard
+
+	LastQuizTime *time.Time `json:"last_quiz_time" bson:"last_quiz_time"`
 }
 
 // LeaderboardEntry represents an entry in a leaderboard.

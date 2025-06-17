@@ -26,11 +26,14 @@ import (
 )
 
 // GetLeaderboards gets all leaderboards for a user
-func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
+func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string, ids []string) ([]model.Leaderboard, error) {
 	leaderboardEntryFilter := bson.M{
 		"org_id":  orgID,
 		"app_id":  appID,
 		"user_id": userID,
+	}
+	if len(ids) > 0 {
+		leaderboardEntryFilter["_id"] = bson.M{"$in": ids}
 	}
 
 	pipeline := mongo.Pipeline{

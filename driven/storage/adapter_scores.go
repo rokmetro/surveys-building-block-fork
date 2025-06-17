@@ -47,32 +47,18 @@ func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Sc
 }
 
 // GetScores returns a list of scores in descending order
-func (a *Adapter) GetScores(orgID string, appID string, leaderboardID *string, limit *int, offset *int) ([]model.Score, error) {
+func (a *Adapter) GetScores(orgID string, appID string, leaderboardIDs []string, userOnly *bool, limit *int, offset *int) ([]model.Score, error) {
 	filter := bson.M{
 		"org_id": orgID,
 		"app_id": appID,
 		"external_profile_id": bson.M{
 			"$ne": "",
 		},
-		"score": bson.M{
-			"$gt": 0,
-		},
+		// TODO: see if this is needed
+		// "score": bson.M{
+		// 	"$gt": 0,
+		// },
 	}
-
-	// // If leaderboard ID is provided, get the leaderboard and filter scores by its members
-	// if leaderboardID != nil && *leaderboardID != "" {
-	// 	var leaderboard model.Leaderboard
-	// 	err := a.db.leaderboards.FindOne(a.context, bson.M{"_id": *leaderboardID}, &leaderboard, nil)
-	// 	if err != nil {
-	// 		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeLeaderboard, nil, err)
-	// 	}
-
-	// 	// Combine admin and regular user IDs
-	// 	userIDs := append(leaderboard.AdminUserIDs, leaderboard.UserIDs...)
-	// 	if len(userIDs) > 0 {
-	// 		filter["user_id"] = bson.M{"$in": userIDs}
-	// 	}
-	// }
 
 	pipeline := mongo.Pipeline{
 		bson.D{{Key: "$match", Value: filter}},

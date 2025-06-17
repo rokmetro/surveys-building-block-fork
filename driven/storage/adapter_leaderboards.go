@@ -17,13 +17,9 @@ package storage
 import (
 	"application/core/interfaces"
 	"application/core/model"
-	"application/driven/storage"
-	"context"
-
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -36,35 +32,36 @@ func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string) ([]
 	}
 
 	pipeline := mongo.Pipeline{
-        // 1) filter leadboard entries for this user
-        bson.D{{Key: "$match", Value: leaderboardEntryFilter}},
-        // 2) join each entry to its leaderboard
-        bson.D{{Key: "$lookup", Value: bson.D{
-            {Key: "from",         Value: "leaderboards"},
-            {Key: "localField",   Value: "leaderboard_id"},
-            {Key: "foreignField", Value: "_id"},
-            {Key: "as",           Value: "leaderboard"},
-        }}},
-        // 3) unwind the resulting array so we get a single doc per leaderboard
-        bson.D{{Key: "$unwind", Value: "$leaderboard"}},
-        // 4) replace the root with a merged object:
-        //   - all fields from the leaderboard
-        //   - plus an "is_admin" field from the entry
-        bson.D{{Key: "$replaceRoot", Value: bson.D{
-            {Key: "newRoot", Value: bson.D{
-                {Key: "$mergeObjects", Value: bson.A{
-                    "$leaderboard",
-                    bson.D{{Key: "is_admin", Value: "$is_admin"}},
-                }},
-            }},
-        }}},
-    }
+		// 1) filter leadboard entries for this user
+		bson.D{{Key: "$match", Value: leaderboardEntryFilter}},
+		// 2) join each entry to its leaderboard
+		bson.D{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "leaderboards"},
+			{Key: "localField", Value: "leaderboard_id"},
+			{Key: "foreignField", Value: "_id"},
+			{Key: "as", Value: "leaderboard"},
+		}}},
+		// 3) unwind the resulting array so we get a single doc per leaderboard
+		bson.D{{Key: "$unwind", Value: "$leaderboard"}},
+		// 4) replace the root with a merged object:
+		//   - all fields from the leaderboard
+		//   - plus an "is_admin" field from the entry
+		bson.D{{Key: "$replaceRoot", Value: bson.D{
+			{Key: "newRoot", Value: bson.D{
+				{Key: "$mergeObjects", Value: bson.A{
+					"$leaderboard",
+					bson.D{{Key: "is_admin", Value: "$is_admin"}},
+				}},
+			}},
+		}}},
+	}
 
 	var leaderboards []model.Leaderboard
 	err := a.db.leaderboards.Aggregate(a.context, pipeline, &leaderboards, nil)
 
 	return leaderboards, err
 }
+
 // CreateLeaderboard creates a new leaderboard
 func (a *Adapter) CreateLeaderboard(leaderboard model.Leaderboard) (*model.Leaderboard, error) {
 	_, err := a.db.leaderboards.InsertOne(a.context, leaderboard)
@@ -76,7 +73,7 @@ func (a *Adapter) CreateLeaderboard(leaderboard model.Leaderboard) (*model.Leade
 }
 
 // UpdateLeaderboard updates an existing leaderboard
-func (a *Adapter) UpdateLeaderboard(leaderboard model.Leaderboard, userID string) error {
+func (a *Adapter) UpdateLeaderboard(leaderboard model.Leaderboard) error {
 	filter := bson.M{
 		"_id":    leaderboard.ID,
 		"org_id": leaderboard.OrgID,
@@ -84,7 +81,7 @@ func (a *Adapter) UpdateLeaderboard(leaderboard model.Leaderboard, userID string
 	}
 	update := bson.M{
 		"$set": bson.M{
-			"name":     leaderboard.Name,
+			"name": leaderboard.Name,
 		},
 	}
 
@@ -97,9 +94,9 @@ func (a *Adapter) DeleteLeaderboard(leaderboardID, orgID, appID, userID string) 
 	transaction := func(storage interfaces.Storage) error {
 		//1. Delete leaderboard
 		filter := bson.M{
-			"_id":            leaderboardID,
-			"org_id":         orgID,
-			"app_id":         appID,
+			"_id":    leaderboardID,
+			"org_id": orgID,
+			"app_id": appID,
 		}
 		_, err := a.db.leaderboards.DeleteOne(a.context, filter, nil)
 		if err != nil {
@@ -120,5 +117,5 @@ func (a *Adapter) DeleteLeaderboard(leaderboardID, orgID, appID, userID string) 
 		return nil
 	}
 
-	return storage.PerformTransaction(transaction)
+	return a.PerformTransaction(transaction)
 }

@@ -21,7 +21,6 @@ import (
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // GetLeaderboardEntry retrieves a leaderboard entry
@@ -38,7 +37,7 @@ func (a *Adapter) GetLeaderboardEntry(leaderboardID string, orgID string, appID 
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeSurvey, filterArgs(filter), err)
 	}
-	
+
 	return &entry, nil
 }
 
@@ -51,6 +50,7 @@ func (a *Adapter) CreateLeaderboardEntry(leaderboardEntry model.LeaderboardEntry
 	return nil
 }
 
+// DeleteLeaderboardEntries deletes a leaderboard entries according to users in leavingUserIDs
 func (a *Adapter) DeleteLeaderboardEntries(leaderboardID string, orgID string, appID string, leavingUserIDs []string) error {
 	filter := bson.D{
 		primitive.E{Key: "leaderboard_id", Value: leaderboardID},

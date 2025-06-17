@@ -22,18 +22,20 @@ const (
 	// TypeLeaderboard is a message type for leaderboard
 	TypeLeaderboard logutils.MessageDataType = "leaderboard"
 
+	// TypeLeaderboardEntry is a message type for leaderboard entry
 	TypeLeaderboardEntry logutils.MessageDataType = "leaderboard entry"
 )
 
 // Leaderboard represents a custom leaderboard.
 type Leaderboard struct {
-	ID      string `json:"id" bson:"_id"`        // corresponds to "id"
-	OrgID   string `json:"org_id" bson:"org_id"` // organization ID
-	AppID   string `json:"app_id" bson:"app_id"` // application ID
-	Name    string `json:"name" bson:"name"`     // required "name"
-	IsAdmin bool   `json:"is_admin" bson:"is_admin"`             // indicates if the user is an admin of the leaderboard
+	ID      string `json:"id" bson:"_id"`            // corresponds to "id"
+	OrgID   string `json:"org_id" bson:"org_id"`     // organization ID
+	AppID   string `json:"app_id" bson:"app_id"`     // application ID
+	Name    string `json:"name" bson:"name"`         // required "name"
+	IsAdmin bool   `json:"is_admin" bson:"is_admin"` // indicates if the user is an admin of the leaderboard
 }
 
+// LeaderboardEntry represents an entry in a leaderboard.
 type LeaderboardEntry struct {
 	ID            string `json:"id" bson:"_id"`
 	LeaderboardID string `json:"leaderboard_id" bson:"leaderboard_id"`

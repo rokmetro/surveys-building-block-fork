@@ -772,7 +772,7 @@ func (h ClientAPIsHandler) updateLeaderboard(l *logs.Log, r *http.Request, claim
 
 	lb.OrgID = claims.OrgID // TODO: figure if we need this
 	lb.AppID = claims.AppID // TODO: figure if we need this
-	err = h.app.Client.UpdateLeaderboard(lb, claims.OrgID, claims.AppID, claims.Subject)
+	err = h.app.Client.UpdateLeaderboard(lb, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionUpdate, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}

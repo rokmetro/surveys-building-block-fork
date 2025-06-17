@@ -419,15 +419,10 @@ func (a appClient) GetLeaderboards(orgID string, appID string, userID string) ([
 
 // CreateLeaderboard creates a new leaderboard
 func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID string) (*model.Leaderboard, error) {
-	leaderboardPtr, err := a.app.storage.CreateLeaderboard(leaderboard, userID)
-	if err != nil {
-		return nil, err
-	}
+	leaderboard.ID = uuid.NewString()
+	leaderboard.IsAdmin = true
 
-	leaderboardPtr.ID = uuid.NewString()
-	leaderboardPtr.IsAdmin = true
-
-	return a.app.storage.CreateLeaderboard(leaderboard, userID)
+	return a.app.storage.CreateLeaderboard(leaderboard)
 }
 
 // UpdateLeaderboard updates an existing leaderboard
@@ -438,7 +433,7 @@ func (a appClient) UpdateLeaderboard(leaderboard model.Leaderboard, userID strin
 		return err
 	}
 
-	return a.app.storage.UpdateLeaderboard(leaderboard, userID)
+	return a.app.storage.UpdateLeaderboard(leaderboard)
 }
 
 // DeleteLeaderboard deletes a leaderboard by ID

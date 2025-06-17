@@ -24,120 +24,71 @@ import (
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// // validateLeaderboard performs basic validation on a leaderboard
-// func (a *Adapter) validateLeaderboard(lb model.Leaderboard) error {
-// 	if lb.Name == "" {
-// 		return errors.ErrorData(logutils.StatusMissing, "name", nil)
-// 	}
-// 	if len(lb.AdminUserIDs) == 0 {
-// 		return errors.ErrorData(logutils.StatusMissing, "admin_user_ids", nil)
-// 	}
-// 	if len(lb.UserIDs) == 0 {
-// 		return errors.ErrorData(logutils.StatusMissing, "user_ids", nil)
-// 	}
-// 	return nil
-// }
-
-// GetLeaderboardsForUser gets all leaderboards for a user
-func (a *Adapter) GetLeaderboardsForUser(userID, orgID, appID string) ([]model.Leaderboard, error) {
-	filter := bson.M{
-		"$and": []bson.M{
-			{"org_id": orgID},
-			{"app_id": appID},
-			{"$or": []bson.M{
-				{"admin_user_ids": userID},
-				{"user_ids": userID},
-			}},
-		},
+// GetLeaderboards gets all leaderboards for a user
+func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
+	leaderboardEntryFilter := bson.M{
+		"org_id":  orgID,
+		"app_id":  appID,
+		"user_id": userID,
 	}
+
+	pipeline := mongo.Pipeline{
+        // 1) filter leadboard entries for this user
+        bson.D{{Key: "$match", Value: leaderboardEntryFilter}},
+        // 2) join each entry to its leaderboard
+        bson.D{{Key: "$lookup", Value: bson.D{
+            {Key: "from",         Value: "leaderboards"},
+            {Key: "localField",   Value: "leaderboard_id"},
+            {Key: "foreignField", Value: "_id"},
+            {Key: "as",           Value: "leaderboard"},
+        }}},
+        // 3) unwind the resulting array so we get a single doc per leaderboard
+        bson.D{{Key: "$unwind", Value: "$leaderboard"}},
+        // 4) replace the root with a merged object:
+        //   - all fields from the leaderboard
+        //   - plus an "is_admin" field from the entry
+        bson.D{{Key: "$replaceRoot", Value: bson.D{
+            {Key: "newRoot", Value: bson.D{
+                {Key: "$mergeObjects", Value: bson.A{
+                    "$leaderboard",
+                    bson.D{{Key: "is_admin", Value: "$is_admin"}},
+                }},
+            }},
+        }}},
+    }
 
 	var leaderboards []model.Leaderboard
-	err := a.db.leaderboards.Find(context.Background(), filter, &leaderboards, nil)
-	if err != nil {
-		return nil, err
-	}
+	err := a.db.leaderboards.Aggregate(a.context, pipeline, &leaderboards, nil)
 
-	return leaderboards, nil
+	return leaderboards, err
 }
-
 // CreateLeaderboard creates a new leaderboard
-func (a *Adapter) CreateLeaderboard(lb model.Leaderboard) (*model.Leaderboard, error) {
-	if len(lb.ID) == 0 {
-		lb.ID = primitive.NewObjectID().Hex()
-	}
-
-	// Ensure the creator is in the admin list
-	if len(lb.AdminUserIDs) == 0 {
-		// If no admins specified, use the first user ID as admin
-		if len(lb.UserIDs) > 0 {
-			lb.AdminUserIDs = []string{lb.UserIDs[0]}
-		} else {
-			return nil, errors.ErrorData(logutils.StatusMissing, "admin_user_ids", nil)
-		}
-	}
-
-	// Validate the leaderboard
-	if err := a.validateLeaderboard(lb); err != nil {
-		return nil, err
-	}
-
-	_, err := a.db.leaderboards.InsertOne(context.Background(), lb)
+func (a *Adapter) CreateLeaderboard(leaderboard model.Leaderboard) (*model.Leaderboard, error) {
+	_, err := a.db.leaderboards.InsertOne(a.context, leaderboard)
 	if err != nil {
 		return nil, err
 	}
 
-	return &lb, nil
+	return &leaderboard, nil
 }
 
 // UpdateLeaderboard updates an existing leaderboard
-func (a *Adapter) UpdateLeaderboard(lb model.Leaderboard, userID string) error {
-	// First get the current leaderboard to verify admin status and preserve admin list
-	var currentLb model.Leaderboard
-	err := a.db.leaderboards.FindOne(context.Background(), bson.M{
-		"_id":    lb.ID,
-		"org_id": lb.OrgID,
-		"app_id": lb.AppID,
-	}, &currentLb, nil)
-	if err != nil {
-		return errors.WrapErrorAction(logutils.ActionFind, model.TypeLeaderboard, nil, err)
-	}
-
-	// Verify the requesting user is an admin
-	isAdmin := false
-	for _, adminID := range currentLb.AdminUserIDs {
-		if adminID == userID {
-			isAdmin = true
-			break
-		}
-	}
-	if !isAdmin {
-		return errors.ErrorData(logutils.StatusInvalid, "user", &logutils.FieldArgs{"admin": false})
-	}
-
-	// Preserve the admin list from the current leaderboard
-	lb.AdminUserIDs = currentLb.AdminUserIDs
-
-	// Validate the updated leaderboard
-	if err := a.validateLeaderboard(lb); err != nil {
-		return err
-	}
-
-	// Only allow updating name and user IDs, preserve admin list
+func (a *Adapter) UpdateLeaderboard(leaderboard model.Leaderboard, userID string) error {
 	filter := bson.M{
-		"_id":    lb.ID,
-		"org_id": lb.OrgID,
-		"app_id": lb.AppID,
+		"_id":    leaderboard.ID,
+		"org_id": leaderboard.OrgID,
+		"app_id": leaderboard.AppID,
 	}
 	update := bson.M{
 		"$set": bson.M{
-			"name":     lb.Name,
-			"user_ids": lb.UserIDs,
+			"name":     leaderboard.Name,
 		},
 	}
 
-	_, err = a.db.leaderboards.UpdateOne(context.Background(), filter, update, nil)
+	_, err := a.db.leaderboards.UpdateOne(a.context, filter, update, nil)
 	return err
 }
 
@@ -170,8 +121,4 @@ func (a *Adapter) DeleteLeaderboard(leaderboardID, orgID, appID, userID string) 
 	}
 
 	return storage.PerformTransaction(transaction)
-}
-
-func (a *Adapter) JoinLeaderboard(id string, orgID string, appID string, userID string) error {
-
 }

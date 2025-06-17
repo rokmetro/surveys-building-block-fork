@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add validate admin claim flag to environment config
 - Add support for custom point value quiz questions and decimal scores [#19](https://github.com/rokmetro/surveys-building-block-fork/issues/19)
 - Add 'difficulty' to getSurveys API [#22](https://github.com/rokmetro/surveys-building-block-fork/issues/22)
+- Add ranking to the custom and global leaderboard [#24](https://github.com/rokmetro/surveys-building-block-fork/issues/24)
 ### Fixed
 - Update Quizzes Pipeline to Correctly Filter and Paginate [#17](https://github.com/rokmetro/surveys-building-block-fork/issues/17)
 - GetScores API returns scores with 0s [#15](https://github.com/rokmetro/surveys-building-block-fork/issues/15)

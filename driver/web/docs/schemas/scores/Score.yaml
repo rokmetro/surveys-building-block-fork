@@ -38,3 +38,6 @@ properties:
   correct_answer_count:
     type: number
     readOnly: true
+  rank:
+    type: number
+    readOnly: true

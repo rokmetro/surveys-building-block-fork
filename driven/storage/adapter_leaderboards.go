@@ -15,7 +15,9 @@
 package storage
 
 import (
+	"application/core/interfaces"
 	"application/core/model"
+	"application/driven/storage"
 	"context"
 
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
@@ -24,19 +26,19 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// validateLeaderboard performs basic validation on a leaderboard
-func (a *Adapter) validateLeaderboard(lb model.Leaderboard) error {
-	if lb.Name == "" {
-		return errors.ErrorData(logutils.StatusMissing, "name", nil)
-	}
-	if len(lb.AdminUserIDs) == 0 {
-		return errors.ErrorData(logutils.StatusMissing, "admin_user_ids", nil)
-	}
-	if len(lb.UserIDs) == 0 {
-		return errors.ErrorData(logutils.StatusMissing, "user_ids", nil)
-	}
-	return nil
-}
+// // validateLeaderboard performs basic validation on a leaderboard
+// func (a *Adapter) validateLeaderboard(lb model.Leaderboard) error {
+// 	if lb.Name == "" {
+// 		return errors.ErrorData(logutils.StatusMissing, "name", nil)
+// 	}
+// 	if len(lb.AdminUserIDs) == 0 {
+// 		return errors.ErrorData(logutils.StatusMissing, "admin_user_ids", nil)
+// 	}
+// 	if len(lb.UserIDs) == 0 {
+// 		return errors.ErrorData(logutils.StatusMissing, "user_ids", nil)
+// 	}
+// 	return nil
+// }
 
 // GetLeaderboardsForUser gets all leaderboards for a user
 func (a *Adapter) GetLeaderboardsForUser(userID, orgID, appID string) ([]model.Leaderboard, error) {
@@ -139,16 +141,35 @@ func (a *Adapter) UpdateLeaderboard(lb model.Leaderboard, userID string) error {
 	return err
 }
 
-// DeleteLeaderboard deletes a leaderboard by ID, scoped to org_id and app_id
-func (a *Adapter) DeleteLeaderboard(id, orgID, appID, userID string) error {
-	filter := bson.M{
-		"_id":            id,
-		"org_id":         orgID,
-		"app_id":         appID,
-		"admin_user_ids": userID, // Only allow deletion by admins
+// DeleteLeaderboard deletes a leaderboard by ID alnog with corresponding leaderboard entries
+func (a *Adapter) DeleteLeaderboard(leaderboardID, orgID, appID, userID string) error {
+	transaction := func(storage interfaces.Storage) error {
+		//1. Delete leaderboard
+		filter := bson.M{
+			"_id":            leaderboardID,
+			"org_id":         orgID,
+			"app_id":         appID,
+		}
+		_, err := a.db.leaderboards.DeleteOne(a.context, filter, nil)
+		if err != nil {
+			return errors.WrapErrorAction(logutils.ActionDelete, model.TypeLeaderboard, filterArgs(filter), err)
+		}
+
+		//2. Delete all leaderboard entries corresponding to leaderboardID
+		filter = bson.M{
+			"leaderboard_id": leaderboardID,
+			"org_id":         orgID,
+			"app_id":         appID,
+		}
+		_, err = a.db.leaderboardEntries.DeleteMany(a.context, filter, nil)
+		if err != nil {
+			return errors.WrapErrorAction(logutils.ActionDelete, model.TypeLeaderboardEntry, filterArgs(filter), err)
+		}
+
+		return nil
 	}
-	_, err := a.db.leaderboards.DeleteOne(context.Background(), filter, nil)
-	return err
+
+	return storage.PerformTransaction(transaction)
 }
 
 func (a *Adapter) JoinLeaderboard(id string, orgID string, appID string, userID string) error {

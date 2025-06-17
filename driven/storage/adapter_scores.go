@@ -84,7 +84,7 @@ func (a *Adapter) GetScores(orgID string, appID string, limit *int, offset *int)
 }
 
 // GetScoresFromLeaderboards retrieves scores from specified leaderboards
-func (a *Adapter) GetScoresFromLeaderboards(orgID string, appID string, leaderboardIDs []string, userID *bool, limit *int, offset *int) ([]model.Score, error) {
+func (a *Adapter) GetScoresFromLeaderboards(orgID string, appID string, leaderboardIDs []string, userID *string, limit *int, offset *int) ([]model.Score, error) {
 	leaderboardEntryFilter := bson.M{
 		"org_id": orgID,
 		"app_id": appID,

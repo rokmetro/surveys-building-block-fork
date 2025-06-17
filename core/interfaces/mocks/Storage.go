@@ -636,7 +636,7 @@ func (_m *Storage) GetScores(orgID string, appID string, limit *int, offset *int
 }
 
 // GetScoresFromLeaderboards provides a mock function with given fields: orgID, appID, leaderboardIDs, userID, limit, offset
-func (_m *Storage) GetScoresFromLeaderboards(orgID string, appID string, leaderboardIDs []string, userID *bool, limit *int, offset *int) ([]model.Score, error) {
+func (_m *Storage) GetScoresFromLeaderboards(orgID string, appID string, leaderboardIDs []string, userID *string, limit *int, offset *int) ([]model.Score, error) {
 	ret := _m.Called(orgID, appID, leaderboardIDs, userID, limit, offset)
 
 	if len(ret) == 0 {
@@ -645,10 +645,10 @@ func (_m *Storage) GetScoresFromLeaderboards(orgID string, appID string, leaderb
 
 	var r0 []model.Score
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, []string, *bool, *int, *int) ([]model.Score, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, string, []string, *string, *int, *int) ([]model.Score, error)); ok {
 		return rf(orgID, appID, leaderboardIDs, userID, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, []string, *bool, *int, *int) []model.Score); ok {
+	if rf, ok := ret.Get(0).(func(string, string, []string, *string, *int, *int) []model.Score); ok {
 		r0 = rf(orgID, appID, leaderboardIDs, userID, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
@@ -656,7 +656,7 @@ func (_m *Storage) GetScoresFromLeaderboards(orgID string, appID string, leaderb
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, []string, *bool, *int, *int) error); ok {
+	if rf, ok := ret.Get(1).(func(string, string, []string, *string, *int, *int) error); ok {
 		r1 = rf(orgID, appID, leaderboardIDs, userID, limit, offset)
 	} else {
 		r1 = ret.Error(1)

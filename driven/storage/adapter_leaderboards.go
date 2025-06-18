@@ -57,7 +57,7 @@ func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string) ([]
 	}
 
 	var leaderboards []model.Leaderboard
-	err := a.db.leaderboards.Aggregate(a.context, pipeline, &leaderboards, nil)
+	err := a.db.leaderboardEntries.Aggregate(a.context, pipeline, &leaderboards, nil)
 
 	return leaderboards, err
 }

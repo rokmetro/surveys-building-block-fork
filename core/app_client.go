@@ -15,6 +15,7 @@
 package core
 
 import (
+	"application/core/interfaces"
 	"application/core/model"
 	"application/driven/notifications"
 	"application/utils"
@@ -144,73 +145,117 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 	}
 
 	surveyResponsePtr, err := a.app.storage.CreateSurveyResponse(surveyResponse)
+	if err != nil {
+		return nil, errors.WrapErrorAction(logutils.ActionCreate, model.TypeSurveyResponse, nil, err)
+	}
 
 	// If the user completed a fashion quiz, update the score
-	if err == nil && survey.Type == model.SurveyTypeFashionQuiz {
+	if survey.Type == model.SurveyTypeFashionQuiz {
 		var score *model.Score
 		var oldScore model.Score
 
-		score, err = a.app.storage.GetScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
+		transaction := func(storage interfaces.Storage) error {
+			var err error
+			score, err = storage.GetScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
 
-		// Create a new score if not present
-		// Otherwise update score
-		if score == nil || err != nil {
-			score, err = a.CreateScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, "")
-			oldScore = *score
-		} else {
-			// make copy of score before modifying for loaderboard notifications
-			oldScore = *score
+			// Create a new score if not present
+			// Otherwise update score
+			if score == nil || err != nil {
+				score, err = a.CreateScore(storage, surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, "")
+				oldScore = *score
+			} else {
+				// make copy of score before modifying for loaderboard notifications
+				oldScore = *score
 
-			a.UpdateScore(score, surveyResponse)
-			err = a.app.storage.UpdateScore(*score)
-		}
-
-		//TODO: First daily quiz play notification
-		// get all leaderboards for this user, notify each user in each leaderboard the user has played the fashion quiz (if have not notified for that leaderboard yet today)
-
-		// User's score eclipsed notification
-		// get all leaderboards for this user
-		//TODO: implement as aggregation pipeline?
-		leaderboards, err := a.app.storage.GetLeaderboards(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, nil)
-		if err != nil {
-			a.app.logger.WarnWithFields("failed to find leaderboards", logutils.Fields{"user_id": surveyResponse.UserID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
-		}
-
-		for i := range leaderboards {
-			lb := leaderboards[i]
-			scores, err := a.app.storage.GetScoresFromLeaderboards(surveyResponse.OrgID, surveyResponse.AppID, []string{lb.ID}, nil, nil, nil)
-			if err != nil {
-				a.app.logger.WarnWithFields("failed to find scores for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
+				a.UpdateScore(score, surveyResponse)
+				err = storage.UpdateScore(*score)
 			}
 
-			for _, userScore := range scores {
-				if userScore.UserID != surveyResponse.UserID {
-					// current user's score has eclipsed this user's score in the leaderboard by completing the fashion quiz
-					if userScore.Score >= oldScore.Score && userScore.Score < score.Score {
-						// notify each user in each leaderboard that has userScore.Score >= oldScore.Score and < score.Score (any other conditions?)
+			//TODO: implement as aggregation pipeline?
+			// get all leaderboards for this user
+			leaderboards, err := storage.GetLeaderboards(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, nil)
+			if err != nil {
+				a.app.logger.WarnWithFields("failed to find leaderboards", logutils.Fields{"user_id": surveyResponse.UserID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
+			}
 
-						body := fmt.Sprintf("@%s is Now the Runway Genius of your group %s. Can you reclaim the top spot?", username, lb.Name)
-						data := map[string]string{
-							"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, lb.ID),
+			for i := range leaderboards {
+				lb := leaderboards[i]
+				notificationData := map[string]string{
+					"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, lb.ID),
+				}
+
+				notifyFirstDailyQuiz := false
+				now := time.Now().UTC()
+				// notify each user in each leaderboard the user has played the fashion quiz, if have not notified for that leaderboard yet today
+				if lb.LastQuizTime == nil || utils.IsNextDay(now, *lb.LastQuizTime) {
+					notifyFirstDailyQuiz = true
+					lb.LastQuizTime = &now
+
+					err = storage.UpdateLeaderboard(lb)
+					if err != nil {
+						a.app.logger.WarnWithFields("failed to update leaderboard", logutils.Fields{"id": lb.ID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
+						// if leaderboard quiz time updates fail, prevent potential notification spam
+						notifyFirstDailyQuiz = false
+					}
+				}
+
+				scores, err := storage.GetScoresFromLeaderboards(surveyResponse.OrgID, surveyResponse.AppID, []string{lb.ID}, nil, nil, nil)
+				if err != nil {
+					a.app.logger.WarnWithFields("failed to find scores for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
+				}
+
+				for _, userScore := range scores {
+					if userScore.UserID != surveyResponse.UserID {
+						// current user's score has eclipsed this user's score in the leaderboard by completing the fashion quiz
+						if userScore.Score >= oldScore.Score && userScore.Score < score.Score {
+							// notify each user in each leaderboard that has userScore.Score >= oldScore.Score and < score.Score (any other conditions?)
+
+							body := fmt.Sprintf("@%s is Now the Runway Genius of your group %s. Can you reclaim the top spot?", username, lb.Name)
+
+							message := model.NotificationMessage{
+								OrgID: surveyResponse.OrgID,
+								AppID: surveyResponse.AppID,
+
+								Subject:    notifications.SubjectVogue,
+								Body:       body,
+								Data:       notificationData,
+								Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
+							}
+							a.app.notifications.SendNotification(message)
 						}
 
-						message := model.NotificationMessage{
-							OrgID: surveyResponse.OrgID,
-							AppID: surveyResponse.AppID,
+						if notifyFirstDailyQuiz {
+							points := 0
+							if score != nil {
+								points = int(score.Score - oldScore.Score)
+							}
+							body := fmt.Sprintf("@%s just scored %d points in today's Runway Genius. Can you outplay them?", username, points)
 
-							Subject:    notifications.SubjectVogue,
-							Body:       body,
-							Data:       data,
-							Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
+							message := model.NotificationMessage{
+								OrgID: surveyResponse.OrgID,
+								AppID: surveyResponse.AppID,
+
+								Subject:    notifications.SubjectVogue,
+								Body:       body,
+								Data:       notificationData,
+								Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
+							}
+							a.app.notifications.SendNotification(message)
 						}
-						a.app.notifications.SendNotification(message)
 					}
 				}
 			}
+
+			return nil
+		}
+
+		err = a.app.storage.PerformTransaction(transaction)
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	return surveyResponsePtr, err
+	return surveyResponsePtr, nil
 }
 
 // UpdateSurveyResponse updates the provided survey response
@@ -257,7 +302,7 @@ func (a appClient) CreateSurveyAlert(surveyAlert model.SurveyAlert) error {
 func (a appClient) GetScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
 	score, err := a.app.storage.GetScore(orgID, appID, userID)
 	if score == nil {
-		score, err = a.CreateScore(orgID, appID, userID, externalProfileID)
+		score, err = a.CreateScore(nil, orgID, appID, userID, externalProfileID)
 	}
 	if err != nil || score == nil {
 		return nil, err
@@ -385,8 +430,11 @@ func (a appClient) insertUserScoreIntoLocalScores(scores []model.Score, userScor
 }
 
 // CreateScore Creates a score object by iterating over all previous survey responses
-func (a appClient) CreateScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
-	surveyResponses, err := a.app.storage.GetSurveyResponses(&orgID, &appID, &userID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
+func (a appClient) CreateScore(storage interfaces.Storage, orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
+	if storage == nil {
+		storage = a.app.storage
+	}
+	surveyResponses, err := storage.GetSurveyResponses(&orgID, &appID, &userID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +456,7 @@ func (a appClient) CreateScore(orgID string, appID string, userID string, extern
 	for i := 0; i < len(surveyResponses); i++ {
 		a.UpdateScore(&score, surveyResponses[i])
 	}
-	return &score, a.app.storage.CreateScore(score)
+	return &score, storage.CreateScore(score)
 }
 
 // UpdateScore updates the score model passed in

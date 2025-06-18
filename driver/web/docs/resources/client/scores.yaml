@@ -7,14 +7,6 @@ get:
   security:
     - bearerAuth: []
   parameters:
-    - name: leaderboard_id
-      in: query
-      description: Optional ID of the custom leaderboard to filter scores by. If provided, only returns scores for users who are members of this leaderboard.
-      required: false
-      style: simple
-      explode: false
-      schema:
-        type: string
     - name: limit
       in: query
       description: The number of results to be loaded in one page
@@ -31,6 +23,14 @@ get:
       explode: false
       schema:
         type: number
+    - name: leaderboard_ids
+      in: query
+      description: Optional IDs of the custom leaderboards to filter scores by. If provided, each score/rank is calculated for the given leaderboards individually.
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string
   responses:
     200:
       description: Success

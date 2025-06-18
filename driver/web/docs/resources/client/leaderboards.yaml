@@ -3,7 +3,7 @@ get:
     - Client
   summary: Retrieves custom leaderboards the current user is in
   description: |
-    Retrieves all custom leaderboards where the authenticated user is a member or admin.
+    Retrieves all custom leaderboards the user is in.
   security:
     - bearerAuth: []
   responses:
@@ -14,7 +14,7 @@ get:
           schema:
             type: array
             items:
-              $ref: "../../schemas/scores/Leaderboard.yaml"
+              $ref: "../../schemas/leaderboards/Leaderboard.yaml"
     '401':
       description: Unauthorized
     '500':
@@ -33,7 +33,7 @@ post:
     content:
       application/json:
         schema:
-          $ref: "../../schemas/scores/Leaderboard.yaml"
+          $ref: "../../schemas/leaderboards/Leaderboard.yaml"
     required: true
   responses:
     200:

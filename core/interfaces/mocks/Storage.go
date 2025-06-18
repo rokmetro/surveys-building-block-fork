@@ -191,6 +191,24 @@ func (_m *Storage) DeleteAlertContact(id string, orgID string, appID string) err
 	return r0
 }
 
+// DeleteAllLeaderboardEntries provides a mock function with given fields: leaderboardID, orgID, appID
+func (_m *Storage) DeleteAllLeaderboardEntries(leaderboardID string, orgID string, appID string) error {
+	ret := _m.Called(leaderboardID, orgID, appID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAllLeaderboardEntries")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, string) error); ok {
+		r0 = rf(leaderboardID, orgID, appID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteConfig provides a mock function with given fields: id
 func (_m *Storage) DeleteConfig(id string) error {
 	ret := _m.Called(id)

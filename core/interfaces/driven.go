@@ -70,6 +70,7 @@ type Storage interface {
 	GetLeaderboardEntries(leaderboardID string, orgID string, appID string, userID *string) ([]model.LeaderboardEntry, error)
 	CreateLeaderboardEntry(leaderboardEntry model.LeaderboardEntry) error
 	DeleteLeaderboardEntries(leaderboardID string, orgID string, appID string, leavingUserIDs []string) error
+	DeleteAllLeaderboardEntries(leaderboardID string, orgID string, appID string) error
 }
 
 // StorageListener represents storage listener

@@ -5,19 +5,5 @@ properties:
   id:
     type: string
     readOnly: true
-  org_id:
-    type: string
-    readOnly: true
-  app_id:
-    type: string
-    readOnly: true
   name:
     type: string
-  adminUserIds:
-    type: array
-    items:
-      type: string
-  userIds:
-    type: array
-    items:
-      type: string

@@ -25,7 +25,7 @@ get:
         type: number
     - name: leaderboard_ids
       in: query
-      description: Optional IDs of the custom leaderboards to filter scores by. If provided, each score/rank is calculated for the given leaderboards individually.
+      description: A comma-separated list of optional IDs of the custom leaderboards to filter scores by. If provided, each score/rank is calculated for the given leaderboards individually.
       required: false
       style: simple
       explode: false

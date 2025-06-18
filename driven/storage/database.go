@@ -209,15 +209,7 @@ func (d *database) applyScoresChecks(scores *collectionWrapper) error {
 func (d *database) applyLeaderboardsChecks(leaderboards *collectionWrapper) error {
 	d.logger.Info("apply leaderboards checks.....")
 
-	// err := leaderboards.AddIndex(nil, bson.D{primitive.E{Key: "admin_user_ids", Value: 1}}, false, nil)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// err = leaderboards.AddIndex(nil, bson.D{primitive.E{Key: "user_ids", Value: 1}}, false, nil)
-	// if err != nil {
-	// 	return err
-	// }
+	// do not need an index on leaderboards collection for now - index on _id is sufficient for current operations
 
 	d.logger.Info("leaderboards passed")
 	return nil

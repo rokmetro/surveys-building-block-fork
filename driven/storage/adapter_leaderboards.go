@@ -32,7 +32,7 @@ func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string, ids
 		"user_id": userID,
 	}
 	if len(ids) > 0 {
-		leaderboardEntryFilter["_id"] = bson.M{"$in": ids}
+		leaderboardEntryFilter["leaderboard_id"] = bson.M{"$in": ids}
 	}
 
 	pipeline := mongo.Pipeline{

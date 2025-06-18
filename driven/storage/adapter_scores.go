@@ -92,9 +92,11 @@ func (a *Adapter) GetScoresFromLeaderboards(orgID string, appID string, leaderbo
 		}
 	}
 
+	pipeline := mongo.Pipeline{}
 	leaderboardEntryMatch := bson.D{{
 		Key: "$match", Value: leaderboardEntryFilter,
 	}}
+	pipeline = append(pipeline, leaderboardEntryMatch)
 
 	setWindow := bson.D{{
 		Key: "$setWindowFields", Value: bson.D{
@@ -105,17 +107,16 @@ func (a *Adapter) GetScoresFromLeaderboards(orgID string, appID string, leaderbo
 			}},
 		},
 	}}
+	pipeline = append(pipeline, setWindow)
 
-	filterByUserID := bson.D{}
 	if userID != nil {
-		filterByUserID = append(filterByUserID,
-			bson.E{
-				Key: "$match",
-				Value: bson.D{
-					{Key: "user_id", Value: *userID},
-				},
+		filterByUserID := bson.D{bson.E{
+			Key: "$match",
+			Value: bson.D{
+				{Key: "user_id", Value: *userID},
 			},
-		)
+		},}
+		pipeline = append(pipeline, filterByUserID)
 	}
 
 	groupStage := bson.D{{
@@ -141,6 +142,7 @@ func (a *Adapter) GetScoresFromLeaderboards(orgID string, appID string, leaderbo
 			}},
 		}},
 	}
+	pipeline = append(pipeline, groupStage)
 
 	projectStage := bson.D{{
 		Key: "$project", Value: bson.D{
@@ -149,19 +151,11 @@ func (a *Adapter) GetScoresFromLeaderboards(orgID string, appID string, leaderbo
 			{Key: "_id", Value: 0},
 		},
 	}}
+	pipeline = append(pipeline, projectStage)
 
 	skipStage := bson.D{{Key: "$skip", Value: offset}}
 	limitStage := bson.D{{Key: "$limit", Value: limit}}
-
-	pipeline := mongo.Pipeline{
-		leaderboardEntryMatch,
-		setWindow,
-		filterByUserID,
-		groupStage,
-		projectStage,
-		skipStage,
-		limitStage,
-	}
+	pipeline = append(pipeline, skipStage, limitStage)
 
 	var scores []model.Score
 	err := a.db.leaderboardEntries.Aggregate(a.context, pipeline, &scores, nil)

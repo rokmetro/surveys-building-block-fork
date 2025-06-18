@@ -448,6 +448,7 @@ func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID strin
 	if err != nil {
 		return nil, err
 	}
+	leaderboard.IsAdmin = true
 	return &leaderboard, nil
 }
 

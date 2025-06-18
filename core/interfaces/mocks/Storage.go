@@ -605,9 +605,9 @@ func (_m *Storage) GetScore(orgID string, appID string, userID string) (*model.S
 	return r0, r1
 }
 
-// GetScores provides a mock function with given fields: orgID, appID, limit, offset
-func (_m *Storage) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
-	ret := _m.Called(orgID, appID, limit, offset)
+// GetScores provides a mock function with given fields: orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax
+func (_m *Storage) GetScores(orgID *string, appID *string, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error) {
+	ret := _m.Called(orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetScores")
@@ -615,19 +615,19 @@ func (_m *Storage) GetScores(orgID string, appID string, limit *int, offset *int
 
 	var r0 []model.Score
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, *int, *int) ([]model.Score, error)); ok {
-		return rf(orgID, appID, limit, offset)
+	if rf, ok := ret.Get(0).(func(*string, *string, *int, *int, *time.Time, *time.Time) ([]model.Score, error)); ok {
+		return rf(orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, *int, *int) []model.Score); ok {
-		r0 = rf(orgID, appID, limit, offset)
+	if rf, ok := ret.Get(0).(func(*string, *string, *int, *int, *time.Time, *time.Time) []model.Score); ok {
+		r0 = rf(orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Score)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, *int, *int) error); ok {
-		r1 = rf(orgID, appID, limit, offset)
+	if rf, ok := ret.Get(1).(func(*string, *string, *int, *int, *time.Time, *time.Time) error); ok {
+		r1 = rf(orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
 	} else {
 		r1 = ret.Error(1)
 	}

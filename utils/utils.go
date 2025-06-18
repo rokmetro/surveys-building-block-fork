@@ -17,6 +17,19 @@ package utils
 import (
 	"crypto/sha256"
 	"time"
+
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
+)
+
+const (
+	// HoursInDay is the number of hours in one day
+	HoursInDay int = 24
+	// SecondsInDay is the number of seconds in one 24-hour day
+	SecondsInDay int = HoursInDay * SecondsInHour
+	// SecondsInHour is the number of seconds in one hour
+	SecondsInHour int = 60 * SecondsInMinute
+	// SecondsInMinute is the number of seconds in one minute
+	SecondsInMinute int = 60
 )
 
 // GetInt gives the value which this pointer points. Gives 0 if the pointer is nil
@@ -65,4 +78,59 @@ func IsPrevOrSameDay(current time.Time, compare time.Time) bool {
 	compare = time.Date(compare.Year(), compare.Month(), compare.Day(), 0, 0, 0, 0, compare.Location())
 
 	return compare.Equal(current) || compare.Before(current)
+}
+
+// StartTimer starts a timer with the given name, period, and function to call when the timer goes off
+func StartTimer(timer *time.Timer, timerDone chan bool, initialDuration *time.Duration, period time.Duration, periodicFunc func(), name string, logger *logs.Logger) {
+	if logger != nil {
+		logger.Info("start timer for " + name)
+	}
+
+	//cancel if active
+	if timer != nil {
+		if logger != nil {
+			logger.Info(name + " -> there is active timer, so cancel it")
+		}
+
+		timerDone <- true
+		timer.Stop()
+	}
+
+	onTimer(timer, timerDone, initialDuration, period, periodicFunc, name, logger)
+}
+
+func onTimer(timer *time.Timer, timerDone chan bool, initialDuration *time.Duration, period time.Duration, periodicFunc func(), name string, logger *logs.Logger) {
+	hasLogger := (logger != nil)
+	if hasLogger {
+		logger.Info(name)
+	}
+
+	duration := period
+	if initialDuration != nil {
+		duration = *initialDuration
+	} else {
+		periodicFunc()
+	}
+	timer = time.NewTimer(duration)
+
+	if hasLogger {
+		logger.Infof(name+" -> next call after %s", duration)
+	}
+
+	select {
+	case <-timer.C:
+		// timer expired
+		if hasLogger {
+			logger.Info(name + " -> timer expired")
+		}
+		timer = nil
+
+		onTimer(timer, timerDone, nil, period, periodicFunc, name, logger)
+	case <-timerDone:
+		// timer aborted
+		if hasLogger {
+			logger.Info(name + " -> timer aborted")
+		}
+		timer = nil
+	}
 }

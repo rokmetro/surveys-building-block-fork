@@ -53,11 +53,12 @@ type Application struct {
 
 	logger *logs.Logger
 
-	storage         interfaces.Storage
-	notifications   interfaces.Notifications
-	calendar        interfaces.Calendar
-	corebb          *corebb.Adapter
-	deleteDataLogic deleteDataLogic
+	storage             interfaces.Storage
+	notifications       interfaces.Notifications
+	calendar            interfaces.Calendar
+	corebb              *corebb.Adapter
+	deleteDataLogic     deleteDataLogic
+	streakNotifications streakNotifications
 }
 
 // Start starts the core part of the application
@@ -66,8 +67,7 @@ func (a *Application) Start() {
 	storageListener := storageListener{app: a}
 	a.storage.RegisterStorageListener(&storageListener)
 	a.deleteDataLogic.start()
-	//TODO: create timer to send streak reminder notifications
-	// Streak reminder notification: search scores collection for users who have not played the fashion quiz yet today (and have streak > 0?). Should user timezone be considered?
+	a.streakNotifications.start()
 }
 
 // GetEnvConfigs retrieves the cached database env configs
@@ -87,9 +87,10 @@ func (a *Application) GetEnvConfigs() (*model.EnvConfigData, error) {
 func NewApplication(version string, build string, storage interfaces.Storage, notifications interfaces.Notifications, calendar interfaces.Calendar,
 	coreBB *corebb.Adapter, serviceID string, logger *logs.Logger) *Application {
 	deleteDataLogic := deleteDataLogic{logger: *logger, core: coreBB, serviceID: serviceID, storage: storage}
+	streakNotifications := streakNotifications{logger: logger, storage: storage, notifications: notifications}
 
 	application := Application{version: version, build: build, storage: storage, notifications: notifications,
-		calendar: calendar, deleteDataLogic: deleteDataLogic, logger: logger}
+		calendar: calendar, deleteDataLogic: deleteDataLogic, streakNotifications: streakNotifications, logger: logger}
 
 	//add the drivers ports/interfaces
 	application.Default = newAppDefault(&application)

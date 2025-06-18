@@ -324,7 +324,7 @@ func (a appClient) GetScores(orgID string, appID string, leaderboardIDs []string
 		return a.app.storage.GetScoresFromLeaderboards(orgID, appID, leaderboardIDs, userID, limit, offset)
 	}
 
-	return a.app.storage.GetScores(orgID, appID, limit, offset)
+	return a.app.storage.GetScores(&orgID, &appID, limit, offset, nil, nil)
 }
 
 // GetScoresWithPivot retrieves scores closest to the user's score

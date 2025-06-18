@@ -16,6 +16,7 @@ package storage
 
 import (
 	"application/core/model"
+	"time"
 
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
@@ -47,16 +48,26 @@ func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Sc
 }
 
 // GetScores returns a list of scores in descending order
-func (a *Adapter) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
+func (a *Adapter) GetScores(orgID *string, appID *string, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error) {
 	filter := bson.M{
-		"org_id": orgID,
-		"app_id": appID,
 		"external_profile_id": bson.M{
 			"$ne": "",
 		},
 		"score": bson.M{
 			"$gt": 0,
 		},
+	}
+	if orgID != nil && *orgID != "" {
+		filter["org_id"] = *orgID
+	}
+	if appID != nil && *appID != "" {
+		filter["app_id"] = *appID
+	}
+	if prevSurveyResponseDateMin != nil {
+		filter["prev_survey_response_date"] = bson.M{"$gte": *prevSurveyResponseDateMin}
+	}
+	if prevSurveyResponseDateMax != nil {
+		filter["prev_survey_response_date"] = bson.M{"$lt": *prevSurveyResponseDateMax}
 	}
 
 	pipeline := mongo.Pipeline{

@@ -67,6 +67,7 @@ func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string, ids
 	return leaderboards, err
 }
 
+// CreateLeaderboard creates a new leaderboard
 func (a *Adapter) CreateLeaderboard(leaderboard model.Leaderboard) (*model.Leaderboard, error) {
 	// Create the leaderboard
 	_, err := a.db.leaderboards.InsertOne(a.context, leaderboard)
@@ -83,10 +84,15 @@ func (a *Adapter) UpdateLeaderboard(leaderboard model.Leaderboard) error {
 		"org_id": leaderboard.OrgID,
 		"app_id": leaderboard.AppID,
 	}
+
+	setUpdate := bson.M{
+		"name": leaderboard.Name,
+	}
+	if leaderboard.LastQuizTime != nil {
+		setUpdate["last_quiz_time"] = leaderboard.LastQuizTime
+	}
 	update := bson.M{
-		"$set": bson.M{
-			"name": leaderboard.Name,
-		},
+		"$set": setUpdate,
 	}
 
 	_, err := a.db.leaderboards.UpdateOne(a.context, filter, update, nil)

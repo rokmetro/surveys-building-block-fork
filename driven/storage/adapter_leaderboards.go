@@ -15,7 +15,6 @@
 package storage
 
 import (
-	"application/core/interfaces"
 	"application/core/model"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
@@ -63,6 +62,7 @@ func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string) ([]
 	return leaderboards, err
 }
 
+// CreateLeaderboard creates a new leaderboard
 func (a *Adapter) CreateLeaderboard(leaderboard model.Leaderboard) (*model.Leaderboard, error) {
 	// Create the leaderboard
 	_, err := a.db.leaderboards.InsertOne(a.context, leaderboard)
@@ -91,33 +91,17 @@ func (a *Adapter) UpdateLeaderboard(leaderboard model.Leaderboard) error {
 
 // DeleteLeaderboard deletes a leaderboard by ID along with corresponding leaderboard entries
 func (a *Adapter) DeleteLeaderboard(leaderboardID, orgID, appID, userID string) error {
-	transaction := func(storage interfaces.Storage) error {
-		//1. Delete leaderboard
-		filter := bson.M{
-			"_id":    leaderboardID,
-			"org_id": orgID,
-			"app_id": appID,
-		}
-		_, err := a.db.leaderboards.DeleteOne(a.context, filter, nil)
-		if err != nil {
-			return errors.WrapErrorAction(logutils.ActionDelete, model.TypeLeaderboard, filterArgs(filter), err)
-		}
-
-		//2. Delete all leaderboard entries corresponding to leaderboardID
-		filter = bson.M{
-			"leaderboard_id": leaderboardID,
-			"org_id":         orgID,
-			"app_id":         appID,
-		}
-		_, err = a.db.leaderboardEntries.DeleteMany(a.context, filter, nil)
-		if err != nil {
-			return errors.WrapErrorAction(logutils.ActionDelete, model.TypeLeaderboardEntry, filterArgs(filter), err)
-		}
-
-		return nil
+	filter := bson.M{
+		"_id":    leaderboardID,
+		"org_id": orgID,
+		"app_id": appID,
+	}
+	_, err := a.db.leaderboards.DeleteOne(a.context, filter, nil)
+	if err != nil {
+		return errors.WrapErrorAction(logutils.ActionDelete, model.TypeLeaderboard, filterArgs(filter), err)
 	}
 
-	return a.PerformTransaction(transaction)
+	return err
 }
 
 // GetLeaderboardEntry retrieves a leaderboard entry
@@ -165,4 +149,19 @@ func (a *Adapter) DeleteLeaderboardEntries(leaderboardID string, orgID string, a
 	}
 
 	return nil
+}
+
+// DeleteAllLeaderboardEntries deletes all leaderboard entries for a given leaderboardID
+func (a *Adapter) DeleteAllLeaderboardEntries(leaderboardID string, orgID string, appID string) error {
+	filter := bson.M{
+		"leaderboard_id": leaderboardID,
+		"org_id":         orgID,
+		"app_id":         appID,
+	}
+	_, err := a.db.leaderboardEntries.DeleteMany(a.context, filter, nil)
+	if err != nil {
+		return errors.WrapErrorAction(logutils.ActionDelete, model.TypeLeaderboardEntry, filterArgs(filter), err)
+	}
+
+	return err
 }

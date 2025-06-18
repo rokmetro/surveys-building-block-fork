@@ -432,13 +432,13 @@ func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID strin
 		//1. Create leaderboard
 		_, err := storage.CreateLeaderboard(leaderboard)
 		if err != nil {
-			return errors.WrapErrorAction(logutils.ActionCreate, model.TypeLeaderboard, nil, err)
+			return err
 		}
 
 		//2. Create corresponding leaderboard entry
 		err = storage.CreateLeaderboardEntry(leaderboardEntry)
 		if err != nil {
-			return errors.WrapErrorAction(logutils.ActionCreate, model.TypeLeaderboardEntry, nil, err)
+			return err
 		}
 
 		return nil
@@ -470,7 +470,23 @@ func (a appClient) DeleteLeaderboard(leaderboardID string, orgID string, appID s
 		return err
 	}
 
-	return a.app.storage.DeleteLeaderboard(leaderboardID, orgID, appID, userID)
+	transaction := func(storage interfaces.Storage) error {
+		//1. Delete leaderboard
+		err := storage.DeleteLeaderboard(leaderboardID, orgID, appID, userID)
+		if err != nil {
+			return err
+		}
+
+		//2. Delete all leaderboard entries corresponding to leaderboardID
+		err = storage.DeleteAllLeaderboardEntries(leaderboardID, orgID, appID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return a.app.storage.PerformTransaction(transaction)
 }
 
 func (a appClient) JoinLeaderboard(leaderboardID string, orgID string, appID string, userID string) error {

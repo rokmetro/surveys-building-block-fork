@@ -527,7 +527,27 @@ func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID strin
 
 	leaderboardEntry := a.createLeaderboardEntry(leaderboard.ID, leaderboard.OrgID, leaderboard.AppID, userID, true)
 
-	return a.app.storage.CreateLeaderboardAndEntry(leaderboard, leaderboardEntry)
+	transaction := func(storage interfaces.Storage) error {
+		//1. Create leaderboard
+		_, err := storage.CreateLeaderboard(leaderboard)
+		if err != nil {
+			return errors.WrapErrorAction(logutils.ActionCreate, model.TypeLeaderboard, nil, err)
+		}
+
+		//2. Create corresponding leaderboard entry
+		err = storage.CreateLeaderboardEntry(leaderboardEntry)
+		if err != nil {
+			return errors.WrapErrorAction(logutils.ActionCreate, model.TypeLeaderboardEntry, nil, err)
+		}
+
+		return nil
+	}
+
+	err := a.app.storage.PerformTransaction(transaction)
+	if err != nil {
+		return nil, err
+	}
+	return &leaderboard, nil
 }
 
 // UpdateLeaderboard updates an existing leaderboard

@@ -124,6 +124,7 @@ func (d *database) start() error {
 	d.alertContacts = alertContacts
 	d.scores = scores
 	d.leaderboards = leaderboards
+	d.leaderboardEntries = leaderboardEntries
 
 	go d.configs.Watch(nil, d.logger)
 

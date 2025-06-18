@@ -53,12 +53,16 @@ paths:
     $ref: "./resources/client/score.yaml"
   /api/v2/scores:
     $ref: "./resources/client/scores.yaml"
-  /api/scores/pivot:
-    $ref: "./resources/client/scores.yaml"
-  /api/leaderboard:
-    $ref: "./resources/client/leaderboard.yaml"
-  /api/leaderboard/{leaderboard_id}:
-    $ref: "./resources/client/leaderboardid.yaml"
+  /api/scores/top-and-local:
+    $ref: "./resources/client/scores-top-and-local.yaml"
+  /api/leaderboards:
+    $ref: "./resources/client/leaderboards.yaml"
+  /api/leaderboards/{id}:
+    $ref: "./resources/client/leaderboardsid.yaml"
+  /api/leaderboards/{id}/join:
+    $ref: "./resources/client/leaderboardsid-join.yaml"
+  /api/leaderboards/{id}/leave:
+    $ref: "./resources/client/leaderboardsid-leave.yaml"
 
   # Admin
   /api/admin/configs:

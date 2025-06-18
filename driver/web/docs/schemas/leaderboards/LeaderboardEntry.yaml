@@ -1,0 +1,14 @@
+type: object
+properties:
+  id:
+    type: string
+    readOnly: true
+  leaderboard_id:
+    type: string
+    readOnly: true
+  user_id:
+    type: string
+    readOnly: true
+  is_admin:
+    type: boolean
+    readOnly: true

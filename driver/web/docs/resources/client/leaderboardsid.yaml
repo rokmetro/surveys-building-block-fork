@@ -3,11 +3,11 @@ put:
     - Client
   summary: Updates the name of the custom leaderboard with the specified id
   description: |
-    Updates the name of the custom leaderboard with the specified id
+    Checks if the calling user is an admin and updates the name of the custom leaderboard with the specified id
   security:
     - bearerAuth: []
   parameters:
-    - name: leaderboard_id
+    - name: id
       in: path
       description: ID of the custom leaderboard
       required: true
@@ -20,7 +20,7 @@ put:
     content:
       application/json:
         schema:
-          $ref: "../../schemas/scores/Leaderboard.yaml"
+          $ref: "../../schemas/leaderboards/Leaderboard.yaml"
     required: true
   responses:
     200:
@@ -38,11 +38,11 @@ delete:
     - Client
   summary: Deletes the custom leaderboard with the specified id
   description: |
-    Deletes the custom leaderboard with the specified id
+    Checks if the calling user is an admin and deletes the custom leaderboard with the specified id
   security:
     - bearerAuth: []
   parameters:
-    - name: leaderboard_id
+    - name: id
       in: path
       description: ID of the custom leaderboard
       required: true

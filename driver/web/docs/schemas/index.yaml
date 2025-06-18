@@ -24,7 +24,9 @@ AlertContact:
 Score:
   $ref: "./scores/Score.yaml"
 Leaderboard:
-  $ref: "./scores/Leaderboard.yaml"
+  $ref: "./leaderboards/Leaderboard.yaml"
+LeaderboardEntry:
+  $ref: "./leaderboards/LeaderboardEntry.yaml"
 
 # ADMIN section
 

@@ -1,0 +1,35 @@
+delete:
+  tags:
+    - Client
+  summary: Leaves leaderboard with specified id and user ids
+  description: |
+    Leaves leaderboard with specified id and user ids. Deletes the LeaderboardEntry object for the user.
+    User ids can be specified if the user is an admin to delete many users at once.
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      description: ID of the custom leaderboard
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: string
+    - name: user_ids
+      in: query
+      description: An optional, comma-separated list of user IDs to leave the leaderboard. If not provided, the current user will leave the leaderboard. The user must be an admin to specify other user IDs.
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string
+  responses:
+    200:
+      description: Success
+    400:
+      description: Bad request
+    401:
+      description: Unauthorized
+    500:
+      description: Internal error

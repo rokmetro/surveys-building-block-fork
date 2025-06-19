@@ -250,11 +250,6 @@ func (a *Adapter) GetLeaderboardUserScores(orgID string, appID string, userID st
 					bson.M{"$eq": bson.A{"$app_id", appID}},
 				}},
 			}}},
-			// only need the score field
-			{{Key: "$project", Value: bson.M{
-				"_id":   0,
-				"score": 1,
-			}}},
 		},
 		"as": "scores",
 	}}}
@@ -262,6 +257,11 @@ func (a *Adapter) GetLeaderboardUserScores(orgID string, appID string, userID st
 
 	unwind := bson.D{{Key: "$unwind", Value: "$scores"}}
 	pipeline = append(pipeline, unwind)
+
+	replaceRoot := bson.D{{Key: "$replaceRoot", Value: bson.M{
+		"newRoot": bson.M{"$mergeObjects": bson.A{"$scores", "$$ROOT"}},
+	}}}
+	pipeline = append(pipeline, replaceRoot)
 
 	rankWindow := bson.D{{Key: "$setWindowFields", Value: bson.M{
 		"partitionBy": "$leaderboard_id",

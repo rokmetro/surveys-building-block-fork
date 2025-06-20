@@ -1904,6 +1904,7 @@ components:
         data:
           anyOf:
             - $ref: '#/components/schemas/EnvConfigData'
+            - $ref: '#/components/schemas/NotificationsConfigData'
         date_created:
           readOnly: true
           type: string
@@ -1931,6 +1932,9 @@ components:
         validate_admin_claim:
           type: boolean
           nullable: true
+    NotificationsConfigData:
+      type: object
+      properties:
         streak_notifications_timer_moment:
           type: integer
           nullable: true
@@ -2333,3 +2337,4 @@ components:
         data:
           anyOf:
             - $ref: '#/components/schemas/EnvConfigData'
+            - $ref: '#/components/schemas/NotificationsConfigData'

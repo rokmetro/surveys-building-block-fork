@@ -17,9 +17,3 @@ properties:
   validate_admin_claim:
     type: boolean
     nullable: true
-  streak_notifications_timer_moment:
-    type: integer
-    nullable: true
-  streak_notifications_timezone:
-    type: string
-    nullable: true

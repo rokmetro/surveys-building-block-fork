@@ -82,8 +82,15 @@ func (n streakNotifications) setupStreakNotificationsTimer() {
 
 func (n streakNotifications) processNotifications() {
 	// Streak reminder notification: search scores collection for users who have not submitted a response yet today
-	nowDay := time.Now().UTC().Truncate(time.Duration(utils.HoursInDay) * time.Hour)
+	nowDay := time.Now().UTC().Truncate(time.Hour)
 	prevDay := nowDay.Add(-time.Duration(utils.HoursInDay) * time.Hour)
+
+	timersData, err := n.application.CheckTimersConfig("streak_notifications_last_process_time", prevDay, nowDay)
+	if err != nil || timersData == nil {
+		n.logger.Warnf("processNotifications -> error finding timers config: %v", err)
+		return
+	}
+
 	scores, err := n.storage.GetScores(nil, nil, nil, nil, &prevDay, &nowDay)
 	if err != nil {
 		n.logger.Errorf("processNotifications -> error finding scores: %v", err)

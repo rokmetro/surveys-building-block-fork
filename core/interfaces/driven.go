@@ -32,6 +32,8 @@ type Storage interface {
 	UpdateConfig(config model.Config) error
 	DeleteConfig(id string) error
 
+	FindAndUpdateTimerConfig(appID string, orgID string, key string, filterTime time.Time, updateTime time.Time) (*model.Config, error)
+
 	GetSurvey(id string, orgID string, appID string) (*model.Survey, error)
 	GetSurveys(orgID string, appID string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool) ([]model.Survey, error)
 	GetSurveysWithResponses(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool) ([]model.Survey, error)

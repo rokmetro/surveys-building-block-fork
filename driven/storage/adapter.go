@@ -99,6 +99,8 @@ func (a *Adapter) setCachedConfigs(configs []model.Config) {
 		switch config.Type {
 		case model.ConfigTypeEnv:
 			err = parseConfigsData[model.EnvConfigData](&config)
+		case model.ConfigTypeTimers:
+			err = parseConfigsData[model.TimersConfigData](&config)
 		default:
 			err = parseConfigsData[map[string]interface{}](&config)
 		}
@@ -209,6 +211,22 @@ func (a *Adapter) FindConfigs(configType *string) ([]model.Config, error) {
 	return a.getCachedConfigs(configType)
 }
 
+// FindAndUpdateTimerConfig finds and updates a config
+func (a *Adapter) FindAndUpdateTimerConfig(appID string, orgID string, key string, filterTime time.Time, updateTime time.Time) (*model.Config, error) {
+	filter := bson.M{"type": model.ConfigTypeTimers, "data." + key: bson.M{"$lte": filterTime}}
+	update := bson.M{"$set": bson.M{
+		"data." + key: updateTime,
+	}}
+
+	var config model.Config
+	err := a.db.configs.FindOneAndUpdate(a.context, filter, update, &config, nil)
+	if err != nil {
+		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeConfig, &logutils.FieldArgs{"type": model.ConfigTypeTimers, "time": filterTime}, err)
+	}
+
+	return &config, nil
+}
+
 // InsertConfig inserts a new config
 func (a *Adapter) InsertConfig(config model.Config) error {
 	_, err := a.db.configs.InsertOne(a.context, config)
@@ -259,7 +277,7 @@ func (a Adapter) DeleteSurveyResponsesWithIDs(orgID string, appID string, accoun
 		primitive.E{Key: "user_id", Value: bson.M{"$in": accountsIDs}},
 	}
 
-	_, err := a.db.surveyResponses.DeleteMany(nil, filter, nil)
+	_, err := a.db.surveyResponses.DeleteMany(a.context, filter, nil)
 	if err != nil {
 		return errors.WrapErrorAction(logutils.ActionDelete, "user", nil, err)
 	}
@@ -274,7 +292,7 @@ func (a Adapter) DeleteSurveysWithIDs(orgID string, appID string, accountsIDs []
 		primitive.E{Key: "creator_id", Value: bson.M{"$in": accountsIDs}},
 	}
 
-	_, err := a.db.surveys.DeleteMany(nil, filter, nil)
+	_, err := a.db.surveys.DeleteMany(a.context, filter, nil)
 	if err != nil {
 		return errors.WrapErrorAction(logutils.ActionDelete, "user", nil, err)
 	}

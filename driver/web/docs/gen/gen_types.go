@@ -49,12 +49,10 @@ type Config_Data struct {
 
 // EnvConfigData defines model for EnvConfigData.
 type EnvConfigData struct {
-	CorsAllowedHeaders             *[]string `json:"cors_allowed_headers"`
-	CorsAllowedOrigins             *[]string `json:"cors_allowed_origins"`
-	SplunkToken                    string    `json:"splunk_token"`
-	StreakNotificationsTimerMoment *int      `json:"streak_notifications_timer_moment"`
-	StreakNotificationsTimezone    *string   `json:"streak_notifications_timezone"`
-	ValidateAdminClaim             *bool     `json:"validate_admin_claim"`
+	CorsAllowedHeaders *[]string `json:"cors_allowed_headers"`
+	CorsAllowedOrigins *[]string `json:"cors_allowed_origins"`
+	SplunkToken        string    `json:"splunk_token"`
+	ValidateAdminClaim *bool     `json:"validate_admin_claim"`
 }
 
 // Leaderboard defines model for Leaderboard.
@@ -64,6 +62,12 @@ type Leaderboard struct {
 	Id          *string    `json:"id,omitempty"`
 	IsAdmin     *bool      `json:"is_admin,omitempty"`
 	Name        string     `json:"name"`
+}
+
+// NotificationsConfigData defines model for NotificationsConfigData.
+type NotificationsConfigData struct {
+	StreakNotificationsTimerMoment *int    `json:"streak_notifications_timer_moment"`
+	StreakNotificationsTimezone    *string `json:"streak_notifications_timezone"`
 }
 
 // OptionData defines model for OptionData.
@@ -506,6 +510,32 @@ func (t *Config_Data) FromEnvConfigData(v EnvConfigData) error {
 
 // MergeEnvConfigData performs a merge with any union data inside the Config_Data, using the provided EnvConfigData
 func (t *Config_Data) MergeEnvConfigData(v EnvConfigData) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsNotificationsConfigData returns the union data inside the Config_Data as a NotificationsConfigData
+func (t Config_Data) AsNotificationsConfigData() (NotificationsConfigData, error) {
+	var body NotificationsConfigData
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNotificationsConfigData overwrites any union data inside the Config_Data as the provided NotificationsConfigData
+func (t *Config_Data) FromNotificationsConfigData(v NotificationsConfigData) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNotificationsConfigData performs a merge with any union data inside the Config_Data, using the provided NotificationsConfigData
+func (t *Config_Data) MergeNotificationsConfigData(v NotificationsConfigData) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err

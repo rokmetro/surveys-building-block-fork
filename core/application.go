@@ -18,6 +18,7 @@ import (
 	"application/core/interfaces"
 	"application/core/model"
 	corebb "application/driven/core"
+	"time"
 
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
@@ -81,6 +82,19 @@ func (a *Application) GetEnvConfigs() (*model.EnvConfigData, error) {
 		return nil, errors.ErrorData(logutils.StatusMissing, model.TypeConfig, &logutils.FieldArgs{"type": model.ConfigTypeEnv, "app_id": rokwireutils.AllApps, "org_id": rokwireutils.AllOrgs})
 	}
 	return model.GetConfigData[model.EnvConfigData](*config)
+}
+
+// CheckTimersConfig retrieves the database timers config
+func (a *Application) CheckTimersConfig(key string, filterTime time.Time, updateTime time.Time) (*model.TimersConfigData, error) {
+	// Load env configs from database
+	config, err := a.storage.FindAndUpdateTimerConfig(rokwireutils.AllApps, rokwireutils.AllOrgs, key, filterTime, updateTime)
+	if err != nil {
+		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeConfig, nil, err)
+	}
+	if config == nil {
+		return nil, nil
+	}
+	return model.GetConfigData[model.TimersConfigData](*config)
 }
 
 // NewApplication creates new Application

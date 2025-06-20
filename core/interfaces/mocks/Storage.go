@@ -353,6 +353,36 @@ func (_m *Storage) DeleteSurveysWithIDs(orgID string, appID string, accountsIDs 
 	return r0
 }
 
+// FindAndUpdateTimerConfig provides a mock function with given fields: appID, orgID, key, filterTime, updateTime
+func (_m *Storage) FindAndUpdateTimerConfig(appID string, orgID string, key string, filterTime time.Time, updateTime time.Time) (*model.Config, error) {
+	ret := _m.Called(appID, orgID, key, filterTime, updateTime)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAndUpdateTimerConfig")
+	}
+
+	var r0 *model.Config
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, time.Time, time.Time) (*model.Config, error)); ok {
+		return rf(appID, orgID, key, filterTime, updateTime)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, time.Time, time.Time) *model.Config); ok {
+		r0 = rf(appID, orgID, key, filterTime, updateTime)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Config)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, time.Time, time.Time) error); ok {
+		r1 = rf(appID, orgID, key, filterTime, updateTime)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FindConfig provides a mock function with given fields: configType, appID, orgID
 func (_m *Storage) FindConfig(configType string, appID string, orgID string) (*model.Config, error) {
 	ret := _m.Called(configType, appID, orgID)

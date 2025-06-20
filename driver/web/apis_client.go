@@ -200,7 +200,6 @@ func (h ClientAPIsHandler) createSurvey(l *logs.Log, r *http.Request, claims *to
 	items.AppID = claims.AppID
 	items.Type = "user"
 	item := surveyRequestToSurvey(items)
-	item.UnstructuredProperties = *items.UnstructuredProperties
 
 	createdItem, err := h.app.Client.CreateSurvey(item, claims.ExternalIDs)
 	if err != nil {

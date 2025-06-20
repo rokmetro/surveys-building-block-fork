@@ -371,23 +371,26 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 		score.CorrectAnswerCount += uint32(survey.SurveyStats.CorrectAnswerCount)
 	}
 
-	externalProfileIDRaw, exists := survey.UnstructuredProperties["external_profile_id"]
-	if exists {
-		externalProfileIDStr, isString := externalProfileIDRaw.(string)
-		if isString {
-			score.ExternalProfileID = externalProfileIDStr
-		}
-	}
-
-	localResponseTimeRaw, exists := survey.UnstructuredProperties["local_time"]
 	responseTime := surveyResponse.DateCreated
-	if exists {
-		localResponseTimeStr, isString := localResponseTimeRaw.(string)
-		if isString {
-			localResponseTime, err := time.Parse(time.DateTime, localResponseTimeStr)
+	unstructProps := *survey.UnstructuredProperties
+	if unstructProps != nil {
+		externalProfileIDRaw, exists := unstructProps["external_profile_id"]
+		if exists {
+			externalProfileIDStr, isString := externalProfileIDRaw.(string)
+			if isString {
+				score.ExternalProfileID = externalProfileIDStr
+			}
+		}
 
-			if err == nil && time.Since(localResponseTime).Abs().Hours() < 24 {
-				responseTime = localResponseTime
+		localResponseTimeRaw, exists := unstructProps["local_time"]
+		if exists {
+			localResponseTimeStr, isString := localResponseTimeRaw.(string)
+			if isString {
+				localResponseTime, err := time.Parse(time.DateTime, localResponseTimeStr)
+
+				if err == nil && time.Since(localResponseTime).Abs().Hours() < 24 {
+					responseTime = localResponseTime
+				}
 			}
 		}
 	}

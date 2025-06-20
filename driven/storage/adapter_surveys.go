@@ -202,9 +202,12 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		}
 	}
 
-	if len(unstructuredProperties) > 0 {
-		for key, value := range unstructuredProperties {
-			surveyFilter = append(surveyFilter, bson.E{Key: "unstructured_properties." + key, Value: bson.M{"$in": value}})
+
+	for key, value := range unstructuredProperties {
+		if sliceValue, ok := value.([]interface{}); ok {
+			surveyFilter = append(surveyFilter, bson.E{Key: "unstructured_properties." + key, Value: bson.M{"$in": sliceValue}})
+		} else {
+			surveyFilter = append(surveyFilter, bson.E{Key: "unstructured_properties." + key, Value: bson.M{"$eq": value}})
 		}
 	}
 
@@ -401,6 +404,7 @@ func (a *Adapter) UpdateSurvey(survey model.Survey, admin bool) error {
 			"archived":                  survey.Archived,
 			"estimated_completion_time": survey.EstimatedCompletionTime,
 			"date_updated":              now,
+			"unstructured_properties":   survey.UnstructuredProperties,
 		}}
 
 		res, err := a.db.surveys.UpdateOne(a.context, filter, update, nil)

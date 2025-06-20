@@ -112,10 +112,12 @@ func main() {
 			logger.Fatalf("Error initializing remote service account loader: %v", err)
 		}
 
-		serviceAccountManager, err = auth.NewServiceAccountManager(&authService, serviceAccountLoader)
-		if err != nil {
-			logger.Fatalf("Error initializing service account manager: %v", err)
-		}
+		print(serviceAccountLoader)
+
+		// serviceAccountManager, err = authservice.NewServiceAccountManager(&authService, serviceAccountLoader)
+		// if err != nil {
+		// 	logger.Fatalf("Error initializing service account manager: %v", err)
+		// }
 	}
 
 	// Notifications adapter

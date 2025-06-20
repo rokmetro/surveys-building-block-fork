@@ -112,6 +112,14 @@ get:
       explode: false
       schema:
         type: string
+    - name: unstructured_properties
+      in: query
+      description: unstructured properties related to survey
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string
   responses:
     200:
       description: Success

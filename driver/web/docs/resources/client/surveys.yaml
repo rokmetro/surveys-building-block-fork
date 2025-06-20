@@ -101,7 +101,7 @@ get:
       style: simple
       explode: false
       schema:
-        type: string   
+        type: string  
     - name: include_responses
       in: query
       description: Whether to include survey responses or not
@@ -110,6 +110,14 @@ get:
       explode: false
       schema:
         type: string
+    - name: unstructured_properties
+      in: query
+      description: A map of properties
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string 
   responses:
     200:
       description: Success

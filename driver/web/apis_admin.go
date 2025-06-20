@@ -278,8 +278,13 @@ func (h AdminAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *token
 	}
 	filter := surveyTimeFilter(&timeFilterItems)
 
+	var unstrucProps map[string]interface{}
+	unstrucPropsParams := r.URL.Query()["unstructured_properties"]
+	unstrucProps = make(map[string]interface{}, len(unstrucPropsParams))
+
 	surveys, err := h.app.Admin.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
-		&limit, &offset, filter, public, archived, completed, includeResponses)
+		&limit, &offset, filter, public, archived, completed, includeResponses, unstrucProps)
+
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}

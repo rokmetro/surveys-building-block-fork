@@ -899,6 +899,10 @@ paths:
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Leaderboard'
         '400':
           description: Bad request
         '401':
@@ -1927,6 +1931,12 @@ components:
         validate_admin_claim:
           type: boolean
           nullable: true
+        streak_notifications_timer_moment:
+          type: integer
+          nullable: true
+        streak_notifications_timezone:
+          type: string
+          nullable: true
     Survey:
       type: object
       properties:
@@ -2267,6 +2277,17 @@ components:
           readOnly: true
         name:
           type: string
+        is_admin:
+          type: boolean
+          readOnly: true
+        date_created:
+          type: string
+          format: date-time
+          readOnly: true
+        date_updated:
+          type: string
+          format: date-time
+          readOnly: true
     LeaderboardEntry:
       type: object
       properties:
@@ -2281,6 +2302,14 @@ components:
           readOnly: true
         is_admin:
           type: boolean
+          readOnly: true
+        date_created:
+          type: string
+          format: date-time
+          readOnly: true
+        date_updated:
+          type: string
+          format: date-time
           readOnly: true
     _admin_req_update-configs:
       required:

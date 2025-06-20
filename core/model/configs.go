@@ -50,6 +50,9 @@ type EnvConfigData struct {
 	AnalyticsToken string `json:"analytics_token" bson:"analytics_token"`
 	ExternalID     string `json:"external_id" bson:"external_id"`
 
+	StreakNotificationsTimerMoment int    `json:"streak_notifications_timer_moment" bson:"streak_notifications_timer_moment"`
+	StreakNotificationsTimezone    string `json:"streak_notifications_timezone" bson:"streak_notifications_timezone"`
+
 	CORSAllowedOrigins []string `json:"cors_allowed_origins" bson:"cors_allowed_origins"`
 	CORSAllowedHeaders []string `json:"cors_allowed_headers" bson:"cors_allowed_headers"`
 	ValidateAdminClaim bool     `json:"validate_admin_claim" bson:"validate_admin_claim"`

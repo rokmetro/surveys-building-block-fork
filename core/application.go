@@ -104,5 +104,7 @@ func NewApplication(version string, build string, storage interfaces.Storage, no
 	application.System = newAppSystem(&application)
 	application.shared = newAppShared(&application)
 
+	streakNotifications.application = &application
+
 	return &application
 }

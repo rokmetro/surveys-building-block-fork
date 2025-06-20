@@ -29,7 +29,8 @@ import (
 )
 
 type streakNotifications struct {
-	logger *logs.Logger
+	application *Application
+	logger      *logs.Logger
 
 	notifications interfaces.Notifications
 
@@ -46,9 +47,24 @@ func (n streakNotifications) start() {
 }
 
 func (n streakNotifications) setupStreakNotificationsTimer() {
-	now := time.Now().UTC()
+	// default to 10AM EST/EDT
+	desiredMoment := 36000            // default desired moment of the day in seconds (beginning of the day)
+	locationStr := "America/New_York" // default location
+
+	envConfig, err := n.application.GetEnvConfigs()
+	if envConfig == nil || err != nil {
+		n.logger.Infof("setupStreakNotificationsTimer -> failed to get env config (%v) - applying defaults", err)
+	} else {
+		desiredMoment = envConfig.StreakNotificationsTimerMoment
+		locationStr = envConfig.StreakNotificationsTimezone
+	}
+
+	location, err := time.LoadLocation(locationStr)
+	if err != nil {
+		n.logger.Warnf("setupStreakNotificationsTimer -> error getting location: %v", err)
+	}
+	now := time.Now().In(location)
 	nowSecondsInDay := utils.SecondsInHour*now.Hour() + utils.SecondsInMinute*now.Minute() + now.Second()
-	desiredMoment := 0 //default desired moment of the day in seconds (beginning of the day)
 
 	var durationInSeconds int
 	n.logger.Infof("setupStreakNotificationsTimer -> nowSecondsInDay:%d", nowSecondsInDay)

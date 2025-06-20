@@ -23,6 +23,23 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// GetLeaderboard gets a leaderboard by ID
+func (a *Adapter) GetLeaderboard(leaderboardID string, orgID string, appID string) (*model.Leaderboard, error) {
+	filter := bson.M{
+		"_id":    leaderboardID,
+		"org_id": orgID,
+		"app_id": appID,
+	}
+
+	var leaderboard model.Leaderboard
+	err := a.db.leaderboards.FindOne(a.context, filter, &leaderboard, nil)
+	if err != nil {
+		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeLeaderboard, filterArgs(filter), err)
+	}
+
+	return &leaderboard, nil
+}
+
 // GetLeaderboards gets all leaderboards for a user
 func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
 	leaderboardEntryFilter := bson.M{

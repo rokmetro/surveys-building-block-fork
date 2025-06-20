@@ -98,7 +98,7 @@ func (a *Adapter) UpdateLeaderboard(leaderboard model.Leaderboard) error {
 	}
 	update := bson.M{
 		"$set": bson.M{
-			"name": leaderboard.Name,
+			"name":         leaderboard.Name,
 			"date_updated": leaderboard.DateUpdated,
 		},
 	}

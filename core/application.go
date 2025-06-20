@@ -87,7 +87,9 @@ func (a *Application) GetEnvConfigs() (*model.EnvConfigData, error) {
 func NewApplication(version string, build string, storage interfaces.Storage, notifications interfaces.Notifications, calendar interfaces.Calendar,
 	coreBB *corebb.Adapter, serviceID string, logger *logs.Logger) *Application {
 	deleteDataLogic := deleteDataLogic{logger: *logger, core: coreBB, serviceID: serviceID, storage: storage}
-	streakNotifications := streakNotifications{logger: logger, storage: storage, notifications: notifications}
+
+	streakNotificationsTimerDone := make(chan bool)
+	streakNotifications := streakNotifications{logger: logger, storage: storage, notifications: notifications, streakNotificationsTimerDone: streakNotificationsTimerDone}
 
 	application := Application{version: version, build: build, storage: storage, notifications: notifications,
 		calendar: calendar, deleteDataLogic: deleteDataLogic, streakNotifications: streakNotifications, logger: logger}

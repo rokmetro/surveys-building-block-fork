@@ -154,108 +154,109 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 		var score *model.Score
 		var oldScore model.Score
 
-		transaction := func(storage interfaces.Storage) error {
-			var err error
-			score, err = storage.GetScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
+		score, err = a.app.storage.GetScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
 
-			// Create a new score if not present
-			// Otherwise update score
-			if score == nil || err != nil {
-				score, err = a.CreateScore(storage, surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, "")
-				oldScore = *score
-			} else {
-				// make copy of score before modifying for loaderboard notifications
-				oldScore = *score
-
-				a.UpdateScore(score, surveyResponse)
-				err = storage.UpdateScore(*score)
-			}
-
-			//TODO: implement as aggregation pipeline?
-			// get all leaderboards for this user
-			leaderboards, err := storage.GetLeaderboards(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, nil)
+		// Create a new score if not present
+		// Otherwise update score
+		if score == nil || err != nil {
+			score, err = a.CreateScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, "")
 			if err != nil {
-				a.app.logger.WarnWithFields("failed to find leaderboards", logutils.Fields{"user_id": surveyResponse.UserID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
+				return nil, errors.WrapErrorAction(logutils.ActionCreate, model.TypeScore, nil, err)
 			}
 
-			for i := range leaderboards {
-				lb := leaderboards[i]
-				notificationData := map[string]string{
-					"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, lb.ID),
-				}
+			oldScore = *score
+		} else {
+			// make copy of score before modifying for loaderboard notifications
+			oldScore = *score
 
-				notifyFirstDailyQuiz := false
-				now := time.Now().UTC()
-				// notify each user in each leaderboard the user has played the fashion quiz, if have not notified for that leaderboard yet today
-				if lb.LastQuizTime == nil || utils.IsNextDay(now, *lb.LastQuizTime) {
-					notifyFirstDailyQuiz = true
-					lb.LastQuizTime = &now
-
-					err = storage.UpdateLeaderboard(lb)
-					if err != nil {
-						a.app.logger.WarnWithFields("failed to update leaderboard", logutils.Fields{"id": lb.ID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
-						// if leaderboard quiz time updates fail, prevent potential notification spam
-						notifyFirstDailyQuiz = false
-					}
-				}
-
-				scores, err := storage.GetLeaderboardScores(lb.ID, surveyResponse.OrgID, surveyResponse.AppID, nil, nil)
-				if err != nil {
-					a.app.logger.WarnWithFields("failed to find scores for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
-				}
-
-				for _, userScore := range scores {
-					if userScore.UserID != surveyResponse.UserID {
-						// current user's score has eclipsed this user's score in the leaderboard by completing the fashion quiz
-						if userScore.Score >= oldScore.Score && userScore.Score < score.Score {
-							// notify each user in each leaderboard that has userScore.Score >= oldScore.Score and < score.Score (any other conditions?)
-
-							body := fmt.Sprintf("@%s is Now the Runway Genius of your group %s. Can you reclaim the top spot?", username, lb.Name)
-
-							message := model.NotificationMessage{
-								OrgID: surveyResponse.OrgID,
-								AppID: surveyResponse.AppID,
-
-								Subject:    notifications.SubjectVogue,
-								Body:       body,
-								Data:       notificationData,
-								Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
-							}
-							a.app.notifications.SendNotification(message)
-						}
-
-						if notifyFirstDailyQuiz {
-							points := 0
-							if score != nil {
-								points = int(score.Score - oldScore.Score)
-							}
-							body := fmt.Sprintf("@%s just scored %d points in today's Runway Genius. Can you outplay them?", username, points)
-
-							message := model.NotificationMessage{
-								OrgID: surveyResponse.OrgID,
-								AppID: surveyResponse.AppID,
-
-								Subject:    notifications.SubjectVogue,
-								Body:       body,
-								Data:       notificationData,
-								Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
-							}
-							a.app.notifications.SendNotification(message)
-						}
-					}
-				}
+			a.UpdateScore(score, surveyResponse)
+			err = a.app.storage.UpdateScore(*score)
+			if err != nil {
+				return nil, errors.WrapErrorAction(logutils.ActionUpdate, model.TypeScore, nil, err)
 			}
-
-			return nil
 		}
 
-		err = a.app.storage.PerformTransaction(transaction)
-		if err != nil {
-			return nil, err
-		}
+		// send notifications
+		go a.sendFashionQuizNotifications(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, username, score, oldScore)
 	}
 
 	return surveyResponsePtr, nil
+}
+
+func (a appClient) sendFashionQuizNotifications(orgID string, appID string, userID string, username string, score *model.Score, oldScore model.Score) {
+	// get all leaderboards for this user
+	leaderboards, err := a.app.storage.GetLeaderboards(orgID, appID, userID, nil)
+	if err != nil {
+		a.app.logger.WarnWithFields("failed to find leaderboards", logutils.Fields{"user_id": userID, "org_id": orgID, "app_id": appID})
+	}
+
+	for i := range leaderboards {
+		lb := leaderboards[i]
+		notificationData := map[string]string{
+			"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, lb.ID),
+		}
+
+		notifyFirstDailyQuiz := false
+		now := time.Now().UTC()
+		// notify each user in each leaderboard the user has played the fashion quiz, if have not notified for that leaderboard yet today
+		if lb.LastQuizTime == nil || utils.IsNextDay(now, *lb.LastQuizTime) {
+			notifyFirstDailyQuiz = true
+			lb.LastQuizTime = &now
+
+			err = a.app.storage.UpdateLeaderboard(lb)
+			if err != nil {
+				a.app.logger.WarnWithFields("failed to update leaderboard", logutils.Fields{"id": lb.ID, "org_id": orgID, "app_id": appID})
+				// if leaderboard quiz time updates fail, prevent potential notification spam
+				notifyFirstDailyQuiz = false
+			}
+		}
+
+		scores, err := a.app.storage.GetLeaderboardScores(lb.ID, orgID, appID, nil, nil)
+		if err != nil {
+			a.app.logger.WarnWithFields("failed to find scores for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": orgID, "app_id": appID})
+		}
+
+		for _, userScore := range scores {
+			if userScore.UserID != userID {
+				// current user's score has eclipsed this user's score in the leaderboard by completing the fashion quiz
+				if userScore.Score >= oldScore.Score && userScore.Score < score.Score {
+					// notify each user in each leaderboard that has userScore.Score >= oldScore.Score and < score.Score (any other conditions?)
+
+					body := fmt.Sprintf("@%s is Now the Runway Genius of your group %s. Can you reclaim the top spot?", username, lb.Name)
+
+					message := model.NotificationMessage{
+						OrgID: orgID,
+						AppID: appID,
+
+						Subject:    notifications.SubjectVogue,
+						Body:       body,
+						Data:       notificationData,
+						Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
+					}
+					a.app.notifications.SendNotification(message)
+				}
+
+				if notifyFirstDailyQuiz {
+					points := 0
+					if score != nil {
+						points = int(score.Score - oldScore.Score)
+					}
+					body := fmt.Sprintf("@%s just scored %d points in today's Runway Genius. Can you outplay them?", username, points)
+
+					message := model.NotificationMessage{
+						OrgID: orgID,
+						AppID: appID,
+
+						Subject:    notifications.SubjectVogue,
+						Body:       body,
+						Data:       notificationData,
+						Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
+					}
+					a.app.notifications.SendNotification(message)
+				}
+			}
+		}
+	}
 }
 
 // UpdateSurveyResponse updates the provided survey response
@@ -302,7 +303,7 @@ func (a appClient) CreateSurveyAlert(surveyAlert model.SurveyAlert) error {
 func (a appClient) GetScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
 	score, err := a.app.storage.GetScore(orgID, appID, userID)
 	if score == nil {
-		score, err = a.CreateScore(nil, orgID, appID, userID, externalProfileID)
+		score, err = a.CreateScore(orgID, appID, userID, externalProfileID)
 	}
 	if err != nil || score == nil {
 		return nil, err
@@ -426,11 +427,8 @@ func (a appClient) insertUserScoreIntoLocalScores(scores []model.Score, userScor
 }
 
 // CreateScore Creates a score object by iterating over all previous survey responses
-func (a appClient) CreateScore(storage interfaces.Storage, orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
-	if storage == nil {
-		storage = a.app.storage
-	}
-	surveyResponses, err := storage.GetSurveyResponses(&orgID, &appID, &userID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
+func (a appClient) CreateScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
+	surveyResponses, err := a.app.storage.GetSurveyResponses(&orgID, &appID, &userID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -452,7 +450,7 @@ func (a appClient) CreateScore(storage interfaces.Storage, orgID string, appID s
 	for i := 0; i < len(surveyResponses); i++ {
 		a.UpdateScore(&score, surveyResponses[i])
 	}
-	return &score, storage.CreateScore(score)
+	return &score, a.app.storage.CreateScore(score)
 }
 
 // UpdateScore updates the score model passed in
@@ -607,22 +605,43 @@ func (a appClient) JoinLeaderboard(leaderboardID string, orgID string, appID str
 		return errors.WrapErrorAction(logutils.ActionCreate, model.TypeLeaderboardEntry, nil, err)
 	}
 
+	// send notifications
+	go a.sendJoinLeaderboardNotifications(leaderboardID, orgID, appID, userID, username)
+
+	return nil
+}
+
+// createLeaderboardEntry creates a model.LeaderboardEntry with the provided parameters
+func (a appClient) createLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string, isAdmin bool) model.LeaderboardEntry {
+	return model.LeaderboardEntry{
+		ID:            uuid.NewString(),
+		LeaderboardID: leaderboardID,
+		OrgID:         orgID,
+		AppID:         appID,
+		UserID:        userID,
+		IsAdmin:       isAdmin,
+		DateCreated:   time.Now().UTC(),
+		DateUpdated:   nil,
+	}
+}
+
+func (a appClient) sendJoinLeaderboardNotifications(leaderboardID string, orgID string, appID string, userID string, username string) {
 	// send notifications to users already in leaderboard
 	leaderboards, err := a.app.storage.GetLeaderboards(orgID, appID, userID, []string{leaderboardID})
 	if err != nil {
 		a.app.logger.Warnf("error getting leaderboard: %v", err)
-		return nil
+		return
 	}
 	if len(leaderboards) == 0 {
 		a.app.logger.WarnWithFields("missing leaderboard", logutils.Fields{"id": leaderboardID, "user_id": userID, "app_id": appID, "org_id": orgID})
-		return nil
+		return
 	}
 	leaderboard := leaderboards[0]
 
 	leaderboardEntries, err := a.app.storage.GetLeaderboardEntries(leaderboardID, orgID, appID, nil)
 	if err != nil {
 		a.app.logger.WarnWithFields("error getting leaderboard entries", logutils.Fields{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID})
-		return nil
+		return
 	}
 	for _, entry := range leaderboardEntries {
 		if entry.UserID != userID {
@@ -648,22 +667,6 @@ func (a appClient) JoinLeaderboard(leaderboardID string, orgID string, appID str
 			}
 			a.app.notifications.SendNotification(message)
 		}
-	}
-
-	return nil
-}
-
-// createLeaderboardEntry creates a model.LeaderboardEntry with the provided parameters
-func (a appClient) createLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string, isAdmin bool) model.LeaderboardEntry {
-	return model.LeaderboardEntry{
-		ID:            uuid.NewString(),
-		LeaderboardID: leaderboardID,
-		OrgID:         orgID,
-		AppID:         appID,
-		UserID:        userID,
-		IsAdmin:       isAdmin,
-		DateCreated:   time.Now().UTC(),
-		DateUpdated:   nil,
 	}
 }
 

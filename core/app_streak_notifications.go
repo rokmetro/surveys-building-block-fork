@@ -46,14 +46,6 @@ func (n streakNotifications) start() {
 }
 
 func (n streakNotifications) setupStreakNotificationsTimer() {
-	//cancel if active
-	if n.streakNotificationsTimer != nil {
-		n.logger.Info("setupStreakNotificationsTimer -> there is active timer, so cancel it")
-
-		n.streakNotificationsTimerDone <- true
-		n.streakNotificationsTimer.Stop()
-	}
-
 	now := time.Now().UTC()
 	nowSecondsInDay := utils.SecondsInHour*now.Hour() + utils.SecondsInMinute*now.Minute() + now.Second()
 	desiredMoment := 0 //default desired moment of the day in seconds (beginning of the day)

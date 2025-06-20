@@ -7,3 +7,6 @@ properties:
     readOnly: true
   name:
     type: string
+  is_admin:
+    type: boolean
+    readOnly: true

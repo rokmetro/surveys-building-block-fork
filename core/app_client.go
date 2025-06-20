@@ -433,6 +433,7 @@ func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID strin
 	leaderboard.ID = uuid.NewString()
 	leaderboard.DateCreated = time.Now().UTC()
 	leaderboard.DateUpdated = nil
+	leaderboard.IsAdmin = nil
 
 	leaderboardEntry := a.createLeaderboardEntry(leaderboard.ID, leaderboard.OrgID, leaderboard.AppID, userID, true)
 
@@ -456,7 +457,9 @@ func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID strin
 	if err != nil {
 		return nil, err
 	}
-	leaderboard.IsAdmin = true
+
+	isAdmin := true
+	leaderboard.IsAdmin = &isAdmin
 	return &leaderboard, nil
 }
 

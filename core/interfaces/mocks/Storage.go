@@ -593,9 +593,9 @@ func (_m *Storage) GetLeaderboardScores(leaderboardID string, orgID string, appI
 	return r0, r1
 }
 
-// GetLeaderboardUserScores provides a mock function with given fields: orgID, appID, userID
-func (_m *Storage) GetLeaderboardUserScores(orgID string, appID string, userID string) ([]model.Score, error) {
-	ret := _m.Called(orgID, appID, userID)
+// GetLeaderboardUserScores provides a mock function with given fields: orgID, appID, userID, limit, offset
+func (_m *Storage) GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error) {
+	ret := _m.Called(orgID, appID, userID, limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetLeaderboardUserScores")
@@ -603,19 +603,19 @@ func (_m *Storage) GetLeaderboardUserScores(orgID string, appID string, userID s
 
 	var r0 []model.Score
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) ([]model.Score, error)); ok {
-		return rf(orgID, appID, userID)
+	if rf, ok := ret.Get(0).(func(string, string, string, *int, *int) ([]model.Score, error)); ok {
+		return rf(orgID, appID, userID, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) []model.Score); ok {
-		r0 = rf(orgID, appID, userID)
+	if rf, ok := ret.Get(0).(func(string, string, string, *int, *int) []model.Score); ok {
+		r0 = rf(orgID, appID, userID, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Score)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(orgID, appID, userID)
+	if rf, ok := ret.Get(1).(func(string, string, string, *int, *int) error); ok {
+		r1 = rf(orgID, appID, userID, limit, offset)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -9,6 +9,7 @@ properties:
     type: string
   is_admin:
     type: boolean
+    optional: true
     readOnly: true
   date_created:
     type: string

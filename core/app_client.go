@@ -505,7 +505,23 @@ func (a appClient) DeleteLeaderboard(leaderboardID string, orgID string, appID s
 }
 
 func (a appClient) JoinLeaderboard(leaderboardID string, orgID string, appID string, userID string) error {
-	return a.app.storage.CreateLeaderboardEntry(a.createLeaderboardEntry(leaderboardID, orgID, appID, userID, false))
+	transaction := func(storage interfaces.Storage) error {
+		// Check if leaderboard exists
+		leaderboard, err := storage.GetLeaderboard(leaderboardID, orgID, appID)
+		if leaderboard == nil || err != nil {
+			return errors.WrapErrorData(logutils.StatusMissing, model.TypeLeaderboard, &logutils.FieldArgs{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID}, err)
+		}
+
+		// Add leaderboard entry
+		err = storage.CreateLeaderboardEntry(a.createLeaderboardEntry(leaderboardID, orgID, appID, userID, false))
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return a.app.storage.PerformTransaction(transaction)
 }
 
 // createLeaderboardEntry creates a model.LeaderboardEntry with the provided parameters

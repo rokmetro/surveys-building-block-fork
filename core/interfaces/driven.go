@@ -61,7 +61,7 @@ type Storage interface {
 	CreateScore(score model.Score) error
 	UpdateScore(score model.Score) error
 	GetLeaderboardScores(leaderboardID string, orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
-	GetLeaderboardUserScores(orgID string, appID string, userID string) ([]model.Score, error)
+	GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error)
 
 	GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error)
 	CreateLeaderboard(leaderboard model.Leaderboard) (*model.Leaderboard, error)

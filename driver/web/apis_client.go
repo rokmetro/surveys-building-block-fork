@@ -856,7 +856,28 @@ func (h ClientAPIsHandler) getLeaderboardScores(l *logs.Log, r *http.Request, cl
 }
 
 func (h ClientAPIsHandler) getLeaderboardUserScores(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
-	scores, err := h.app.Client.GetLeaderboardUserScores(claims.OrgID, claims.AppID, claims.Subject)
+
+	limitRaw := r.URL.Query().Get("limit")
+	limit := 20
+	if len(limitRaw) > 0 {
+		intParsed, err := strconv.Atoi(limitRaw)
+		if err != nil {
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("limit"), nil, http.StatusBadRequest, false)
+		}
+		limit = intParsed
+	}
+
+	offsetRaw := r.URL.Query().Get("offset")
+	offset := 0
+	if len(offsetRaw) > 0 {
+		intParsed, err := strconv.Atoi(offsetRaw)
+		if err != nil {
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("offset"), nil, http.StatusBadRequest, false)
+		}
+		offset = intParsed
+	}
+
+	scores, err := h.app.Client.GetLeaderboardUserScores(claims.OrgID, claims.AppID, claims.Subject, &limit, &offset)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, "scores", nil, err, http.StatusInternalServerError, true)
 	}

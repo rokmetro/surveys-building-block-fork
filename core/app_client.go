@@ -424,8 +424,8 @@ func (a appClient) GetLeaderboardScores(leaderboardID string, orgID string, appI
 }
 
 // GetLeaderboardUserScores returns the scores of a user in each leaderboard
-func (a appClient) GetLeaderboardUserScores(orgID string, appID string, userID string) ([]model.Score, error) {
-	return a.app.storage.GetLeaderboardUserScores(orgID, appID, userID)
+func (a appClient) GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error) {
+	return a.app.storage.GetLeaderboardUserScores(orgID, appID, userID, limit, offset)
 }
 
 // CreateLeaderboard creates a new leaderboard

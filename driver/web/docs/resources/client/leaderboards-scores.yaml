@@ -6,6 +6,23 @@ get:
     Retrieves scores for every leaderboard the user is in.
   security:
     - bearerAuth: []
+  parameters:
+    - name: limit
+      in: query
+      description: The number of results to be loaded in one page
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: number
+    - name: offset
+      in: query
+      description: The number of results previously loaded
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: number
   responses:
     200:
       description: Success

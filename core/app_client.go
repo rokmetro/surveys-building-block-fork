@@ -199,7 +199,7 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 					}
 				}
 
-				scores, err := storage.GetScoresFromLeaderboards(surveyResponse.OrgID, surveyResponse.AppID, []string{lb.ID}, nil, nil, nil)
+				scores, err := storage.GetLeaderboardScores(lb.ID, surveyResponse.OrgID, surveyResponse.AppID, nil, nil)
 				if err != nil {
 					a.app.logger.WarnWithFields("failed to find scores for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": surveyResponse.OrgID, "app_id": surveyResponse.AppID})
 				}
@@ -319,11 +319,7 @@ func (a appClient) GetScore(orgID string, appID string, userID string, externalP
 }
 
 // GetScores returns scores in descending order and removes scores with empty external IDs
-func (a appClient) GetScores(orgID string, appID string, leaderboardIDs []string, userID *string, limit *int, offset *int) ([]model.Score, error) {
-	if leaderboardIDs != nil && len(leaderboardIDs) > 0 {
-		return a.app.storage.GetScoresFromLeaderboards(orgID, appID, leaderboardIDs, userID, limit, offset)
-	}
-
+func (a appClient) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
 	return a.app.storage.GetScores(&orgID, &appID, limit, offset, nil, nil)
 }
 
@@ -519,6 +515,16 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 // GetLeaderboards gets all leaderboards for a user
 func (a appClient) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
 	return a.app.storage.GetLeaderboards(orgID, appID, userID, nil)
+}
+
+// GetLeaderboardScores returns the paginated scores in the leaderboard with the provided ID
+func (a appClient) GetLeaderboardScores(leaderboardID string, orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
+	return a.app.storage.GetLeaderboardScores(leaderboardID, orgID, appID, limit, offset)
+}
+
+// GetLeaderboardUserScores returns the scores of a user in each leaderboard
+func (a appClient) GetLeaderboardUserScores(orgID string, appID string, userID string) ([]model.Score, error) {
+	return a.app.storage.GetLeaderboardUserScores(orgID, appID, userID)
 }
 
 // CreateLeaderboard creates a new leaderboard

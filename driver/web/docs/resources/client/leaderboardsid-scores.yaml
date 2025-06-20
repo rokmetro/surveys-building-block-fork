@@ -1,12 +1,20 @@
 get:
   tags:
     - Client
-  summary: Retrieves scores
+  summary: Retrieves scores for specified leaderboard
   description: |
-    Retrieves paginated scores sorted descending.
+    Retrieves paginated scores sorted descending for a specified leaderboard.
   security:
     - bearerAuth: []
   parameters:
+    - name: id
+      in: path
+      description: The ID of the leaderboard to retrieve scores for
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: string
     - name: limit
       in: query
       description: The number of results to be loaded in one page

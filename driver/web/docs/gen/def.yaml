@@ -752,18 +752,10 @@ paths:
         - Client
       summary: Retrieves scores
       description: |
-        Retrieves scores sorted descending. If a leaderboard ID is provided, only returns scores for users in that leaderboard. If no leaderboard ID is provided, returns all scores.
+        Retrieves paginated scores sorted descending.
       security:
         - bearerAuth: []
       parameters:
-        - name: leaderboard_id
-          in: query
-          description: 'Optional ID of the custom leaderboard to filter scores by. If provided, only returns scores for users who are members of this leaderboard.'
-          required: false
-          style: simple
-          explode: false
-          schema:
-            type: string
         - name: limit
           in: query
           description: The number of results to be loaded in one page
@@ -799,15 +791,78 @@ paths:
     $ref: '#/paths/~1api~1score'
   /api/v2/scores:
     $ref: '#/paths/~1api~1scores'
-  /api/scores/pivot:
-    $ref: '#/paths/~1api~1scores'
-  /api/leaderboard:
+  /api/scores/top-and-local:
+    get:
+      tags:
+        - Client
+      summary: Retrieves top and local scores
+      description: |
+        Gets top scores and local scores that have the closest value to the user's score. (Includes the user's score)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: The number of top scores to be loaded.
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+        - name: offset
+          in: query
+          description: The number of scores previously loaded.
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+        - name: local_limit
+          in: query
+          description: The number of local scores to be in the loaded.
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+        - name: above_pivot_limit
+          in: query
+          description: The number of scores to be loaded above pivot.
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+        - name: below_pivot_limit
+          in: query
+          description: The number of scores to be loaded below pivot.
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Score'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error
+  /api/leaderboards:
     get:
       tags:
         - Client
       summary: Retrieves custom leaderboards the current user is in
       description: |
-        Retrieves all custom leaderboards where the authenticated user is a member or admin.
+        Retrieves all custom leaderboards the user is in.
       security:
         - bearerAuth: []
       responses:
@@ -819,6 +874,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Leaderboard'
+        '400':
+          description: Bad request
         '401':
           description: Unauthorized
         '500':
@@ -828,7 +885,8 @@ paths:
         - Client
       summary: Creates a new custom leaderboard
       description: |
-        Creates a new custom leaderboard. Only the leaderboard name is required; the requesting user becomes an admin automatically.
+        Creates a new custom leaderboard. 
+        Only the leaderboard name is required; the requesting user becomes an admin automatically.
       security:
         - bearerAuth: []
       requestBody:
@@ -847,17 +905,17 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error
-  '/api/leaderboard/{leaderboard_id}':
+  '/api/leaderboards/{id}':
     put:
       tags:
         - Client
       summary: Updates the name of the custom leaderboard with the specified id
       description: |
-        Updates the name of the custom leaderboard with the specified id
+        Checks if the calling user is an admin and updates the name of the custom leaderboard with the specified id
       security:
         - bearerAuth: []
       parameters:
-        - name: leaderboard_id
+        - name: id
           in: path
           description: ID of the custom leaderboard
           required: true
@@ -886,11 +944,11 @@ paths:
         - Client
       summary: Deletes the custom leaderboard with the specified id
       description: |
-        Deletes the custom leaderboard with the specified id
+        Checks if the calling user is an admin and deletes the custom leaderboard with the specified id
       security:
         - bearerAuth: []
       parameters:
-        - name: leaderboard_id
+        - name: id
           in: path
           description: ID of the custom leaderboard
           required: true
@@ -907,6 +965,69 @@ paths:
           description: Unauthorized
         '403':
           description: Forbidden
+        '500':
+          description: Internal error
+  '/api/leaderboards/{id}/join':
+    post:
+      tags:
+        - Client
+      summary: Joins leaderboard with specified id
+      description: |
+        Joins leaderboard with specified id. Creates a new LeaderboardEntry object with admin set to false.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of the custom leaderboard
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error
+  '/api/leaderboards/{id}/leave':
+    delete:
+      tags:
+        - Client
+      summary: Leaves leaderboard with specified id and user ids
+      description: |
+        Leaves leaderboard with specified id and user ids. Deletes the LeaderboardEntry object for the user.
+        User ids can be specified if the user is an admin to delete many users at once.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of the custom leaderboard
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: user_ids
+          in: query
+          description: 'An optional, comma-separated list of user IDs to leave the leaderboard. If not provided, the current user will leave the leaderboard. The user must be an admin to specify other user IDs.'
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
         '500':
           description: Internal error
   /api/admin/configs:
@@ -2133,6 +2254,9 @@ components:
         correct_answer_count:
           type: number
           readOnly: true
+        rank:
+          type: number
+          readOnly: true
     Leaderboard:
       required:
         - name
@@ -2141,24 +2265,22 @@ components:
         id:
           type: string
           readOnly: true
-        org_id:
-          type: string
-          readOnly: true
-        app_id:
-          type: string
-          readOnly: true
         name:
           type: string
-        adminUserIds:
-          type: array
-          items:
-            type: string
-        userIds:
-          type: array
-          items:
-            type: string
-        rank:
-          type: number
+    LeaderboardEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        leaderboard_id:
+          type: string
+          readOnly: true
+        user_id:
+          type: string
+          readOnly: true
+        is_admin:
+          type: boolean
           readOnly: true
     _admin_req_update-configs:
       required:

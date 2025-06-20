@@ -143,7 +143,7 @@ func (a *Adapter) CreateLeaderboardEntry(leaderboardEntry model.LeaderboardEntry
 	return nil
 }
 
-// DeleteLeaderboardEntries deletes a leaderboard entries according to users in leavingUserIDs
+// DeleteLeaderboardEntries deletes non-admin leaderboard entries according to users in leavingUserIDs
 func (a *Adapter) DeleteLeaderboardEntries(leaderboardID string, orgID string, appID string, leavingUserIDs []string) error {
 	filter := bson.D{
 		primitive.E{Key: "leaderboard_id", Value: leaderboardID},

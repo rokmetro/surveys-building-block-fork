@@ -138,6 +138,7 @@ func (a *Adapter) DeleteLeaderboardEntries(leaderboardID string, orgID string, a
 		primitive.E{Key: "org_id", Value: orgID},
 		primitive.E{Key: "app_id", Value: appID},
 		primitive.E{Key: "user_id", Value: bson.M{"$in": leavingUserIDs}},
+		primitive.E{Key: "is_admin", Value: false}, // Only delete non-admin entries
 	}
 
 	result, err := a.db.leaderboardEntries.DeleteMany(a.context, filter, nil)

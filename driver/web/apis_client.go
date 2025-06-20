@@ -711,6 +711,26 @@ func (h ClientAPIsHandler) getTopAndLocalScores(l *logs.Log, r *http.Request, cl
 	return l.HTTPResponseSuccessJSON(rdata)
 }
 
+func (h ClientAPIsHandler) getLeaderboard(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	vars := mux.Vars(r)
+	leaderboardID := vars["id"]
+	if len(leaderboardID) <= 0 {
+		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
+	}
+
+	leaderboard, err := h.app.Client.GetLeaderboard(leaderboardID, claims.OrgID, claims.AppID)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionGet, "leaderboard", nil, err, http.StatusInternalServerError, true)
+	}
+
+	data, err := json.Marshal(leaderboard)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
+	}
+
+	return l.HTTPResponseSuccessJSON(data)
+}
+
 func (h ClientAPIsHandler) getLeaderboards(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
 	leaderboards, err := h.app.Client.GetLeaderboards(claims.OrgID, claims.AppID, claims.Subject)
 	if err != nil {

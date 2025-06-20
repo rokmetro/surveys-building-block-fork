@@ -510,6 +510,17 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	return nil
 }
 
+// GetLeaderboard gets the leaderboard with the provided ID
+func (a appClient) GetLeaderboard(leaderboardID string, orgID string, appID string) (*model.Leaderboard, error) {
+	leaderboard, err := a.app.storage.GetLeaderboard(leaderboardID, orgID, appID)
+
+	if leaderboard == nil || err != nil {
+		return nil, errors.WrapErrorData(logutils.StatusMissing, model.TypeLeaderboard, &logutils.FieldArgs{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID}, err)
+	}
+
+	return leaderboard, nil
+}
+
 // GetLeaderboards gets all leaderboards for a user
 func (a appClient) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
 	return a.app.storage.GetLeaderboards(orgID, appID, userID)

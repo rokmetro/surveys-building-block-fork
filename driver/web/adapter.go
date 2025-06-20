@@ -100,6 +100,7 @@ func (a Adapter) Start() {
 	// Leaderboard endpoints
 	mainRouter.HandleFunc("/leaderboards", a.wrapFunc(a.clientAPIsHandler.getLeaderboards, a.auth.client.User)).Methods("GET")
 	mainRouter.HandleFunc("/leaderboards", a.wrapFunc(a.clientAPIsHandler.createLeaderboard, a.auth.client.User)).Methods("POST")
+	mainRouter.HandleFunc("/leaderboards/{id}", a.wrapFunc(a.clientAPIsHandler.getLeaderboard, a.auth.client.User)).Methods("GET")
 	mainRouter.HandleFunc("/leaderboards/{id}", a.wrapFunc(a.clientAPIsHandler.updateLeaderboard, a.auth.client.User)).Methods("PUT")
 	mainRouter.HandleFunc("/leaderboards/{id}", a.wrapFunc(a.clientAPIsHandler.deleteLeaderboard, a.auth.client.User)).Methods("DELETE")
 	mainRouter.HandleFunc("/leaderboards/{id}/join", a.wrapFunc(a.clientAPIsHandler.joinLeaderboard, a.auth.client.User)).Methods("PUT")

@@ -523,13 +523,15 @@ func (a appClient) GetLeaderboardScores(leaderboardID string, orgID string, appI
 }
 
 // GetLeaderboardUserScores returns the scores of a user in each leaderboard
-func (a appClient) GetLeaderboardUserScores(orgID string, appID string, userID string) ([]model.Score, error) {
-	return a.app.storage.GetLeaderboardUserScores(orgID, appID, userID)
+func (a appClient) GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error) {
+	return a.app.storage.GetLeaderboardUserScores(orgID, appID, userID, limit, offset)
 }
 
 // CreateLeaderboard creates a new leaderboard
 func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID string) (*model.Leaderboard, error) {
 	leaderboard.ID = uuid.NewString()
+	leaderboard.DateCreated = time.Now().UTC()
+	leaderboard.DateUpdated = nil
 
 	leaderboardEntry := a.createLeaderboardEntry(leaderboard.ID, leaderboard.OrgID, leaderboard.AppID, userID, true)
 
@@ -564,6 +566,9 @@ func (a appClient) UpdateLeaderboard(leaderboard model.Leaderboard, userID strin
 	if err != nil {
 		return err
 	}
+
+	time := time.Now().UTC()
+	leaderboard.DateUpdated = &time
 
 	return a.app.storage.UpdateLeaderboard(leaderboard)
 }
@@ -657,6 +662,8 @@ func (a appClient) createLeaderboardEntry(leaderboardID string, orgID string, ap
 		AppID:         appID,
 		UserID:        userID,
 		IsAdmin:       isAdmin,
+		DateCreated:   time.Now().UTC(),
+		DateUpdated:   nil,
 	}
 }
 

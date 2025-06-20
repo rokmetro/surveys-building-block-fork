@@ -7,3 +7,14 @@ properties:
     readOnly: true
   name:
     type: string
+  is_admin:
+    type: boolean
+    readOnly: true
+  date_created:
+    type: string
+    format: date-time
+    readOnly: true
+  date_updated:
+    type: string
+    format: date-time
+    readOnly: true

@@ -37,14 +37,19 @@ type Leaderboard struct {
 	IsAdmin bool   `json:"is_admin" bson:"is_admin"` // indicates if the user is an admin of the leaderboard
 
 	LastQuizTime *time.Time `json:"last_quiz_time" bson:"last_quiz_time"`
+
+	DateCreated time.Time  `json:"date_created" bson:"date_created"`
+	DateUpdated *time.Time `json:"date_updated" bson:"date_updated"`
 }
 
 // LeaderboardEntry represents an entry in a leaderboard.
 type LeaderboardEntry struct {
-	ID            string `json:"id" bson:"_id"`
-	LeaderboardID string `json:"leaderboard_id" bson:"leaderboard_id"`
-	OrgID         string `json:"org_id" bson:"org_id"`
-	AppID         string `json:"app_id" bson:"app_id"`
-	UserID        string `json:"user_id" bson:"user_id"`
-	IsAdmin       bool   `json:"is_admin" bson:"is_admin"`
+	ID            string     `json:"id" bson:"_id"`
+	LeaderboardID string     `json:"leaderboard_id" bson:"leaderboard_id"`
+	OrgID         string     `json:"org_id" bson:"org_id"`
+	AppID         string     `json:"app_id" bson:"app_id"`
+	UserID        string     `json:"user_id" bson:"user_id"`
+	IsAdmin       bool       `json:"is_admin" bson:"is_admin"`
+	DateCreated   time.Time  `json:"date_created" bson:"date_created"`
+	DateUpdated   *time.Time `json:"date_updated" bson:"date_updated"`
 }

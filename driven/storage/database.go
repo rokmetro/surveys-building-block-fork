@@ -209,7 +209,10 @@ func (d *database) applyScoresChecks(scores *collectionWrapper) error {
 func (d *database) applyLeaderboardsChecks(leaderboards *collectionWrapper) error {
 	d.logger.Info("apply leaderboards checks.....")
 
-	// do not need an index on leaderboards collection for now - index on _id is sufficient for current operations (UpdateLeaderboard and DeleteLeaderboard)
+	err := leaderboards.AddIndex(nil, bson.D{primitive.E{Key: "_id", Value: 1}, primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}}, true, nil)
+	if err != nil {
+		return err
+	}
 
 	d.logger.Info("leaderboards passed")
 	return nil
@@ -218,12 +221,12 @@ func (d *database) applyLeaderboardsChecks(leaderboards *collectionWrapper) erro
 func (d *database) applyLeaderboardEntriesChecks(leaderboardEntries *collectionWrapper) error {
 	d.logger.Info("apply leaderboard entries checks.....")
 
-	err := leaderboardEntries.AddIndex(nil, bson.D{primitive.E{Key: "leaderboard_id", Value: 1}, primitive.E{Key: "user_id", Value: 1}}, true, nil)
+	err := leaderboardEntries.AddIndex(nil, bson.D{primitive.E{Key: "leaderboard_id", Value: 1}, primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "user_id", Value: 1}}, true, nil)
 	if err != nil {
 		return err
 	}
 
-	err = leaderboardEntries.AddIndex(nil, bson.D{primitive.E{Key: "user_id", Value: 1}, primitive.E{Key: "leaderboard_id", Value: 1}}, true, nil)
+	err = leaderboardEntries.AddIndex(nil, bson.D{primitive.E{Key: "user_id", Value: 1}, primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "leaderboard_id", Value: 1}}, true, nil)
 	if err != nil {
 		return err
 	}

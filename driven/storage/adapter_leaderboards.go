@@ -150,6 +150,7 @@ func (a *Adapter) DeleteLeaderboardEntries(leaderboardID string, orgID string, a
 		primitive.E{Key: "org_id", Value: orgID},
 		primitive.E{Key: "app_id", Value: appID},
 		primitive.E{Key: "user_id", Value: bson.M{"$in": leavingUserIDs}},
+		primitive.E{Key: "is_admin", Value: false}, // Only delete non-admin entries
 	}
 
 	result, err := a.db.leaderboardEntries.DeleteMany(a.context, filter, nil)
@@ -241,7 +242,7 @@ func (a *Adapter) GetLeaderboardScores(leaderboardID string, orgID string, appID
 }
 
 // GetLeaderboardUserScores retrieves scores for a specific user in each leaderboard they're in
-func (a *Adapter) GetLeaderboardUserScores(orgID string, appID string, userID string) ([]model.Score, error) {
+func (a *Adapter) GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error) {
 	pipeline := mongo.Pipeline{}
 
 	leaderboardEntryFilter := bson.D{{Key: "$match", Value: bson.M{
@@ -275,6 +276,24 @@ func (a *Adapter) GetLeaderboardUserScores(orgID string, appID string, userID st
 	}}}
 	pipeline = append(pipeline, replaceRoot)
 
+	// lookup leaderboards for each entry
+	addLeaderboardField := bson.D{{
+		Key: "$lookup", Value: bson.M{
+			"from":         "leaderboards",
+			"localField":   "leaderboard_id",
+			"foreignField": "_id",
+			"as":           "leaderboard",
+		},
+	}}
+	pipeline = append(pipeline, addLeaderboardField)
+
+	unwindLeaderboard := bson.D{{
+		Key: "$unwind", Value: bson.M{
+			"path": "$leaderboard",
+		},
+	}}
+	pipeline = append(pipeline, unwindLeaderboard)
+
 	rankWindow := bson.D{{Key: "$setWindowFields", Value: bson.M{
 		"partitionBy": "$leaderboard_id",
 		"sortBy":      bson.M{"scores.score": -1},
@@ -286,6 +305,14 @@ func (a *Adapter) GetLeaderboardUserScores(orgID string, appID string, userID st
 
 	userIDFilter := bson.D{{Key: "$match", Value: bson.M{"user_id": userID}}}
 	pipeline = append(pipeline, userIDFilter)
+
+	if offset != nil {
+		pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
+	}
+
+	if limit != nil {
+		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
+	}
 
 	var scores []model.Score
 	err := a.db.leaderboardEntries.Aggregate(a.context, pipeline, &scores, nil)

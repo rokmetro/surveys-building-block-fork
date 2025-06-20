@@ -25,19 +25,45 @@ import (
 
 // GetLeaderboard gets a leaderboard by ID
 func (a *Adapter) GetLeaderboard(leaderboardID string, orgID string, appID string) (*model.Leaderboard, error) {
-	filter := bson.M{
+	leaderboardEntryFilter := bson.M{
 		"_id":    leaderboardID,
 		"org_id": orgID,
 		"app_id": appID,
 	}
 
-	var leaderboard model.Leaderboard
-	err := a.db.leaderboards.FindOne(a.context, filter, &leaderboard, nil)
-	if err != nil {
-		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeLeaderboard, filterArgs(filter), err)
+	pipeline := mongo.Pipeline{
+		// 1) filter leadboard entries for this user
+		bson.D{{Key: "$match", Value: leaderboardEntryFilter}},
+		// 2) join each entry to its leaderboard
+		bson.D{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "leaderboards"},
+			{Key: "localField", Value: "leaderboard_id"},
+			{Key: "foreignField", Value: "_id"},
+			{Key: "as", Value: "leaderboard"},
+		}}},
+		// 3) unwind the resulting array so we get a single doc per leaderboard
+		bson.D{{Key: "$unwind", Value: "$leaderboard"}},
+		// 4) replace the root with a merged object:
+		//   - all fields from the leaderboard
+		//   - plus an "is_admin" field from the entry
+		bson.D{{Key: "$replaceRoot", Value: bson.D{
+			{Key: "newRoot", Value: bson.D{
+				{Key: "$mergeObjects", Value: bson.A{
+					"$leaderboard",
+					bson.D{{Key: "is_admin", Value: "$is_admin"}},
+				}},
+			}},
+		}}},
 	}
 
-	return &leaderboard, nil
+	var leaderboards []model.Leaderboard
+	err := a.db.leaderboardEntries.Aggregate(a.context, pipeline, &leaderboards, nil)
+
+	if len(leaderboards) == 0 {
+		return nil, errors.ErrorData(logutils.StatusMissing, model.TypeLeaderboard, &logutils.FieldArgs{"leaderboard_id": leaderboardID})
+	}
+
+	return &leaderboards[0], err
 }
 
 // GetLeaderboards gets all leaderboards for a user

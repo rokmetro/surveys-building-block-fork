@@ -899,6 +899,10 @@ paths:
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Leaderboard'
         '400':
           description: Bad request
         '401':
@@ -906,6 +910,38 @@ paths:
         '500':
           description: Internal error
   '/api/leaderboards/{id}':
+    get:
+      tags:
+        - Client
+      summary: Gets the custom leaderboard with the specified id
+      description: |
+        Returns the custom leaderboard with the specified id
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of the custom leaderboard
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Leaderboard'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '500':
+          description: Internal error
     put:
       tags:
         - Client
@@ -2267,6 +2303,17 @@ components:
           readOnly: true
         name:
           type: string
+        is_admin:
+          type: boolean
+          readOnly: true
+        date_created:
+          type: string
+          format: date-time
+          readOnly: true
+        date_updated:
+          type: string
+          format: date-time
+          readOnly: true
     LeaderboardEntry:
       type: object
       properties:
@@ -2281,6 +2328,14 @@ components:
           readOnly: true
         is_admin:
           type: boolean
+          readOnly: true
+        date_created:
+          type: string
+          format: date-time
+          readOnly: true
+        date_updated:
+          type: string
+          format: date-time
           readOnly: true
     _admin_req_update-configs:
       required:

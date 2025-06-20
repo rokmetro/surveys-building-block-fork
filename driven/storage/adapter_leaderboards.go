@@ -24,15 +24,29 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// GetLeaderboard gets a leaderboard by ID
+func (a *Adapter) GetLeaderboard(leaderboardID string, orgID string, appID string) (*model.Leaderboard, error) {
+	filter := bson.M{
+		"_id":    leaderboardID,
+		"org_id": orgID,
+		"app_id": appID,
+	}
+
+	var leaderboard model.Leaderboard
+	err := a.db.leaderboards.FindOne(a.context, filter, &leaderboard, nil)
+	if err != nil {
+		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeLeaderboard, filterArgs(filter), err)
+	}
+
+	return &leaderboard, nil
+}
+
 // GetLeaderboards gets all leaderboards for a user
-func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string, ids []string) ([]model.Leaderboard, error) {
+func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
 	leaderboardEntryFilter := bson.M{
 		"org_id":  orgID,
 		"app_id":  appID,
 		"user_id": userID,
-	}
-	if len(ids) > 0 {
-		leaderboardEntryFilter["leaderboard_id"] = bson.M{"$in": ids}
 	}
 
 	pipeline := mongo.Pipeline{
@@ -85,7 +99,8 @@ func (a *Adapter) UpdateLeaderboard(leaderboard model.Leaderboard) error {
 	}
 
 	setUpdate := bson.M{
-		"name": leaderboard.Name,
+		"name":         leaderboard.Name,
+		"date_updated": leaderboard.DateUpdated,
 	}
 	if leaderboard.LastQuizTime != nil {
 		setUpdate["last_quiz_time"] = leaderboard.LastQuizTime

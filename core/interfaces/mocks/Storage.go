@@ -533,6 +533,36 @@ func (_m *Storage) GetAlertContactsByKey(key string, orgID string, appID string)
 	return r0, r1
 }
 
+// GetLeaderboard provides a mock function with given fields: leaderboardID, orgID, appID
+func (_m *Storage) GetLeaderboard(leaderboardID string, orgID string, appID string) (*model.Leaderboard, error) {
+	ret := _m.Called(leaderboardID, orgID, appID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLeaderboard")
+	}
+
+	var r0 *model.Leaderboard
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string) (*model.Leaderboard, error)); ok {
+		return rf(leaderboardID, orgID, appID)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string) *model.Leaderboard); ok {
+		r0 = rf(leaderboardID, orgID, appID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Leaderboard)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(leaderboardID, orgID, appID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetLeaderboardEntries provides a mock function with given fields: leaderboardID, orgID, appID, userID
 func (_m *Storage) GetLeaderboardEntries(leaderboardID string, orgID string, appID string, userID *string) ([]model.LeaderboardEntry, error) {
 	ret := _m.Called(leaderboardID, orgID, appID, userID)
@@ -623,9 +653,9 @@ func (_m *Storage) GetLeaderboardUserScores(orgID string, appID string, userID s
 	return r0, r1
 }
 
-// GetLeaderboards provides a mock function with given fields: orgID, appID, userID, ids
-func (_m *Storage) GetLeaderboards(orgID string, appID string, userID string, ids []string) ([]model.Leaderboard, error) {
-	ret := _m.Called(orgID, appID, userID, ids)
+// GetLeaderboards provides a mock function with given fields: orgID, appID, userID
+func (_m *Storage) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
+	ret := _m.Called(orgID, appID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetLeaderboards")
@@ -633,19 +663,19 @@ func (_m *Storage) GetLeaderboards(orgID string, appID string, userID string, id
 
 	var r0 []model.Leaderboard
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, []string) ([]model.Leaderboard, error)); ok {
-		return rf(orgID, appID, userID, ids)
+	if rf, ok := ret.Get(0).(func(string, string, string) ([]model.Leaderboard, error)); ok {
+		return rf(orgID, appID, userID)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, []string) []model.Leaderboard); ok {
-		r0 = rf(orgID, appID, userID, ids)
+	if rf, ok := ret.Get(0).(func(string, string, string) []model.Leaderboard); ok {
+		r0 = rf(orgID, appID, userID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Leaderboard)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, []string) error); ok {
-		r1 = rf(orgID, appID, userID, ids)
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(orgID, appID, userID)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -185,7 +185,7 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 
 func (a appClient) sendFashionQuizNotifications(orgID string, appID string, userID string, username string, score *model.Score, oldScore model.Score) {
 	// get all leaderboards for this user
-	leaderboards, err := a.app.storage.GetLeaderboards(orgID, appID, userID, nil)
+	leaderboards, err := a.app.storage.GetLeaderboards(orgID, appID, userID)
 	if err != nil {
 		a.app.logger.WarnWithFields("failed to find leaderboards", logutils.Fields{"user_id": userID, "org_id": orgID, "app_id": appID})
 	}
@@ -512,7 +512,7 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 
 // GetLeaderboards gets all leaderboards for a user
 func (a appClient) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
-	return a.app.storage.GetLeaderboards(orgID, appID, userID, nil)
+	return a.app.storage.GetLeaderboards(orgID, appID, userID)
 }
 
 // GetLeaderboardScores returns the paginated scores in the leaderboard with the provided ID
@@ -530,6 +530,7 @@ func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID strin
 	leaderboard.ID = uuid.NewString()
 	leaderboard.DateCreated = time.Now().UTC()
 	leaderboard.DateUpdated = nil
+	leaderboard.IsAdmin = nil
 
 	leaderboardEntry := a.createLeaderboardEntry(leaderboard.ID, leaderboard.OrgID, leaderboard.AppID, userID, true)
 
@@ -553,7 +554,9 @@ func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID strin
 	if err != nil {
 		return nil, err
 	}
-	leaderboard.IsAdmin = true
+
+	isAdmin := true
+	leaderboard.IsAdmin = &isAdmin
 	return &leaderboard, nil
 }
 
@@ -599,16 +602,26 @@ func (a appClient) DeleteLeaderboard(leaderboardID string, orgID string, appID s
 }
 
 func (a appClient) JoinLeaderboard(leaderboardID string, orgID string, appID string, userID string, username string) error {
-	lbEntry := a.createLeaderboardEntry(leaderboardID, orgID, appID, userID, false)
-	err := a.app.storage.CreateLeaderboardEntry(lbEntry)
-	if err != nil {
-		return errors.WrapErrorAction(logutils.ActionCreate, model.TypeLeaderboardEntry, nil, err)
+	transaction := func(storage interfaces.Storage) error {
+		// Check if leaderboard exists
+		leaderboard, err := storage.GetLeaderboard(leaderboardID, orgID, appID)
+		if leaderboard == nil || err != nil {
+			return errors.WrapErrorData(logutils.StatusMissing, model.TypeLeaderboard, &logutils.FieldArgs{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID}, err)
+		}
+
+		// Add leaderboard entry
+		err = storage.CreateLeaderboardEntry(a.createLeaderboardEntry(leaderboardID, orgID, appID, userID, false))
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
 
 	// send notifications
 	go a.sendJoinLeaderboardNotifications(leaderboardID, orgID, appID, userID, username)
 
-	return nil
+	return a.app.storage.PerformTransaction(transaction)
 }
 
 // createLeaderboardEntry creates a model.LeaderboardEntry with the provided parameters
@@ -627,16 +640,11 @@ func (a appClient) createLeaderboardEntry(leaderboardID string, orgID string, ap
 
 func (a appClient) sendJoinLeaderboardNotifications(leaderboardID string, orgID string, appID string, userID string, username string) {
 	// send notifications to users already in leaderboard
-	leaderboards, err := a.app.storage.GetLeaderboards(orgID, appID, userID, []string{leaderboardID})
+	leaderboard, err := a.app.storage.GetLeaderboard(leaderboardID, orgID, appID)
 	if err != nil {
 		a.app.logger.Warnf("error getting leaderboard: %v", err)
 		return
 	}
-	if len(leaderboards) == 0 {
-		a.app.logger.WarnWithFields("missing leaderboard", logutils.Fields{"id": leaderboardID, "user_id": userID, "app_id": appID, "org_id": orgID})
-		return
-	}
-	leaderboard := leaderboards[0]
 
 	leaderboardEntries, err := a.app.storage.GetLeaderboardEntries(leaderboardID, orgID, appID, nil)
 	if err != nil {

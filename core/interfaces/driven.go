@@ -64,6 +64,7 @@ type Storage interface {
 	GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error)
 
 	GetLeaderboard(leaderboardID string, orgID string, appID string) (*model.Leaderboard, error)
+	GetLeaderboardWithUserContext(leaderboardID string, orgID string, appID string, userID string) (*model.Leaderboard, error)
 	GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error)
 	CreateLeaderboard(leaderboard model.Leaderboard) (*model.Leaderboard, error)
 	UpdateLeaderboard(leaderboard model.Leaderboard) error

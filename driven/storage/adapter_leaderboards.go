@@ -16,6 +16,7 @@ package storage
 
 import (
 	"application/core/model"
+
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -25,39 +26,66 @@ import (
 
 // GetLeaderboard gets a leaderboard by ID
 func (a *Adapter) GetLeaderboard(leaderboardID string, orgID string, appID string) (*model.Leaderboard, error) {
-	leaderboardEntryFilter := bson.M{
+	filter := bson.M{
+		"_id":    leaderboardID,
+		"org_id": orgID,
+		"app_id": appID,
+	}
+
+	var leaderboard model.Leaderboard
+	err := a.db.leaderboards.FindOne(a.context, filter, &leaderboard, nil)
+	if err != nil {
+		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeLeaderboard, filterArgs(filter), err)
+	}
+
+	return &leaderboard, nil
+}
+
+// GetLeaderboardWithUserContext gets a leaderboard by ID and populates the is_admin field for a specific user
+func (a *Adapter) GetLeaderboardWithUserContext(leaderboardID string, orgID string, appID string, userID string) (*model.Leaderboard, error) {
+	leaderboardFilter := bson.M{
 		"_id":    leaderboardID,
 		"org_id": orgID,
 		"app_id": appID,
 	}
 
 	pipeline := mongo.Pipeline{
-		// 1) filter leadboard entries for this user
-		bson.D{{Key: "$match", Value: leaderboardEntryFilter}},
-		// 2) join each entry to its leaderboard
+		// 1) filter leaderboards by ID, org, and app
+		bson.D{{Key: "$match", Value: leaderboardFilter}},
+		// 2) lookup the leaderboard entry for this specific user
 		bson.D{{Key: "$lookup", Value: bson.D{
-			{Key: "from", Value: "leaderboards"},
-			{Key: "localField", Value: "leaderboard_id"},
-			{Key: "foreignField", Value: "_id"},
-			{Key: "as", Value: "leaderboard"},
+			{Key: "from", Value: "leaderboard_entries"},
+			{Key: "let", Value: bson.D{{Key: "leaderboard_id", Value: "$_id"}}},
+			{Key: "pipeline", Value: mongo.Pipeline{
+				bson.D{{Key: "$match", Value: bson.D{
+					{Key: "$expr", Value: bson.D{
+						{Key: "$and", Value: bson.A{
+							bson.D{{Key: "$eq", Value: bson.A{"$leaderboard_id", "$$leaderboard_id"}}},
+							bson.D{{Key: "$eq", Value: bson.A{"$user_id", userID}}},
+							bson.D{{Key: "$eq", Value: bson.A{"$org_id", orgID}}},
+							bson.D{{Key: "$eq", Value: bson.A{"$app_id", appID}}},
+						}},
+					}},
+				}}},
+			}},
+			{Key: "as", Value: "user_entry"},
 		}}},
-		// 3) unwind the resulting array so we get a single doc per leaderboard
-		bson.D{{Key: "$unwind", Value: "$leaderboard"}},
-		// 4) replace the root with a merged object:
-		//   - all fields from the leaderboard
-		//   - plus an "is_admin" field from the entry
-		bson.D{{Key: "$replaceRoot", Value: bson.D{
-			{Key: "newRoot", Value: bson.D{
-				{Key: "$mergeObjects", Value: bson.A{
-					"$leaderboard",
-					bson.D{{Key: "is_admin", Value: "$is_admin"}},
+		// 3) add the is_admin field from the user's entry (if it exists)
+		bson.D{{Key: "$addFields", Value: bson.D{
+			{Key: "is_admin", Value: bson.D{
+				{Key: "$cond", Value: bson.D{
+					{Key: "if", Value: bson.D{{Key: "$gt", Value: bson.A{bson.D{{Key: "$size", Value: "$user_entry"}}, 0}}}},
+					{Key: "then", Value: bson.D{{Key: "$arrayElemAt", Value: bson.A{"$user_entry.is_admin", 0}}}},
+					{Key: "else", Value: nil},
 				}},
 			}},
 		}}},
+		// 4) remove the temporary user_entry field
+		bson.D{{Key: "$unset", Value: "user_entry"}},
 	}
 
 	var leaderboards []model.Leaderboard
-	err := a.db.leaderboardEntries.Aggregate(a.context, pipeline, &leaderboards, nil)
+	err := a.db.leaderboards.Aggregate(a.context, pipeline, &leaderboards, nil)
 
 	if len(leaderboards) == 0 {
 		return nil, errors.ErrorData(logutils.StatusMissing, model.TypeLeaderboard, &logutils.FieldArgs{"leaderboard_id": leaderboardID})

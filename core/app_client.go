@@ -427,6 +427,11 @@ func (a appClient) GetLeaderboard(leaderboardID string, orgID string, appID stri
 	return leaderboard, nil
 }
 
+// GetLeaderboardWithUserContext gets the leaderboard with the provided ID and populates is_admin field for the user
+func (a appClient) GetLeaderboardWithUserContext(leaderboardID string, orgID string, appID string, userID string) (*model.Leaderboard, error) {
+	return a.app.storage.GetLeaderboardWithUserContext(leaderboardID, orgID, appID, userID)
+}
+
 // GetLeaderboards gets all leaderboards for a user
 func (a appClient) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
 	return a.app.storage.GetLeaderboards(orgID, appID, userID)

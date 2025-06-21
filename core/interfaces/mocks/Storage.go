@@ -653,6 +653,36 @@ func (_m *Storage) GetLeaderboardUserScores(orgID string, appID string, userID s
 	return r0, r1
 }
 
+// GetLeaderboardWithUserContext provides a mock function with given fields: leaderboardID, orgID, appID, userID
+func (_m *Storage) GetLeaderboardWithUserContext(leaderboardID string, orgID string, appID string, userID string) (*model.Leaderboard, error) {
+	ret := _m.Called(leaderboardID, orgID, appID, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLeaderboardWithUserContext")
+	}
+
+	var r0 *model.Leaderboard
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, string) (*model.Leaderboard, error)); ok {
+		return rf(leaderboardID, orgID, appID, userID)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, string) *model.Leaderboard); ok {
+		r0 = rf(leaderboardID, orgID, appID, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Leaderboard)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
+		r1 = rf(leaderboardID, orgID, appID, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetLeaderboards provides a mock function with given fields: orgID, appID, userID
 func (_m *Storage) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
 	ret := _m.Called(orgID, appID, userID)

@@ -728,7 +728,7 @@ func (h ClientAPIsHandler) getLeaderboard(l *logs.Log, r *http.Request, claims *
 		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
 	}
 
-	leaderboard, err := h.app.Client.GetLeaderboard(leaderboardID, claims.OrgID, claims.AppID)
+	leaderboard, err := h.app.Client.GetLeaderboardWithUserContext(leaderboardID, claims.OrgID, claims.AppID, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}

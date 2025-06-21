@@ -137,7 +137,7 @@ func (a *Adapter) GetSurveys(orgID string, appID string, creatorID *string, surv
 }
 
 // GetSurveysWithResponses gets surveys with optional responses
-func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool) ([]model.Survey, error) {
+func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, unstructuredProperties map[string]interface{}) ([]model.Survey, error) {
 	surveyFilter := bson.D{
 		{Key: "org_id", Value: orgID},
 		{Key: "app_id", Value: appID},
@@ -199,6 +199,14 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 				bson.M{"archived": bson.M{"$exists": false}},
 				bson.M{"archived": nil},
 			}})
+		}
+	}
+
+	for key, value := range unstructuredProperties {
+		if sliceValue, ok := value.([]interface{}); ok {
+			surveyFilter = append(surveyFilter, bson.E{Key: "unstructured_properties." + key, Value: bson.M{"$in": sliceValue}})
+		} else {
+			surveyFilter = append(surveyFilter, bson.E{Key: "unstructured_properties." + key, Value: bson.M{"$eq": value}})
 		}
 	}
 
@@ -395,6 +403,7 @@ func (a *Adapter) UpdateSurvey(survey model.Survey, admin bool) error {
 			"archived":                  survey.Archived,
 			"estimated_completion_time": survey.EstimatedCompletionTime,
 			"date_updated":              now,
+			"unstructured_properties":   survey.UnstructuredProperties,
 		}}
 
 		res, err := a.db.surveys.UpdateOne(a.context, filter, update, nil)

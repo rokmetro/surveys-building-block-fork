@@ -372,7 +372,7 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	}
 
 	responseTime := surveyResponse.DateCreated
-	unstructProps := *survey.UnstructuredProperties
+	unstructProps := survey.UnstructuredProperties
 	if unstructProps != nil {
 		externalProfileIDRaw, exists := unstructProps["external_profile_id"]
 		if exists {

@@ -40,37 +40,37 @@ type SurveyResponse struct {
 
 // Survey wraps the entire record
 type Survey struct {
-	ID                      string                  `json:"id" bson:"_id"`
-	CreatorID               string                  `json:"creator_id" bson:"creator_id"`
-	OrgID                   string                  `json:"org_id" bson:"org_id"`
-	AppID                   string                  `json:"app_id" bson:"app_id"`
-	Title                   string                  `json:"title" bson:"title"`
-	MoreInfo                *string                 `json:"more_info" bson:"more_info"`
-	Data                    map[string]SurveyData   `json:"data" bson:"data"`
-	Scored                  bool                    `json:"scored" bson:"scored"`
-	ResultRules             string                  `json:"result_rules" bson:"result_rules"`
-	ResultJSON              string                  `json:"result_json" bson:"result_json"`
-	Type                    string                  `json:"type" bson:"type"`
-	SurveyStats             *SurveyStats            `json:"stats" bson:"stats"`
-	Sensitive               bool                    `json:"sensitive" bson:"sensitive"`
-	Anonymous               bool                    `json:"anonymous" bson:"anonymous"`
-	DefaultDataKey          *string                 `json:"default_data_key" bson:"default_data_key"`
-	DefaultDataKeyRule      *string                 `json:"default_data_key_rule" bson:"default_data_key_rule"`
-	Constants               map[string]interface{}  `json:"constants" bson:"constants"`
-	Strings                 map[string]interface{}  `json:"strings" bson:"strings"`
-	SubRules                map[string]interface{}  `json:"sub_rules" bson:"sub_rules"`
-	ResponseKeys            []string                `json:"response_keys" bson:"response_keys"`
-	DateCreated             time.Time               `json:"date_created" bson:"date_created"`
-	DateUpdated             *time.Time              `json:"date_updated" bson:"date_updated"`
-	CalendarEventID         string                  `json:"calendar_event_id" bson:"calendar_event_id"`
-	StartDate               *time.Time              `json:"start_date" bson:"start_date"`
-	EndDate                 *time.Time              `json:"end_date" bson:"end_date"`
-	Public                  *bool                   `json:"public" bson:"public"`
-	Archived                *bool                   `json:"archived" bson:"archived"`
-	EstimatedCompletionTime *int                    `json:"estimated_completion_time" bson:"estimated_completion_time"`
-	SurveyResponses         []*SurveyResponse       `json:"survey_response" bson:"survey_response"`
-	Completed               *bool                   `json:"completed" bson:"completed"`
-	UnstructuredProperties  *map[string]interface{} `json:"unstructured_properties" bson:"unstructured_properties"`
+	ID                      string                 `json:"id" bson:"_id"`
+	CreatorID               string                 `json:"creator_id" bson:"creator_id"`
+	OrgID                   string                 `json:"org_id" bson:"org_id"`
+	AppID                   string                 `json:"app_id" bson:"app_id"`
+	Title                   string                 `json:"title" bson:"title"`
+	MoreInfo                *string                `json:"more_info" bson:"more_info"`
+	Data                    map[string]SurveyData  `json:"data" bson:"data"`
+	Scored                  bool                   `json:"scored" bson:"scored"`
+	ResultRules             string                 `json:"result_rules" bson:"result_rules"`
+	ResultJSON              string                 `json:"result_json" bson:"result_json"`
+	Type                    string                 `json:"type" bson:"type"`
+	SurveyStats             *SurveyStats           `json:"stats" bson:"stats"`
+	Sensitive               bool                   `json:"sensitive" bson:"sensitive"`
+	Anonymous               bool                   `json:"anonymous" bson:"anonymous"`
+	DefaultDataKey          *string                `json:"default_data_key" bson:"default_data_key"`
+	DefaultDataKeyRule      *string                `json:"default_data_key_rule" bson:"default_data_key_rule"`
+	Constants               map[string]interface{} `json:"constants" bson:"constants"`
+	Strings                 map[string]interface{} `json:"strings" bson:"strings"`
+	SubRules                map[string]interface{} `json:"sub_rules" bson:"sub_rules"`
+	ResponseKeys            []string               `json:"response_keys" bson:"response_keys"`
+	DateCreated             time.Time              `json:"date_created" bson:"date_created"`
+	DateUpdated             *time.Time             `json:"date_updated" bson:"date_updated"`
+	CalendarEventID         string                 `json:"calendar_event_id" bson:"calendar_event_id"`
+	StartDate               *time.Time             `json:"start_date" bson:"start_date"`
+	EndDate                 *time.Time             `json:"end_date" bson:"end_date"`
+	Public                  *bool                  `json:"public" bson:"public"`
+	Archived                *bool                  `json:"archived" bson:"archived"`
+	EstimatedCompletionTime *int                   `json:"estimated_completion_time" bson:"estimated_completion_time"`
+	SurveyResponses         []*SurveyResponse      `json:"survey_response" bson:"survey_response"`
+	Completed               *bool                  `json:"completed" bson:"completed"`
+	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties" bson:"unstructured_properties"`
 }
 
 // SurveyResponseAnonymous represents an anonymized survey response
@@ -178,35 +178,35 @@ type DeletedMembership struct {
 
 // SurveyRequest wraps the wraps the request for the surveys
 type SurveyRequest struct {
-	ID                      string                  `json:"id" bson:"_id"`
-	CreatorID               string                  `json:"creator_id" bson:"creator_id"`
-	OrgID                   string                  `json:"org_id" bson:"org_id"`
-	AppID                   string                  `json:"app_id" bson:"app_id"`
-	Title                   string                  `json:"title" bson:"title"`
-	MoreInfo                *string                 `json:"more_info" bson:"more_info"`
-	Data                    map[string]SurveyData   `json:"data" bson:"data"`
-	Scored                  bool                    `json:"scored" bson:"scored"`
-	ResultRules             string                  `json:"result_rules" bson:"result_rules"`
-	ResultJSON              string                  `json:"result_json" bson:"result_json"`
-	Type                    string                  `json:"type" bson:"type"`
-	SurveyStats             *SurveyStats            `json:"stats" bson:"stats"`
-	Sensitive               bool                    `json:"sensitive" bson:"sensitive"`
-	Anonymous               bool                    `json:"anonymous" bson:"anonymous"`
-	DefaultDataKey          *string                 `json:"default_data_key" bson:"default_data_key"`
-	DefaultDataKeyRule      *string                 `json:"default_data_key_rule" bson:"default_data_key_rule"`
-	Constants               map[string]interface{}  `json:"constants" bson:"constants"`
-	Strings                 map[string]interface{}  `json:"strings" bson:"strings"`
-	SubRules                map[string]interface{}  `json:"sub_rules" bson:"sub_rules"`
-	ResponseKeys            []string                `json:"response_keys" bson:"response_keys"`
-	DateCreated             time.Time               `json:"date_created" bson:"date_created"`
-	DateUpdated             *time.Time              `json:"date_updated" bson:"date_updated"`
-	CalendarEventID         string                  `json:"calendar_event_id" bson:"calendar_event_id"`
-	StartDate               *string                 `json:"start_date" bson:"start_date"`
-	EndDate                 *string                 `json:"end_date" bson:"end_date"`
-	Public                  *bool                   `json:"public" bson:"public"`
-	Archived                *bool                   `json:"archived" bson:"archived"`
-	EstimatedCompletionTime *int                    `json:"estimated_completion_time" bson:"estimated_completion_time"`
-	UnstructuredProperties  *map[string]interface{} `json:"unstructured_properties"`
+	ID                      string                 `json:"id" bson:"_id"`
+	CreatorID               string                 `json:"creator_id" bson:"creator_id"`
+	OrgID                   string                 `json:"org_id" bson:"org_id"`
+	AppID                   string                 `json:"app_id" bson:"app_id"`
+	Title                   string                 `json:"title" bson:"title"`
+	MoreInfo                *string                `json:"more_info" bson:"more_info"`
+	Data                    map[string]SurveyData  `json:"data" bson:"data"`
+	Scored                  bool                   `json:"scored" bson:"scored"`
+	ResultRules             string                 `json:"result_rules" bson:"result_rules"`
+	ResultJSON              string                 `json:"result_json" bson:"result_json"`
+	Type                    string                 `json:"type" bson:"type"`
+	SurveyStats             *SurveyStats           `json:"stats" bson:"stats"`
+	Sensitive               bool                   `json:"sensitive" bson:"sensitive"`
+	Anonymous               bool                   `json:"anonymous" bson:"anonymous"`
+	DefaultDataKey          *string                `json:"default_data_key" bson:"default_data_key"`
+	DefaultDataKeyRule      *string                `json:"default_data_key_rule" bson:"default_data_key_rule"`
+	Constants               map[string]interface{} `json:"constants" bson:"constants"`
+	Strings                 map[string]interface{} `json:"strings" bson:"strings"`
+	SubRules                map[string]interface{} `json:"sub_rules" bson:"sub_rules"`
+	ResponseKeys            []string               `json:"response_keys" bson:"response_keys"`
+	DateCreated             time.Time              `json:"date_created" bson:"date_created"`
+	DateUpdated             *time.Time             `json:"date_updated" bson:"date_updated"`
+	CalendarEventID         string                 `json:"calendar_event_id" bson:"calendar_event_id"`
+	StartDate               *string                `json:"start_date" bson:"start_date"`
+	EndDate                 *string                `json:"end_date" bson:"end_date"`
+	Public                  *bool                  `json:"public" bson:"public"`
+	Archived                *bool                  `json:"archived" bson:"archived"`
+	EstimatedCompletionTime *int                   `json:"estimated_completion_time" bson:"estimated_completion_time"`
+	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties" bson:"unstructured_properties"`
 }
 
 // SurveyTimeFilter wraps the time filter for surveys
@@ -227,35 +227,35 @@ type SurveyTimeFilterRequest struct {
 
 // SurveysResponseData wraps the entire record
 type SurveysResponseData struct {
-	ID                      string                  `json:"id"`
-	CreatorID               string                  `json:"creator_id"`
-	OrgID                   string                  `json:"org_id"`
-	AppID                   string                  `json:"app_id"`
-	Title                   string                  `json:"title"`
-	MoreInfo                *string                 `json:"more_info"`
-	Data                    map[string]SurveyData   `json:"data"`
-	Scored                  bool                    `json:"scored"`
-	ResultRules             string                  `json:"result_rules"`
-	ResultJSON              string                  `json:"result_json"`
-	Type                    string                  `json:"type"`
-	SurveyStats             *SurveyStats            `json:"stats"`
-	Sensitive               bool                    `json:"sensitive"`
-	Anonymous               bool                    `json:"anonymous"`
-	DefaultDataKey          *string                 `json:"default_data_key"`
-	DefaultDataKeyRule      *string                 `json:"default_data_key_rule"`
-	Constants               map[string]interface{}  `json:"constants"`
-	Strings                 map[string]interface{}  `json:"strings"`
-	SubRules                map[string]interface{}  `json:"sub_rules"`
-	ResponseKeys            []string                `json:"response_keys"`
-	DateCreated             time.Time               `json:"date_created"`
-	DateUpdated             *time.Time              `json:"date_updated"`
-	CalendarEventID         string                  `json:"calendar_event_id"`
-	StartDate               *time.Time              `json:"start_date"`
-	EndDate                 *time.Time              `json:"end_date"`
-	Public                  *bool                   `json:"public"`
-	Archived                *bool                   `json:"archived"`
-	EstimatedCompletionTime *int                    `json:"estimated_completion_time"`
-	Completed               *bool                   `json:"completed"`
-	SurveyResponses         []*SurveyResponse       `json:"survey_response"`
-	UnstructuredProperties  *map[string]interface{} `json:"unstructured_properties"`
+	ID                      string                 `json:"id"`
+	CreatorID               string                 `json:"creator_id"`
+	OrgID                   string                 `json:"org_id"`
+	AppID                   string                 `json:"app_id"`
+	Title                   string                 `json:"title"`
+	MoreInfo                *string                `json:"more_info"`
+	Data                    map[string]SurveyData  `json:"data"`
+	Scored                  bool                   `json:"scored"`
+	ResultRules             string                 `json:"result_rules"`
+	ResultJSON              string                 `json:"result_json"`
+	Type                    string                 `json:"type"`
+	SurveyStats             *SurveyStats           `json:"stats"`
+	Sensitive               bool                   `json:"sensitive"`
+	Anonymous               bool                   `json:"anonymous"`
+	DefaultDataKey          *string                `json:"default_data_key"`
+	DefaultDataKeyRule      *string                `json:"default_data_key_rule"`
+	Constants               map[string]interface{} `json:"constants"`
+	Strings                 map[string]interface{} `json:"strings"`
+	SubRules                map[string]interface{} `json:"sub_rules"`
+	ResponseKeys            []string               `json:"response_keys"`
+	DateCreated             time.Time              `json:"date_created"`
+	DateUpdated             *time.Time             `json:"date_updated"`
+	CalendarEventID         string                 `json:"calendar_event_id"`
+	StartDate               *time.Time             `json:"start_date"`
+	EndDate                 *time.Time             `json:"end_date"`
+	Public                  *bool                  `json:"public"`
+	Archived                *bool                  `json:"archived"`
+	EstimatedCompletionTime *int                   `json:"estimated_completion_time"`
+	Completed               *bool                  `json:"completed"`
+	SurveyResponses         []*SurveyResponse      `json:"survey_response"`
+	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties"`
 }

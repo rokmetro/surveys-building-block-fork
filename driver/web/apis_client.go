@@ -163,8 +163,7 @@ func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *toke
 		if err != nil {
 			return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
 		}
-	} 
-
+	}
 
 	surveys, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
 		&limit, &offset, filter, public, archived, completed, includeResponses, unstrucProps)

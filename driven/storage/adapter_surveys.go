@@ -202,7 +202,6 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		}
 	}
 
-
 	for key, value := range unstructuredProperties {
 		if sliceValue, ok := value.([]interface{}); ok {
 			surveyFilter = append(surveyFilter, bson.E{Key: "unstructured_properties." + key, Value: bson.M{"$in": sliceValue}})

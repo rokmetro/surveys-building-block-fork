@@ -25,7 +25,7 @@ func surveyRequestToSurvey(item model.SurveyRequest) model.Survey {
 		SurveyStats: item.SurveyStats, Sensitive: item.Sensitive, Anonymous: item.Anonymous, DefaultDataKey: item.DefaultDataKey,
 		DefaultDataKeyRule: item.DefaultDataKeyRule, Constants: item.Constants, Strings: item.Strings, SubRules: item.SubRules,
 		ResponseKeys: item.ResponseKeys, CalendarEventID: item.CalendarEventID, StartDate: startValue, EndDate: endValue,
-		Public: item.Public, Archived: item.Archived, EstimatedCompletionTime: item.EstimatedCompletionTime, UnstructuredProperties: item.UnstructuredProperties,}
+		Public: item.Public, Archived: item.Archived, EstimatedCompletionTime: item.EstimatedCompletionTime, UnstructuredProperties: item.UnstructuredProperties}
 }
 
 func getSurvey(item model.Survey) model.Survey {

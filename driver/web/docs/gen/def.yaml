@@ -723,7 +723,7 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error
-  /api/score:
+  /api/v2/score:
     get:
       tags:
         - Client
@@ -754,7 +754,7 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error
-  /api/scores:
+  /api/v2/scores:
     get:
       tags:
         - Client
@@ -795,10 +795,6 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error
-  /api/v2/score:
-    $ref: '#/paths/~1api~1score'
-  /api/v2/scores:
-    $ref: '#/paths/~1api~1scores'
   /api/scores/top-and-local:
     get:
       tags:

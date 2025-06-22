@@ -102,11 +102,13 @@ func NewApplication(version string, build string, storage interfaces.Storage, no
 	coreBB *corebb.Adapter, serviceID string, logger *logs.Logger) *Application {
 	deleteDataLogic := deleteDataLogic{logger: *logger, core: coreBB, serviceID: serviceID, storage: storage}
 
-	streakNotificationsTimerDone := make(chan bool)
-	streakNotifications := streakNotifications{logger: logger, storage: storage, notifications: notifications, streakNotificationsTimerDone: streakNotificationsTimerDone}
-
 	application := Application{version: version, build: build, storage: storage, notifications: notifications,
-		calendar: calendar, deleteDataLogic: deleteDataLogic, streakNotifications: streakNotifications, logger: logger}
+		calendar: calendar, deleteDataLogic: deleteDataLogic, logger: logger}
+
+	streakNotificationsTimerDone := make(chan bool)
+	streakNotifications := streakNotifications{application: &application, logger: logger, storage: storage, notifications: notifications, streakNotificationsTimerDone: streakNotificationsTimerDone}
+
+	application.streakNotifications = streakNotifications
 
 	//add the drivers ports/interfaces
 	application.Default = newAppDefault(&application)
@@ -117,8 +119,6 @@ func NewApplication(version string, build string, storage interfaces.Storage, no
 	application.TPS = newAppTPS(&application)
 	application.System = newAppSystem(&application)
 	application.shared = newAppShared(&application)
-
-	streakNotifications.application = &application
 
 	return &application
 }

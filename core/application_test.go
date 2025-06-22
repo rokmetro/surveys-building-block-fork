@@ -42,6 +42,9 @@ func buildTestApplication(storage interfaces.Storage) *core.Application {
 
 func TestApplication_Start(t *testing.T) {
 	storage := mocks.NewStorage(t)
+	data := model.EnvConfigData{AnalyticsToken: "example"}
+	config := model.Config{Type: model.ConfigTypeEnv, AppID: rokwireutils.AllApps, OrgID: rokwireutils.AllOrgs, Data: data, DateCreated: time.Now(), DateUpdated: nil}
+	storage.On("FindConfig", model.ConfigTypeEnv, rokwireutils.AllApps, rokwireutils.AllOrgs).Maybe().Return(&config, nil)
 	storage.On("RegisterStorageListener", mock.AnythingOfType("*core.storageListener"))
 	app := buildTestApplication(storage)
 

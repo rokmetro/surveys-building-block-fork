@@ -332,21 +332,6 @@ type DeleteApiLeaderboardsIdLeaveParams struct {
 	UserIds *string `json:"user_ids,omitempty"`
 }
 
-// GetApiScoreParams defines parameters for GetApiScore.
-type GetApiScoreParams struct {
-	// ExternalProfileId External Profile ID to update score
-	ExternalProfileId *string `json:"external_profile_id,omitempty"`
-}
-
-// GetApiScoresParams defines parameters for GetApiScores.
-type GetApiScoresParams struct {
-	// Limit The number of results to be loaded in one page
-	Limit *float32 `json:"limit,omitempty"`
-
-	// Offset The number of results previously loaded
-	Offset *float32 `json:"offset,omitempty"`
-}
-
 // GetApiScoresTopAndLocalParams defines parameters for GetApiScoresTopAndLocal.
 type GetApiScoresTopAndLocalParams struct {
 	// Limit The number of top scores to be loaded.
@@ -461,14 +446,14 @@ type GetApiSurveysIdResponsesParams struct {
 	Offset *float32 `json:"offset,omitempty"`
 }
 
-// GetApiScoreParams defines parameters for GetApiScore.
-type GetApiScoreParams struct {
+// GetApiV2ScoreParams defines parameters for GetApiV2Score.
+type GetApiV2ScoreParams struct {
 	// ExternalProfileId External Profile ID to update score
 	ExternalProfileId *string `json:"external_profile_id,omitempty"`
 }
 
-// GetApiScoresParams defines parameters for GetApiScores.
-type GetApiScoresParams struct {
+// GetApiV2ScoresParams defines parameters for GetApiV2Scores.
+type GetApiV2ScoresParams struct {
 	// Limit The number of results to be loaded in one page
 	Limit *float32 `json:"limit,omitempty"`
 

@@ -156,6 +156,14 @@ paths:
           explode: false
           schema:
             type: string
+        - name: unstructured_properties
+          in: query
+          description: Map containing filters by unstructured properties in profile
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
       responses:
         '200':
           description: Success
@@ -715,7 +723,7 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error
-  /api/score:
+  /api/v2/score:
     get:
       tags:
         - Client
@@ -746,7 +754,7 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error
-  /api/scores:
+  /api/v2/scores:
     get:
       tags:
         - Client
@@ -787,10 +795,6 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error
-  /api/v2/score:
-    $ref: '#/paths/~1api~1score'
-  /api/v2/scores:
-    $ref: '#/paths/~1api~1scores'
   /api/scores/top-and-local:
     get:
       tags:
@@ -1421,6 +1425,14 @@ paths:
           explode: false
           schema:
             type: string
+        - name: unstructured_properties
+          in: query
+          description: Map containing filters by unstructured properties in profile
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: object
       responses:
         '200':
           description: Success
@@ -1936,6 +1948,7 @@ components:
         data:
           anyOf:
             - $ref: '#/components/schemas/EnvConfigData'
+            - $ref: '#/components/schemas/NotificationsConfigData'
         date_created:
           readOnly: true
           type: string
@@ -1962,6 +1975,15 @@ components:
           nullable: true
         validate_admin_claim:
           type: boolean
+          nullable: true
+    NotificationsConfigData:
+      type: object
+      properties:
+        streak_notifications_timer_moment:
+          type: integer
+          nullable: true
+        streak_notifications_timezone:
+          type: string
           nullable: true
     Survey:
       type: object
@@ -2360,3 +2382,4 @@ components:
         data:
           anyOf:
             - $ref: '#/components/schemas/EnvConfigData'
+            - $ref: '#/components/schemas/NotificationsConfigData'

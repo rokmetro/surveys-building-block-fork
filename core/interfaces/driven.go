@@ -32,6 +32,8 @@ type Storage interface {
 	UpdateConfig(config model.Config) error
 	DeleteConfig(id string) error
 
+	FindAndUpdateTimerConfig(appID string, orgID string, key string, filterTime time.Time, updateTime time.Time) (*model.Config, error)
+
 	GetSurvey(id string, orgID string, appID string) (*model.Survey, error)
 	GetSurveys(orgID string, appID string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool) ([]model.Survey, error)
 	GetSurveysWithResponses(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, unstructuredProperties map[string]interface{}) ([]model.Survey, error)
@@ -56,7 +58,7 @@ type Storage interface {
 	DeleteAlertContact(id string, orgID string, appID string) error
 
 	GetScore(orgID string, appID string, userID string) (*model.Score, error)
-	GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
+	GetScores(orgID *string, appID *string, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error)
 	GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int) ([]model.Score, error)
 	CreateScore(score model.Score) error
 	UpdateScore(score model.Score) error
@@ -70,7 +72,7 @@ type Storage interface {
 	UpdateLeaderboard(leaderboard model.Leaderboard) error
 	DeleteLeaderboard(leaderboardID string, orgID string, appID string, userID string) error
 
-	GetLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string) (*model.LeaderboardEntry, error)
+	GetLeaderboardEntries(leaderboardID string, orgID string, appID string, userID *string) ([]model.LeaderboardEntry, error)
 	CreateLeaderboardEntry(leaderboardEntry model.LeaderboardEntry) error
 	DeleteLeaderboardEntries(leaderboardID string, orgID string, appID string, leavingUserIDs []string) error
 	DeleteAllLeaderboardEntries(leaderboardID string, orgID string, appID string) error

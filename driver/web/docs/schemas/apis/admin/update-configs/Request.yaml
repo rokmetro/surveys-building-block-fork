@@ -19,3 +19,4 @@ properties:
   data:
     anyOf:
       - $ref: "../../../application/EnvConfigData.yaml"
+      - $ref: "../../../application/NotificationsConfigData.yaml"

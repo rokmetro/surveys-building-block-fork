@@ -28,9 +28,13 @@ const (
 	TypeConfigData logutils.MessageDataType = "config data"
 	// TypeEnvConfigData env configs type
 	TypeEnvConfigData logutils.MessageDataType = "env config data"
+	// TypeTimersConfigData timers configs type
+	TypeTimersConfigData logutils.MessageDataType = "timers config data"
 
 	// ConfigTypeEnv is the Config Type for EnvConfigData
 	ConfigTypeEnv string = "env"
+	// ConfigTypeTimers is the Config Type for TimersConfigData
+	ConfigTypeTimers string = "timers"
 )
 
 // Config contain generic configs
@@ -50,9 +54,17 @@ type EnvConfigData struct {
 	AnalyticsToken string `json:"analytics_token" bson:"analytics_token"`
 	ExternalID     string `json:"external_id" bson:"external_id"`
 
+	StreakNotificationsTimerMoment int    `json:"streak_notifications_timer_moment" bson:"streak_notifications_timer_moment"`
+	StreakNotificationsTimezone    string `json:"streak_notifications_timezone" bson:"streak_notifications_timezone"`
+
 	CORSAllowedOrigins []string `json:"cors_allowed_origins" bson:"cors_allowed_origins"`
 	CORSAllowedHeaders []string `json:"cors_allowed_headers" bson:"cors_allowed_headers"`
 	ValidateAdminClaim bool     `json:"validate_admin_claim" bson:"validate_admin_claim"`
+}
+
+// TimersConfigData contains timers configs for this service
+type TimersConfigData struct {
+	StreakNotificationsLastProcessTime *time.Time `bson:"streak_notifications_last_process_time"`
 }
 
 // GetConfigData returns a pointer to the given config's Data as the given type T
@@ -65,5 +77,5 @@ func GetConfigData[T ConfigData](c Config) (*T, error) {
 
 // ConfigData represents any set of data that may be stored in a config
 type ConfigData interface {
-	EnvConfigData | map[string]interface{}
+	EnvConfigData | TimersConfigData | map[string]interface{}
 }

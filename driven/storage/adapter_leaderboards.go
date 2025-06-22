@@ -150,11 +150,16 @@ func (a *Adapter) UpdateLeaderboard(leaderboard model.Leaderboard) error {
 		"org_id": leaderboard.OrgID,
 		"app_id": leaderboard.AppID,
 	}
+
+	setUpdate := bson.M{
+		"name":         leaderboard.Name,
+		"date_updated": leaderboard.DateUpdated,
+	}
+	if leaderboard.LastQuizTime != nil {
+		setUpdate["last_quiz_time"] = leaderboard.LastQuizTime
+	}
 	update := bson.M{
-		"$set": bson.M{
-			"name":         leaderboard.Name,
-			"date_updated": leaderboard.DateUpdated,
-		},
+		"$set": setUpdate,
 	}
 
 	_, err := a.db.leaderboards.UpdateOne(a.context, filter, update, nil)
@@ -176,22 +181,25 @@ func (a *Adapter) DeleteLeaderboard(leaderboardID, orgID, appID, userID string) 
 	return err
 }
 
-// GetLeaderboardEntry retrieves a leaderboard entry
-func (a *Adapter) GetLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string) (*model.LeaderboardEntry, error) {
+// GetLeaderboardEntries retrieves a list of leaderboard entry
+func (a *Adapter) GetLeaderboardEntries(leaderboardID string, orgID string, appID string, userID *string) ([]model.LeaderboardEntry, error) {
 	filter := bson.M{
 		"leaderboard_id": leaderboardID,
 		"org_id":         orgID,
 		"app_id":         appID,
-		"user_id":        userID,
 	}
 
-	var entry model.LeaderboardEntry
-	err := a.db.leaderboardEntries.FindOne(a.context, filter, &entry, nil)
+	if userID != nil && *userID != "" {
+		filter["user_id"] = *userID
+	}
+
+	var results []model.LeaderboardEntry
+	err := a.db.leaderboardEntries.Find(a.context, filter, &results, nil)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeSurvey, filterArgs(filter), err)
 	}
 
-	return &entry, nil
+	return results, nil
 }
 
 // CreateLeaderboardEntry creates a new leaderboardEntry object

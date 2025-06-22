@@ -45,10 +45,6 @@ paths:
     $ref: "./resources/client/survey-alerts.yaml"
   /api/creator/surveys:
     $ref: "./resources/client/creator/surveys.yaml"
-  /api/score:
-    $ref: "./resources/client/score.yaml"
-  /api/scores:
-    $ref: "./resources/client/scores.yaml"
   /api/v2/score:
     $ref: "./resources/client/score.yaml"
   /api/v2/scores:

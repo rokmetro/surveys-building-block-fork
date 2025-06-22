@@ -353,6 +353,36 @@ func (_m *Storage) DeleteSurveysWithIDs(orgID string, appID string, accountsIDs 
 	return r0
 }
 
+// FindAndUpdateTimerConfig provides a mock function with given fields: appID, orgID, key, filterTime, updateTime
+func (_m *Storage) FindAndUpdateTimerConfig(appID string, orgID string, key string, filterTime time.Time, updateTime time.Time) (*model.Config, error) {
+	ret := _m.Called(appID, orgID, key, filterTime, updateTime)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAndUpdateTimerConfig")
+	}
+
+	var r0 *model.Config
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, time.Time, time.Time) (*model.Config, error)); ok {
+		return rf(appID, orgID, key, filterTime, updateTime)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, time.Time, time.Time) *model.Config); ok {
+		r0 = rf(appID, orgID, key, filterTime, updateTime)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Config)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, time.Time, time.Time) error); ok {
+		r1 = rf(appID, orgID, key, filterTime, updateTime)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FindConfig provides a mock function with given fields: configType, appID, orgID
 func (_m *Storage) FindConfig(configType string, appID string, orgID string) (*model.Config, error) {
 	ret := _m.Called(configType, appID, orgID)
@@ -563,28 +593,28 @@ func (_m *Storage) GetLeaderboard(leaderboardID string, orgID string, appID stri
 	return r0, r1
 }
 
-// GetLeaderboardEntry provides a mock function with given fields: leaderboardID, orgID, appID, userID
-func (_m *Storage) GetLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string) (*model.LeaderboardEntry, error) {
+// GetLeaderboardEntries provides a mock function with given fields: leaderboardID, orgID, appID, userID
+func (_m *Storage) GetLeaderboardEntries(leaderboardID string, orgID string, appID string, userID *string) ([]model.LeaderboardEntry, error) {
 	ret := _m.Called(leaderboardID, orgID, appID, userID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetLeaderboardEntry")
+		panic("no return value specified for GetLeaderboardEntries")
 	}
 
-	var r0 *model.LeaderboardEntry
+	var r0 []model.LeaderboardEntry
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) (*model.LeaderboardEntry, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, *string) ([]model.LeaderboardEntry, error)); ok {
 		return rf(leaderboardID, orgID, appID, userID)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) *model.LeaderboardEntry); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, *string) []model.LeaderboardEntry); ok {
 		r0 = rf(leaderboardID, orgID, appID, userID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.LeaderboardEntry)
+			r0 = ret.Get(0).([]model.LeaderboardEntry)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
+	if rf, ok := ret.Get(1).(func(string, string, string, *string) error); ok {
 		r1 = rf(leaderboardID, orgID, appID, userID)
 	} else {
 		r1 = ret.Error(1)
@@ -743,9 +773,9 @@ func (_m *Storage) GetScore(orgID string, appID string, userID string) (*model.S
 	return r0, r1
 }
 
-// GetScores provides a mock function with given fields: orgID, appID, limit, offset
-func (_m *Storage) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
-	ret := _m.Called(orgID, appID, limit, offset)
+// GetScores provides a mock function with given fields: orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax
+func (_m *Storage) GetScores(orgID *string, appID *string, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error) {
+	ret := _m.Called(orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetScores")
@@ -753,19 +783,19 @@ func (_m *Storage) GetScores(orgID string, appID string, limit *int, offset *int
 
 	var r0 []model.Score
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, *int, *int) ([]model.Score, error)); ok {
-		return rf(orgID, appID, limit, offset)
+	if rf, ok := ret.Get(0).(func(*string, *string, *int, *int, *time.Time, *time.Time) ([]model.Score, error)); ok {
+		return rf(orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, *int, *int) []model.Score); ok {
-		r0 = rf(orgID, appID, limit, offset)
+	if rf, ok := ret.Get(0).(func(*string, *string, *int, *int, *time.Time, *time.Time) []model.Score); ok {
+		r0 = rf(orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Score)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, *int, *int) error); ok {
-		r1 = rf(orgID, appID, limit, offset)
+	if rf, ok := ret.Get(1).(func(*string, *string, *int, *int, *time.Time, *time.Time) error); ok {
+		r1 = rf(orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
 	} else {
 		r1 = ret.Error(1)
 	}

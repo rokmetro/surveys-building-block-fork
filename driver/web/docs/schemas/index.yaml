@@ -3,6 +3,8 @@ Config:
   $ref: "./application/Config.yaml"
 EnvConfigData:
   $ref: "./application/EnvConfigData.yaml"
+NotificationsConfigData:
+  $ref: "./application/NotificationsConfigData.yaml"
 Survey:
   $ref: "./surveys/Survey.yaml"
 SurveyData:

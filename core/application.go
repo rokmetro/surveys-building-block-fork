@@ -18,6 +18,7 @@ import (
 	"application/core/interfaces"
 	"application/core/model"
 	corebb "application/driven/core"
+	"time"
 
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
@@ -53,11 +54,12 @@ type Application struct {
 
 	logger *logs.Logger
 
-	storage         interfaces.Storage
-	notifications   interfaces.Notifications
-	calendar        interfaces.Calendar
-	corebb          *corebb.Adapter
-	deleteDataLogic deleteDataLogic
+	storage             interfaces.Storage
+	notifications       interfaces.Notifications
+	calendar            interfaces.Calendar
+	corebb              *corebb.Adapter
+	deleteDataLogic     deleteDataLogic
+	streakNotifications streakNotifications
 }
 
 // Start starts the core part of the application
@@ -66,6 +68,7 @@ func (a *Application) Start() {
 	storageListener := storageListener{app: a}
 	a.storage.RegisterStorageListener(&storageListener)
 	a.deleteDataLogic.start()
+	a.streakNotifications.start()
 }
 
 // GetEnvConfigs retrieves the cached database env configs
@@ -81,6 +84,19 @@ func (a *Application) GetEnvConfigs() (*model.EnvConfigData, error) {
 	return model.GetConfigData[model.EnvConfigData](*config)
 }
 
+// CheckTimersConfig retrieves the database timers config
+func (a *Application) CheckTimersConfig(key string, filterTime time.Time, updateTime time.Time) (*model.TimersConfigData, error) {
+	// Load env configs from database
+	config, err := a.storage.FindAndUpdateTimerConfig(rokwireutils.AllApps, rokwireutils.AllOrgs, key, filterTime, updateTime)
+	if err != nil {
+		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeConfig, nil, err)
+	}
+	if config == nil {
+		return nil, nil
+	}
+	return model.GetConfigData[model.TimersConfigData](*config)
+}
+
 // NewApplication creates new Application
 func NewApplication(version string, build string, storage interfaces.Storage, notifications interfaces.Notifications, calendar interfaces.Calendar,
 	coreBB *corebb.Adapter, serviceID string, logger *logs.Logger) *Application {
@@ -88,6 +104,11 @@ func NewApplication(version string, build string, storage interfaces.Storage, no
 
 	application := Application{version: version, build: build, storage: storage, notifications: notifications,
 		calendar: calendar, deleteDataLogic: deleteDataLogic, logger: logger}
+
+	streakNotificationsTimerDone := make(chan bool)
+	streakNotifications := streakNotifications{application: &application, logger: logger, storage: storage, notifications: notifications, streakNotificationsTimerDone: streakNotificationsTimerDone}
+
+	application.streakNotifications = streakNotifications
 
 	//add the drivers ports/interfaces
 	application.Default = newAppDefault(&application)

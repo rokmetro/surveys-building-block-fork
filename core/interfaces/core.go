@@ -30,7 +30,7 @@ type Default interface {
 type Client interface {
 	// Surveys
 	GetSurvey(id string, orgID string, appID string) (*model.Survey, error)
-	GetSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool) ([]model.Survey, error)
+	GetSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, unstrucProps map[string]interface{}) ([]model.Survey, error)
 	CreateSurvey(survey model.Survey, externalIDs map[string]string) (*model.Survey, error)
 	UpdateSurvey(survey model.Survey, userID string, externalIDs map[string]string) error
 	DeleteSurvey(id string, orgID string, appID string, userID string, externalIDs map[string]string) error
@@ -56,6 +56,7 @@ type Client interface {
 
 	// Leaderboards
 	GetLeaderboard(leaderboardID string, orgID string, appID string) (*model.Leaderboard, error)
+	GetLeaderboardWithUserContext(leaderboardID string, orgID string, appID string, userID string) (*model.Leaderboard, error)
 	GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error)
 	CreateLeaderboard(leaderboard model.Leaderboard, userID string) (*model.Leaderboard, error)
 	UpdateLeaderboard(leaderboard model.Leaderboard, userID string) error
@@ -75,7 +76,7 @@ type Admin interface {
 
 	// Surveys
 	GetSurvey(id string, orgID string, appID string) (*model.Survey, error)
-	GetSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool) ([]model.Survey, error)
+	GetSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, unstrucProps map[string]interface{}) ([]model.Survey, error)
 	CreateSurvey(survey model.Survey, externalIDs map[string]string) (*model.Survey, error)
 	UpdateSurvey(survey model.Survey, userID string, externalIDs map[string]string) error
 	DeleteSurvey(id string, orgID string, appID string, userID string, externalIDs map[string]string) error

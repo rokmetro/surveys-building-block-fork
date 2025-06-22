@@ -155,8 +155,18 @@ func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *toke
 	}
 	filter := surveyTimeFilter(&timeFilterItems)
 
+	var unstrucProps map[string]interface{}
+	unstrucPropsRaw := r.URL.Query().Get("unstructured_properties")
+	if len(unstrucPropsRaw) > 0 {
+		jsonData := []byte(unstrucPropsRaw)
+		err := json.Unmarshal(jsonData, &unstrucProps)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
+		}
+	}
+
 	surveys, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
-		&limit, &offset, filter, public, archived, completed, includeResponses)
+		&limit, &offset, filter, public, archived, completed, includeResponses, unstrucProps)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}
@@ -556,7 +566,7 @@ func (h ClientAPIsHandler) getCreatorSurveys(l *logs.Log, r *http.Request, claim
 	}
 	filter := surveyTimeFilter(&timeFilterItems)
 
-	resData, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset, filter, nil, nil, nil, nil)
+	resData, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset, filter, nil, nil, nil, nil, nil)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}
@@ -718,7 +728,7 @@ func (h ClientAPIsHandler) getLeaderboard(l *logs.Log, r *http.Request, claims *
 		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
 	}
 
-	leaderboard, err := h.app.Client.GetLeaderboard(leaderboardID, claims.OrgID, claims.AppID)
+	leaderboard, err := h.app.Client.GetLeaderboardWithUserContext(leaderboardID, claims.OrgID, claims.AppID, claims.Subject)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, "leaderboard", nil, err, http.StatusInternalServerError, true)
 	}

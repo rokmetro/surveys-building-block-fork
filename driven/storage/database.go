@@ -209,7 +209,7 @@ func (d *database) applyScoresChecks(scores *collectionWrapper) error {
 func (d *database) applyLeaderboardsChecks(leaderboards *collectionWrapper) error {
 	d.logger.Info("apply leaderboards checks.....")
 
-	err := leaderboards.AddIndex(nil, bson.D{primitive.E{Key: "_id", Value: 1}, primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}}, true, nil)
+	err := leaderboards.AddIndex(nil, bson.D{primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "_id", Value: 1}}, true, nil)
 	if err != nil {
 		return err
 	}

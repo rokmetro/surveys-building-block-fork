@@ -70,7 +70,7 @@ type Survey struct {
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time" bson:"estimated_completion_time"`
 	SurveyResponses         []*SurveyResponse      `json:"survey_response" bson:"survey_response"`
 	Completed               *bool                  `json:"completed" bson:"completed"`
-	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties"`
+	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties" bson:"unstructured_properties"`
 }
 
 // SurveyResponseAnonymous represents an anonymized survey response
@@ -206,6 +206,7 @@ type SurveyRequest struct {
 	Public                  *bool                  `json:"public" bson:"public"`
 	Archived                *bool                  `json:"archived" bson:"archived"`
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time" bson:"estimated_completion_time"`
+	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties" bson:"unstructured_properties"`
 }
 
 // SurveyTimeFilter wraps the time filter for surveys

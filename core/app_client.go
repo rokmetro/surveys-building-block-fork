@@ -40,8 +40,8 @@ func (a appClient) GetSurvey(id string, orgID string, appID string) (*model.Surv
 
 // GetSurvey returns surveys matching the provided query
 func (a appClient) GetSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string,
-	limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool) ([]model.Survey, error) {
-	return a.app.shared.getSurveys(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed, includeResponses, nil)
+	limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, unstrucProps map[string]interface{}) ([]model.Survey, error) {
+	return a.app.shared.getSurveys(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed, includeResponses, nil, unstrucProps)
 }
 
 // CreateSurvey creates a new survey
@@ -469,23 +469,26 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 		score.CorrectAnswerCount += uint32(survey.SurveyStats.CorrectAnswerCount)
 	}
 
-	externalProfileIDRaw, exists := survey.UnstructuredProperties["external_profile_id"]
-	if exists {
-		externalProfileIDStr, isString := externalProfileIDRaw.(string)
-		if isString {
-			score.ExternalProfileID = externalProfileIDStr
-		}
-	}
-
-	localResponseTimeRaw, exists := survey.UnstructuredProperties["local_time"]
 	responseTime := surveyResponse.DateCreated
-	if exists {
-		localResponseTimeStr, isString := localResponseTimeRaw.(string)
-		if isString {
-			localResponseTime, err := time.Parse(time.DateTime, localResponseTimeStr)
+	unstructProps := survey.UnstructuredProperties
+	if unstructProps != nil {
+		externalProfileIDRaw, exists := unstructProps["external_profile_id"]
+		if exists {
+			externalProfileIDStr, isString := externalProfileIDRaw.(string)
+			if isString {
+				score.ExternalProfileID = externalProfileIDStr
+			}
+		}
 
-			if err == nil && time.Since(localResponseTime).Abs().Hours() < 24 {
-				responseTime = localResponseTime
+		localResponseTimeRaw, exists := unstructProps["local_time"]
+		if exists {
+			localResponseTimeStr, isString := localResponseTimeRaw.(string)
+			if isString {
+				localResponseTime, err := time.Parse(time.DateTime, localResponseTimeStr)
+
+				if err == nil && time.Since(localResponseTime).Abs().Hours() < 24 {
+					responseTime = localResponseTime
+				}
 			}
 		}
 	}
@@ -519,6 +522,11 @@ func (a appClient) GetLeaderboard(leaderboardID string, orgID string, appID stri
 	}
 
 	return leaderboard, nil
+}
+
+// GetLeaderboardWithUserContext gets the leaderboard with the provided ID and populates is_admin field for the user
+func (a appClient) GetLeaderboardWithUserContext(leaderboardID string, orgID string, appID string, userID string) (*model.Leaderboard, error) {
+	return a.app.storage.GetLeaderboardWithUserContext(leaderboardID, orgID, appID, userID)
 }
 
 // GetLeaderboards gets all leaderboards for a user

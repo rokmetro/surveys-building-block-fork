@@ -33,18 +33,19 @@ const (
 
 // Score object maintains data of accumulated scores from surveys
 type Score struct {
-	ID                     string    `json:"id" bson:"_id"`
-	OrgID                  string    `json:"org_id" bson:"org_id"`
-	AppID                  string    `json:"app_id" bson:"app_id"`
-	UserID                 string    `json:"user_id" bson:"user_id"`
-	SurveyType             string    `json:"survey_type" bson:"survey_type"`
-	ExternalProfileID      string    `json:"external_profile_id" bson:"external_profile_id"`
-	Score                  float64   `json:"score" bson:"score"`
-	ResponseCount          uint32    `json:"response_count" bson:"response_count"`
-	PrevSurveyResponseDate time.Time `json:"prev_survey_response_date" bson:"prev_survey_response_date"`
-	CurrentStreak          uint32    `json:"current_streak" bson:"current_streak"`
-	StreakMultiplier       float64   `json:"streak_multiplier" bson:"streak_multiplier"`
-	AnswerCount            uint32    `json:"answer_count" bson:"answer_count"`
-	CorrectAnswerCount     uint32    `json:"correct_answer_count" bson:"correct_answer_count"`
-	Rank                   uint32    `json:"rank" bson:"rank"`
+	ID                     string       `json:"id" bson:"_id"`
+	OrgID                  string       `json:"org_id" bson:"org_id"`
+	AppID                  string       `json:"app_id" bson:"app_id"`
+	UserID                 string       `json:"user_id" bson:"user_id"`
+	SurveyType             string       `json:"survey_type" bson:"survey_type"`
+	ExternalProfileID      string       `json:"external_profile_id" bson:"external_profile_id"`
+	Score                  float64      `json:"score" bson:"score"`
+	ResponseCount          uint32       `json:"response_count" bson:"response_count"`
+	PrevSurveyResponseDate time.Time    `json:"prev_survey_response_date" bson:"prev_survey_response_date"`
+	CurrentStreak          uint32       `json:"current_streak" bson:"current_streak"`
+	StreakMultiplier       float64      `json:"streak_multiplier" bson:"streak_multiplier"`
+	AnswerCount            uint32       `json:"answer_count" bson:"answer_count"`
+	CorrectAnswerCount     uint32       `json:"correct_answer_count" bson:"correct_answer_count"`
+	Rank                   uint32       `json:"rank" bson:"rank"`
+	Leaderboard            *Leaderboard `json:"leaderboard" bson:"leaderboard,omitempty"`
 }

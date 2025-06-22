@@ -1,9 +1,9 @@
 get:
   tags:
     - Client
-  summary: Retrieves scores
+  summary: Retrieves users's leaderboard scores
   description: |
-    Retrieves paginated scores sorted descending.
+    Retrieves scores for every leaderboard the user is in.
   security:
     - bearerAuth: []
   parameters:

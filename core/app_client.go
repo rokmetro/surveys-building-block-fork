@@ -15,6 +15,7 @@
 package core
 
 import (
+	"application/core/interfaces"
 	"application/core/model"
 	"application/utils"
 	"time"
@@ -410,6 +411,175 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 		score.Score += pointsForResponse * model.ScoreStreakMultiplier
 	} else {
 		score.Score += pointsForResponse
+	}
+
+	return nil
+}
+
+// GetLeaderboard gets the leaderboard with the provided ID
+func (a appClient) GetLeaderboard(leaderboardID string, orgID string, appID string) (*model.Leaderboard, error) {
+	leaderboard, err := a.app.storage.GetLeaderboard(leaderboardID, orgID, appID)
+
+	if leaderboard == nil || err != nil {
+		return nil, errors.WrapErrorData(logutils.StatusMissing, model.TypeLeaderboard, &logutils.FieldArgs{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID}, err)
+	}
+
+	return leaderboard, nil
+}
+
+// GetLeaderboardWithUserContext gets the leaderboard with the provided ID and populates is_admin field for the user
+func (a appClient) GetLeaderboardWithUserContext(leaderboardID string, orgID string, appID string, userID string) (*model.Leaderboard, error) {
+	return a.app.storage.GetLeaderboardWithUserContext(leaderboardID, orgID, appID, userID)
+}
+
+// GetLeaderboards gets all leaderboards for a user
+func (a appClient) GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error) {
+	return a.app.storage.GetLeaderboards(orgID, appID, userID)
+}
+
+// GetLeaderboardScores returns the paginated scores in the leaderboard with the provided ID
+func (a appClient) GetLeaderboardScores(leaderboardID string, orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
+	return a.app.storage.GetLeaderboardScores(leaderboardID, orgID, appID, limit, offset)
+}
+
+// GetLeaderboardUserScores returns the scores of a user in each leaderboard
+func (a appClient) GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error) {
+	return a.app.storage.GetLeaderboardUserScores(orgID, appID, userID, limit, offset)
+}
+
+// CreateLeaderboard creates a new leaderboard
+func (a appClient) CreateLeaderboard(leaderboard model.Leaderboard, userID string) (*model.Leaderboard, error) {
+	leaderboard.ID = uuid.NewString()
+	leaderboard.DateCreated = time.Now().UTC()
+	leaderboard.DateUpdated = nil
+	leaderboard.IsAdmin = nil
+
+	leaderboardEntry := a.createLeaderboardEntry(leaderboard.ID, leaderboard.OrgID, leaderboard.AppID, userID, true)
+
+	transaction := func(storage interfaces.Storage) error {
+		//1. Create leaderboard
+		_, err := storage.CreateLeaderboard(leaderboard)
+		if err != nil {
+			return err
+		}
+
+		//2. Create corresponding leaderboard entry
+		err = storage.CreateLeaderboardEntry(leaderboardEntry)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	err := a.app.storage.PerformTransaction(transaction)
+	if err != nil {
+		return nil, err
+	}
+
+	isAdmin := true
+	leaderboard.IsAdmin = &isAdmin
+	return &leaderboard, nil
+}
+
+// UpdateLeaderboard updates an existing leaderboard
+func (a appClient) UpdateLeaderboard(leaderboard model.Leaderboard, userID string) error {
+	// Check if user is an admin of the leaderboard
+	err := a.requireLeaderboardAdmin(leaderboard.ID, leaderboard.OrgID, leaderboard.AppID, userID)
+	if err != nil {
+		return err
+	}
+
+	time := time.Now().UTC()
+	leaderboard.DateUpdated = &time
+
+	return a.app.storage.UpdateLeaderboard(leaderboard)
+}
+
+// DeleteLeaderboard deletes a leaderboard by ID
+func (a appClient) DeleteLeaderboard(leaderboardID string, orgID string, appID string, userID string) error {
+	// Check if user is an admin of the leaderboard
+	err := a.requireLeaderboardAdmin(leaderboardID, orgID, appID, userID)
+	if err != nil {
+		return err
+	}
+
+	transaction := func(storage interfaces.Storage) error {
+		//1. Delete leaderboard
+		err := storage.DeleteLeaderboard(leaderboardID, orgID, appID, userID)
+		if err != nil {
+			return err
+		}
+
+		//2. Delete all leaderboard entries corresponding to leaderboardID
+		err = storage.DeleteAllLeaderboardEntries(leaderboardID, orgID, appID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return a.app.storage.PerformTransaction(transaction)
+}
+
+func (a appClient) JoinLeaderboard(leaderboardID string, orgID string, appID string, userID string) error {
+	transaction := func(storage interfaces.Storage) error {
+		// Check if leaderboard exists
+		leaderboard, err := storage.GetLeaderboard(leaderboardID, orgID, appID)
+		if leaderboard == nil || err != nil {
+			return errors.WrapErrorData(logutils.StatusMissing, model.TypeLeaderboard, &logutils.FieldArgs{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID}, err)
+		}
+
+		// Add leaderboard entry
+		err = storage.CreateLeaderboardEntry(a.createLeaderboardEntry(leaderboardID, orgID, appID, userID, false))
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return a.app.storage.PerformTransaction(transaction)
+}
+
+// createLeaderboardEntry creates a model.LeaderboardEntry with the provided parameters
+func (a appClient) createLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string, isAdmin bool) model.LeaderboardEntry {
+	return model.LeaderboardEntry{
+		ID:            uuid.NewString(),
+		LeaderboardID: leaderboardID,
+		OrgID:         orgID,
+		AppID:         appID,
+		UserID:        userID,
+		IsAdmin:       isAdmin,
+		DateCreated:   time.Now().UTC(),
+		DateUpdated:   nil,
+	}
+}
+
+func (a appClient) LeaveLeaderboard(leaderboardID string, orgID string, appID string, userID string, leavingUserIDs []string) error {
+	if len(leavingUserIDs) == 0 {
+		// If leavingUserIDs aren't provided, remove the current user from the leaderboard
+		leavingUserIDs = append(leavingUserIDs, userID)
+	} else if !(len(leavingUserIDs) == 1 && leavingUserIDs[0] == userID) {
+		// Only remove specified users other than the user if the current user is an admin
+		err := a.requireLeaderboardAdmin(leaderboardID, orgID, appID, userID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return a.app.storage.DeleteLeaderboardEntries(leaderboardID, orgID, appID, leavingUserIDs)
+}
+
+func (a appClient) requireLeaderboardAdmin(leaderboardID string, orgID string, appID string, userID string) error {
+	leaderboardEntry, err := a.app.storage.GetLeaderboardEntry(leaderboardID, orgID, appID, userID)
+	if err != nil {
+		return errors.WrapErrorData(logutils.StatusMissing, model.TypeLeaderboardEntry, &logutils.FieldArgs{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID, "user_id": userID}, err)
+	}
+
+	if !leaderboardEntry.IsAdmin {
+		return errors.Newf("User %s is not an admin of leaderboard %s", userID, leaderboardID)
 	}
 
 	return nil

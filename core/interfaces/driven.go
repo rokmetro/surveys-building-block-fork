@@ -60,6 +60,20 @@ type Storage interface {
 	GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int) ([]model.Score, error)
 	CreateScore(score model.Score) error
 	UpdateScore(score model.Score) error
+	GetLeaderboardScores(leaderboardID string, orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
+	GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error)
+
+	GetLeaderboard(leaderboardID string, orgID string, appID string) (*model.Leaderboard, error)
+	GetLeaderboardWithUserContext(leaderboardID string, orgID string, appID string, userID string) (*model.Leaderboard, error)
+	GetLeaderboards(orgID string, appID string, userID string) ([]model.Leaderboard, error)
+	CreateLeaderboard(leaderboard model.Leaderboard) (*model.Leaderboard, error)
+	UpdateLeaderboard(leaderboard model.Leaderboard) error
+	DeleteLeaderboard(leaderboardID string, orgID string, appID string, userID string) error
+
+	GetLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string) (*model.LeaderboardEntry, error)
+	CreateLeaderboardEntry(leaderboardEntry model.LeaderboardEntry) error
+	DeleteLeaderboardEntries(leaderboardID string, orgID string, appID string, leavingUserIDs []string) error
+	DeleteAllLeaderboardEntries(leaderboardID string, orgID string, appID string) error
 }
 
 // StorageListener represents storage listener

@@ -97,6 +97,17 @@ func (a Adapter) Start() {
 	mainRouter.HandleFunc("/v2/scores", a.wrapFunc(a.clientAPIsHandler.getScoresV2, a.auth.client.User)).Methods("GET")
 	mainRouter.HandleFunc("/scores/top-and-local", a.wrapFunc(a.clientAPIsHandler.getTopAndLocalScores, a.auth.client.User)).Methods("GET")
 
+	// Leaderboard endpoints
+	mainRouter.HandleFunc("/leaderboards", a.wrapFunc(a.clientAPIsHandler.getLeaderboards, a.auth.client.User)).Methods("GET")
+	mainRouter.HandleFunc("/leaderboards", a.wrapFunc(a.clientAPIsHandler.createLeaderboard, a.auth.client.User)).Methods("POST")
+	mainRouter.HandleFunc("/leaderboards/scores", a.wrapFunc(a.clientAPIsHandler.getLeaderboardUserScores, a.auth.client.User)).Methods("GET")
+	mainRouter.HandleFunc("/leaderboards/{id}", a.wrapFunc(a.clientAPIsHandler.getLeaderboard, a.auth.client.User)).Methods("GET")
+	mainRouter.HandleFunc("/leaderboards/{id}", a.wrapFunc(a.clientAPIsHandler.updateLeaderboard, a.auth.client.User)).Methods("PUT")
+	mainRouter.HandleFunc("/leaderboards/{id}", a.wrapFunc(a.clientAPIsHandler.deleteLeaderboard, a.auth.client.User)).Methods("DELETE")
+	mainRouter.HandleFunc("/leaderboards/{id}/join", a.wrapFunc(a.clientAPIsHandler.joinLeaderboard, a.auth.client.User)).Methods("PUT")
+	mainRouter.HandleFunc("/leaderboards/{id}/leave", a.wrapFunc(a.clientAPIsHandler.leaveLeaderboard, a.auth.client.User)).Methods("DELETE")
+	mainRouter.HandleFunc("/leaderboards/{id}/scores", a.wrapFunc(a.clientAPIsHandler.getLeaderboardScores, a.auth.client.User)).Methods("GET")
+
 	// Admin APIs
 	adminRouter := mainRouter.PathPrefix("/admin").Subrouter()
 	adminRouter.HandleFunc("/configs/{id}", a.wrapFunc(a.adminAPIsHandler.getConfig, a.auth.admin.Permissions)).Methods("GET")

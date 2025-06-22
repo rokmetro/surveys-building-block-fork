@@ -7,6 +7,8 @@ Survey:
   $ref: "./surveys/Survey.yaml"
 SurveyData:
   $ref: "./surveys/SurveyData.yaml"
+SurveyAlert:
+  $ref: "./surveys/SurveyAlert.yaml"
 SurveyStats:
   $ref: "./surveys/SurveyStats.yaml"
 ActionData:
@@ -21,6 +23,10 @@ AlertContact:
   $ref: "./surveys/AlertContact.yaml"
 Score:
   $ref: "./scores/Score.yaml"
+Leaderboard:
+  $ref: "./leaderboards/Leaderboard.yaml"
+LeaderboardEntry:
+  $ref: "./leaderboards/LeaderboardEntry.yaml"
 
 # ADMIN section
 

@@ -37,11 +37,13 @@ type database struct {
 	dbClient *mongo.Client
 	logger   *logs.Logger
 
-	configs         *collectionWrapper
-	surveys         *collectionWrapper
-	surveyResponses *collectionWrapper
-	alertContacts   *collectionWrapper
-	scores          *collectionWrapper
+	configs            *collectionWrapper
+	surveys            *collectionWrapper
+	surveyResponses    *collectionWrapper
+	alertContacts      *collectionWrapper
+	scores             *collectionWrapper
+	leaderboards       *collectionWrapper
+	leaderboardEntries *collectionWrapper
 
 	listeners []interfaces.StorageListener
 }
@@ -100,6 +102,18 @@ func (d *database) start() error {
 		return err
 	}
 
+	leaderboards := &collectionWrapper{database: d, coll: db.Collection("leaderboards")}
+	err = d.applyLeaderboardsChecks(leaderboards)
+	if err != nil {
+		return err
+	}
+
+	leaderboardEntries := &collectionWrapper{database: d, coll: db.Collection("leaderboard_entries")}
+	err = d.applyLeaderboardEntriesChecks(leaderboardEntries)
+	if err != nil {
+		return err
+	}
+
 	//assign the db, db client and the collections
 	d.db = db
 	d.dbClient = client
@@ -109,6 +123,8 @@ func (d *database) start() error {
 	d.surveyResponses = surveyResponses
 	d.alertContacts = alertContacts
 	d.scores = scores
+	d.leaderboards = leaderboards
+	d.leaderboardEntries = leaderboardEntries
 
 	go d.configs.Watch(nil, d.logger)
 
@@ -187,6 +203,35 @@ func (d *database) applyScoresChecks(scores *collectionWrapper) error {
 	}
 
 	d.logger.Info("scores passed")
+	return nil
+}
+
+func (d *database) applyLeaderboardsChecks(leaderboards *collectionWrapper) error {
+	d.logger.Info("apply leaderboards checks.....")
+
+	err := leaderboards.AddIndex(nil, bson.D{primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}}, false, nil)
+	if err != nil {
+		return err
+	}
+
+	d.logger.Info("leaderboards passed")
+	return nil
+}
+
+func (d *database) applyLeaderboardEntriesChecks(leaderboardEntries *collectionWrapper) error {
+	d.logger.Info("apply leaderboard entries checks.....")
+
+	err := leaderboardEntries.AddIndex(nil, bson.D{primitive.E{Key: "leaderboard_id", Value: 1}, primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "user_id", Value: 1}}, true, nil)
+	if err != nil {
+		return err
+	}
+
+	err = leaderboardEntries.AddIndex(nil, bson.D{primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "user_id", Value: 1}}, false, nil)
+	if err != nil {
+		return err
+	}
+
+	d.logger.Info("leaderboard entries passed")
 	return nil
 }
 

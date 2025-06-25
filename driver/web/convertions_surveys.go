@@ -36,7 +36,8 @@ func getSurvey(item model.Survey) model.Survey {
 		SurveyStats: item.SurveyStats, Sensitive: item.Sensitive, Anonymous: item.Anonymous, DefaultDataKey: item.DefaultDataKey,
 		DefaultDataKeyRule: item.DefaultDataKeyRule, Constants: item.Constants, Strings: item.Strings, SubRules: item.SubRules,
 		ResponseKeys: item.ResponseKeys, CalendarEventID: item.CalendarEventID, StartDate: item.StartDate, EndDate: item.EndDate,
-		Public: item.Public, Archived: item.Archived, EstimatedCompletionTime: item.EstimatedCompletionTime}
+		Public: item.Public, Archived: item.Archived, EstimatedCompletionTime: item.EstimatedCompletionTime,
+		UnstructuredProperties: item.UnstructuredProperties}
 }
 
 func getSurveys(items []model.Survey) []model.Survey {
@@ -67,7 +68,8 @@ func updateSurveyRequestToSurvey(item model.SurveyRequest, id string) model.Surv
 		SurveyStats: item.SurveyStats, Sensitive: item.Sensitive, Anonymous: item.Anonymous, DefaultDataKey: item.DefaultDataKey,
 		DefaultDataKeyRule: item.DefaultDataKeyRule, Constants: item.Constants, Strings: item.Strings, SubRules: item.SubRules,
 		ResponseKeys: item.ResponseKeys, CalendarEventID: item.CalendarEventID, StartDate: startValue, EndDate: endValue,
-		Public: item.Public, Archived: item.Archived, EstimatedCompletionTime: item.EstimatedCompletionTime}
+		Public: item.Public, Archived: item.Archived, EstimatedCompletionTime: item.EstimatedCompletionTime,
+		UnstructuredProperties: item.UnstructuredProperties}
 }
 
 func surveyTimeFilter(item *model.SurveyTimeFilterRequest) *model.SurveyTimeFilter {

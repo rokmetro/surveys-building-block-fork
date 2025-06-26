@@ -120,6 +120,14 @@ get:
       explode: true
       schema:
         type: object
+    - name: query
+      in: query
+      description: String to find quizzes that have the string in their title or more info
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string
   responses:
     200:
       description: Success

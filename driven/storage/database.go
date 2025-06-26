@@ -156,6 +156,11 @@ func (d *database) applySurveysChecks(surveys *collectionWrapper) error {
 		return err
 	}
 
+	err = surveys.AddIndex(nil, bson.D{primitive.E{Key: "more_info", Value: "text"}, primitive.E{Key: "title", Value: "text"}}, false, nil)
+	if err != nil {
+		return err
+	}
+
 	d.logger.Info("surveys passed")
 	return nil
 }

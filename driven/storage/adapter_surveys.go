@@ -210,11 +210,8 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		}
 	}
 
-	if query != nil {
-		if *query != "" {
-			surveyFilter = append(surveyFilter, bson.E{Key: "$text", Value: bson.M{"$search": query}})
-
-		}
+	if query != nil && *query != "" {
+		surveyFilter = append(surveyFilter, bson.E{Key: "$text", Value: bson.M{"$search": query}})
 	}
 
 	// Find all surveys matching surveyFilter

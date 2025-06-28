@@ -165,8 +165,10 @@ func (h ClientAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *toke
 		}
 	}
 
+	query := r.URL.Query().Get("query")
+
 	surveys, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
-		&limit, &offset, filter, public, archived, completed, includeResponses, unstrucProps)
+		&limit, &offset, filter, public, archived, completed, includeResponses, unstrucProps, &query)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}
@@ -566,7 +568,7 @@ func (h ClientAPIsHandler) getCreatorSurveys(l *logs.Log, r *http.Request, claim
 	}
 	filter := surveyTimeFilter(&timeFilterItems)
 
-	resData, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset, filter, nil, nil, nil, nil, nil)
+	resData, err := h.app.Client.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, &claims.Subject, surveyIDs, surveyTypes, "", &limit, &offset, filter, nil, nil, nil, nil, nil, nil)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
 	}

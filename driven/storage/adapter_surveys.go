@@ -137,7 +137,7 @@ func (a *Adapter) GetSurveys(orgID string, appID string, creatorID *string, surv
 }
 
 // GetSurveysWithResponses gets surveys with optional responses
-func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, unstructuredProperties map[string]interface{}) ([]model.Survey, error) {
+func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, unstructuredProperties map[string]interface{}, query *string) ([]model.Survey, error) {
 	surveyFilter := bson.D{
 		{Key: "org_id", Value: orgID},
 		{Key: "app_id", Value: appID},
@@ -208,6 +208,10 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		} else {
 			surveyFilter = append(surveyFilter, bson.E{Key: "unstructured_properties." + key, Value: bson.M{"$eq": value}})
 		}
+	}
+
+	if query != nil && *query != "" {
+		surveyFilter = append(surveyFilter, bson.E{Key: "$text", Value: bson.M{"$search": query}})
 	}
 
 	// Find all surveys matching surveyFilter

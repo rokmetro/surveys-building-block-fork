@@ -288,8 +288,10 @@ func (h AdminAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *token
 		}
 	}
 
+	query := r.URL.Query().Get("query")
+
 	surveys, err := h.app.Admin.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
-		&limit, &offset, filter, public, archived, completed, includeResponses, unstrucProps)
+		&limit, &offset, filter, public, archived, completed, includeResponses, unstrucProps, &query)
 
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)

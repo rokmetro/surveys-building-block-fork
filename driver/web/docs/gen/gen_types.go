@@ -252,6 +252,9 @@ type GetApiAdminSurveysParams struct {
 
 	// UnstructuredProperties Map containing filters by unstructured properties in profile
 	UnstructuredProperties *map[string]interface{} `form:"unstructured_properties,omitempty" json:"unstructured_properties,omitempty"`
+
+	// Query String to find quizzes that have the string in their title or more info
+	Query *string `json:"query,omitempty"`
 }
 
 // GetApiAdminSurveysIdResponseParams defines parameters for GetApiAdminSurveysIdResponse.
@@ -429,6 +432,9 @@ type GetApiSurveysParams struct {
 
 	// UnstructuredProperties Map containing filters by unstructured properties in profile
 	UnstructuredProperties *map[string]interface{} `form:"unstructured_properties,omitempty" json:"unstructured_properties,omitempty"`
+
+	// Query String to find quizzes that have the string in their title or more info
+	Query *string `json:"query,omitempty"`
 }
 
 // GetApiSurveysIdResponsesParams defines parameters for GetApiSurveysIdResponses.

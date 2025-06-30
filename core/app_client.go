@@ -455,7 +455,7 @@ func (a appClient) CreateScore(orgID string, appID string, userID string, extern
 
 // UpdateScore updates the score model passed in
 // Assumes that surveyResponse is a fashion quiz
-func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyResponse) error {
+func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyResponse) {
 	survey := surveyResponse.Survey
 	score.ResponseCount++
 	score.AnswerCount += uint32(survey.SurveyStats.Total)
@@ -493,13 +493,16 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 		}
 	}
 
-	if utils.IsPrevOrSameDay(score.PrevSurveyResponseDate, responseTime) {
-		// Don't update streak if day is same or previous
-	} else if utils.IsNextDay(score.PrevSurveyResponseDate, responseTime) {
+	isTodaysQuiz, err := survey.IsLive(&responseTime)
+	if err != nil {
+		a.app.logger.Warnf("error determining whether survey %s is today's quiz", survey.ID)
+	}
+
+	if isTodaysQuiz && utils.IsNextDay(score.PrevSurveyResponseDate, responseTime) {
 		// Update streak
 		score.CurrentStreak++
-	} else {
-		// Reset streak to day 1
+	} else if !utils.IsPrevOrSameDay(score.PrevSurveyResponseDate, responseTime) {
+		// Reset streak to day 1 if day is not same or previous day
 		score.CurrentStreak = 1
 	}
 	score.PrevSurveyResponseDate = responseTime
@@ -509,8 +512,6 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 	} else {
 		score.Score += pointsForResponse
 	}
-
-	return nil
 }
 
 // GetLeaderboard gets the leaderboard with the provided ID

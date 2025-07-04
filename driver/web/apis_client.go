@@ -408,7 +408,7 @@ func (h ClientAPIsHandler) createSurveyResponse(l *logs.Log, r *http.Request, cl
 	item.AppID = claims.AppID
 	item.CreatorID = claims.Subject
 
-	createdItem, err := h.app.Client.CreateSurveyResponse(model.SurveyResponse{UserID: claims.Subject, AppID: claims.AppID, OrgID: claims.OrgID, Survey: item}, claims.ExternalIDs, claims.Username)
+	createdItem, err := h.app.Client.CreateSurveyResponse(model.SurveyResponse{UserID: claims.Subject, AppID: claims.AppID, OrgID: claims.OrgID, Survey: item}, claims.ExternalIDs, claims.Username, l)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionCreate, model.TypeSurveyResponse, nil, err, http.StatusInternalServerError, true)
 	}

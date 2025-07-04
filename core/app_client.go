@@ -24,6 +24,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
@@ -116,7 +117,7 @@ func (a appClient) GetAllSurveyResponses(orgID string, appID string, userID stri
 }
 
 // CreateSurveyResponse creates a new survey response
-func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, externalIDs map[string]string, username string) (*model.SurveyResponse, error) {
+func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, externalIDs map[string]string, username string, l *logs.Log) (*model.SurveyResponse, error) {
 	surveyResponse.ID = uuid.NewString()
 	surveyResponse.DateCreated = time.Now().UTC()
 	surveyResponse.DateUpdated = nil
@@ -169,7 +170,7 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 			// make copy of score before modifying for loaderboard notifications
 			oldScore = *score
 
-			a.UpdateScore(score, surveyResponse)
+			a.UpdateScore(score, surveyResponse, l)
 			err = a.app.storage.UpdateScore(*score)
 			if err != nil {
 				return nil, errors.WrapErrorAction(logutils.ActionUpdate, model.TypeScore, nil, err)
@@ -448,14 +449,14 @@ func (a appClient) CreateScore(orgID string, appID string, userID string, extern
 	}
 
 	for i := 0; i < len(surveyResponses); i++ {
-		a.UpdateScore(&score, surveyResponses[i])
+		a.UpdateScore(&score, surveyResponses[i], nil)
 	}
 	return &score, a.app.storage.CreateScore(score)
 }
 
 // UpdateScore updates the score model passed in
 // Assumes that surveyResponse is a fashion quiz
-func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyResponse) {
+func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyResponse, l *logs.Log) {
 	survey := surveyResponse.Survey
 	score.ResponseCount++
 	score.AnswerCount += uint32(survey.SurveyStats.Total)
@@ -498,14 +499,23 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 		a.app.logger.Warnf("error determining whether survey %s is today's quiz", survey.ID)
 	}
 
-	if isTodaysQuiz && utils.IsNextDay(score.PrevSurveyResponseDate, responseTime) {
-		// Update streak
-		score.CurrentStreak++
+	if isTodaysQuiz {
+		if utils.IsNextDay(score.PrevSurveyResponseDate, responseTime) {
+			// Update streak
+			score.CurrentStreak++
+			l.Info("Incremented streak")
+		} else {
+			// Reset streak to day 1 if day is not same or previous day
+			score.CurrentStreak = 1
+			l.Info("Reset streak to 1")
+		}
+		// Only set prev survey response date if today's quiz
+		score.PrevSurveyResponseDate = responseTime
 	} else if !utils.IsPrevOrSameDay(score.PrevSurveyResponseDate, responseTime) {
-		// Reset streak to day 1 if day is not same or previous day
-		score.CurrentStreak = 1
+		// Reset streak to day 0 if day is not same or previous day
+		score.CurrentStreak = 0
+		l.Info("Reset streak to 0")
 	}
-	score.PrevSurveyResponseDate = responseTime
 
 	if score.CurrentStreak >= model.ScoreStreakMinDays {
 		score.Score += pointsForResponse * model.ScoreStreakMultiplier

@@ -105,16 +105,18 @@ func (a *Adapter) GetLeaderboards(orgID string, appID string, userID string) ([]
 	pipeline := mongo.Pipeline{
 		// 1) filter leadboard entries for this user
 		bson.D{{Key: "$match", Value: leaderboardEntryFilter}},
-		// 2) join each entry to its leaderboard
+		// 2) sort by date_created in descending order (most recent first)
+		bson.D{{Key: "$sort", Value: bson.D{{Key: "date_created", Value: -1}}}},
+		// 3) join each entry to its leaderboard
 		bson.D{{Key: "$lookup", Value: bson.D{
 			{Key: "from", Value: "leaderboards"},
 			{Key: "localField", Value: "leaderboard_id"},
 			{Key: "foreignField", Value: "_id"},
 			{Key: "as", Value: "leaderboard"},
 		}}},
-		// 3) unwind the resulting array so we get a single doc per leaderboard
+		// 4) unwind the resulting array so we get a single doc per leaderboard
 		bson.D{{Key: "$unwind", Value: "$leaderboard"}},
-		// 4) replace the root with a merged object:
+		// 5) replace the root with a merged object:
 		//   - all fields from the leaderboard
 		//   - plus an "is_admin" field from the entry
 		bson.D{{Key: "$replaceRoot", Value: bson.D{
@@ -373,6 +375,9 @@ func (a *Adapter) GetLeaderboardUserScores(orgID string, appID string, userID st
 
 	userIDFilter := bson.D{{Key: "$match", Value: bson.M{"user_id": userID}}}
 	pipeline = append(pipeline, userIDFilter)
+
+	sortByRank := bson.D{{Key: "$sort", Value: bson.M{"rank": 1}}}
+	pipeline = append(pipeline, sortByRank)
 
 	if offset != nil {
 		pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})

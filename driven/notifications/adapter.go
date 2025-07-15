@@ -17,6 +17,8 @@ import (
 const (
 	// SubjectVogue is a subject type for vogue
 	SubjectVogue string = "Vogue"
+	// TopicQuizAll is the topic to use for all quiz notifications
+	TopicQuizAll string = "quiz.all.all"
 	// BaseURLVogue is a base url used for vogue deep links
 	BaseURLVogue string = "https://vogue.com"
 )

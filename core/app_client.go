@@ -217,6 +217,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 			a.app.logger.WarnWithFields("failed to find scores for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": orgID, "app_id": appID})
 		}
 
+		topic := notifications.TopicQuizAll
 		for _, userScore := range scores {
 			if userScore.UserID != userID {
 				// current user's score has eclipsed this user's score in the leaderboard by completing the fashion quiz
@@ -233,6 +234,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 						Body:       body,
 						Data:       notificationData,
 						Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
+						Topic:      &topic,
 					}
 					a.app.notifications.SendNotification(message)
 				}
@@ -252,6 +254,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 						Body:       body,
 						Data:       notificationData,
 						Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
+						Topic:      &topic,
 					}
 					a.app.notifications.SendNotification(message)
 				}
@@ -689,6 +692,7 @@ func (a appClient) sendJoinLeaderboardNotifications(leaderboardID string, orgID 
 			} else {
 				body = fmt.Sprintf("@%s just joined the %s leaderboard. Want to see how they stack up?", username, leaderboard.Name)
 			}
+			topic := notifications.TopicQuizAll
 
 			data := map[string]string{
 				"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, leaderboardID),
@@ -702,6 +706,7 @@ func (a appClient) sendJoinLeaderboardNotifications(leaderboardID string, orgID 
 				Body:       body,
 				Data:       data,
 				Recipients: []model.NotificationMessageRecipient{{UserID: entry.UserID}},
+				Topic:      &topic,
 			}
 			a.app.notifications.SendNotification(message)
 		}

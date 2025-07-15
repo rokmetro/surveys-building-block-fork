@@ -99,6 +99,7 @@ func (n streakNotifications) processNotifications() {
 
 	for _, score := range scores {
 		body := fmt.Sprintf("You're on a %d-day Runway Genius streak! Play now to keep it going.", score.CurrentStreak)
+		topic := notifications.TopicQuizAll
 
 		data := map[string]string{
 			"url": fmt.Sprintf("%s/quiz/landing", notifications.BaseURLVogue),
@@ -112,6 +113,7 @@ func (n streakNotifications) processNotifications() {
 			Body:       body,
 			Data:       data,
 			Recipients: []model.NotificationMessageRecipient{{UserID: score.UserID}},
+			Topic:      &topic,
 		}
 		n.notifications.SendNotification(message)
 	}

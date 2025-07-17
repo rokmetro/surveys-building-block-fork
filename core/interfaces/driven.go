@@ -65,6 +65,10 @@ type Storage interface {
 	CreateScore(score model.Score) error
 	UpdateScore(score model.Score) error
 	InitRanks(orgID string, appID string) error
+
+	// Lock management for rank operations
+	AcquireRanksLock()
+	ReleaseRanksLock()
 	GetLeaderboardScores(leaderboardID string, orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
 	GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error)
 
@@ -79,6 +83,7 @@ type Storage interface {
 	CreateLeaderboardEntry(leaderboardEntry model.LeaderboardEntry) error
 	DeleteLeaderboardEntries(leaderboardID string, orgID string, appID string, leavingUserIDs []string) error
 	DeleteAllLeaderboardEntries(leaderboardID string, orgID string, appID string) error
+	InitLeaderboardRanks(orgID string, appID string) error
 }
 
 // StorageListener represents storage listener

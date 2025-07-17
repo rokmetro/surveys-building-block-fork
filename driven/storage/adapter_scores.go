@@ -297,9 +297,6 @@ func (a *Adapter) UpdateScore(score model.Score) error {
 
 // InitRanks calculates and updates rank field for all scores in the given org/app
 func (a *Adapter) InitRanks(orgID string, appID string) error {
-	// Acquire write lock to prevent concurrent score operations during rank initialization
-	a.ranksLock.Lock()
-	defer a.ranksLock.Unlock()
 
 	// Use aggregation pipeline with $merge to calculate and update ranks in one operation
 	pipeline := mongo.Pipeline{
@@ -328,4 +325,14 @@ func (a *Adapter) InitRanks(orgID string, appID string) error {
 	}
 
 	return nil
+}
+
+// AcquireRanksLock acquires the write lock for rank operations
+func (a *Adapter) AcquireRanksLock() {
+	a.ranksLock.Lock()
+}
+
+// ReleaseRanksLock releases the write lock for rank operations
+func (a *Adapter) ReleaseRanksLock() {
+	a.ranksLock.Unlock()
 }

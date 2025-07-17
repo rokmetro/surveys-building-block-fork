@@ -320,3 +320,66 @@ func (a *Adapter) GetLeaderboardUserScores(orgID string, appID string, userID st
 
 	return scores, err
 }
+
+// InitLeaderboardRanks calculates and updates score and rank fields for all leaderboard entries in the given org/app
+func (a *Adapter) InitLeaderboardRanks(orgID string, appID string) error {
+
+	pipeline := mongo.Pipeline{
+		// Match leaderboard entries for the specific org/app
+		bson.D{{Key: "$match", Value: bson.M{
+			"org_id": orgID,
+			"app_id": appID,
+		}}},
+		// Lookup scores for each user
+		bson.D{{Key: "$lookup", Value: bson.M{
+			"from": "scores",
+			"let":  bson.M{"uid": "$user_id"},
+			"pipeline": mongo.Pipeline{
+				// match the same user/org/app
+				{{Key: "$match", Value: bson.M{
+					"$expr": bson.M{"$and": bson.A{
+						bson.M{"$eq": bson.A{"$user_id", "$$uid"}},
+						bson.M{"$eq": bson.A{"$org_id", orgID}},
+						bson.M{"$eq": bson.A{"$app_id", appID}},
+					}},
+				}}},
+			},
+			"as": "user_scores",
+		}}},
+		// Unwind the scores array (should be single score per user)
+		bson.D{{Key: "$unwind", Value: bson.M{
+			"path":                       "$user_scores",
+			"preserveNullAndEmptyArrays": true,
+		}}},
+		// Add score field from the looked up score document
+		bson.D{{Key: "$addFields", Value: bson.M{
+			"score": bson.M{
+				"$ifNull": bson.A{"$user_scores.score", 0},
+			},
+		}}},
+		// Calculate rank within each leaderboard using window functions
+		bson.D{{Key: "$setWindowFields", Value: bson.M{
+			"partitionBy": "$leaderboard_id",
+			"sortBy":      bson.M{"score": -1},
+			"output": bson.M{
+				"rank": bson.M{"$denseRank": bson.M{}},
+			},
+		}}},
+		// Remove the temporary user_scores field and merge back to leaderboard_entries
+		bson.D{{Key: "$unset", Value: "user_scores"}},
+		bson.D{{Key: "$merge", Value: bson.M{
+			"into":           "leaderboard_entries",
+			"whenMatched":    "merge",
+			"whenNotMatched": "discard",
+		}}},
+	}
+
+	// Execute the aggregation pipeline that updates the documents directly
+	var results []bson.M // We don't need the results since $merge updates in place
+	err := a.db.leaderboardEntries.Aggregate(a.context, pipeline, &results, nil)
+	if err != nil {
+		return errors.WrapErrorAction(logutils.ActionUpdate, model.TypeLeaderboardEntry, &logutils.FieldArgs{"app_id": appID, "org_id": orgID}, err)
+	}
+
+	return nil
+}

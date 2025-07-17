@@ -51,7 +51,7 @@ type Client interface {
 	// Score
 	GetScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error)
 	GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
-	GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int) ([]model.Score, error)
+	GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int, l *logs.Log) ([]model.Score, error)
 	GetLeaderboardScores(leaderboardID string, orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
 	GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error)
 
@@ -92,6 +92,9 @@ type Admin interface {
 	CreateAlertContact(alertContact model.AlertContact) (*model.AlertContact, error)
 	UpdateAlertContact(alertContact model.AlertContact) error
 	DeleteAlertContact(id string, orgID string, appID string) error
+
+	// Scores
+	InitRanks(orgID string, appID string) error
 }
 
 // Analytics exposes Analytics APIs for the driver adapters

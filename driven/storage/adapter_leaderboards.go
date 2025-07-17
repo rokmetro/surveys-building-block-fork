@@ -22,6 +22,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // GetLeaderboard gets a leaderboard by ID
@@ -208,6 +209,10 @@ func (a *Adapter) GetLeaderboardEntries(orgID string, appID string, leaderboardI
 
 // CreateLeaderboardEntry creates a new leaderboardEntry object
 func (a *Adapter) CreateLeaderboardEntry(leaderboardEntry model.LeaderboardEntry) error {
+	// Acquire read lock to allow concurrent operations but block during rank initialization
+	a.ranksLock.RLock()
+	defer a.ranksLock.RUnlock()
+
 	_, err := a.db.leaderboardEntries.InsertOne(a.context, leaderboardEntry)
 	if err != nil {
 		return errors.WrapErrorAction(logutils.ActionCreate, model.TypeLeaderboardEntry, nil, err)
@@ -268,62 +273,22 @@ func (a *Adapter) UpdateUserLeaderboardEntryRank(leaderboardID string, orgID str
 
 // GetLeaderboardScores retrieves paginated scores for a specific leaderboard
 func (a *Adapter) GetLeaderboardScores(leaderboardID string, orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
-	pipeline := mongo.Pipeline{}
-
-	// 1) match only this leaderboard
-	leaderboardEntryFilter := bson.D{{Key: "$match", Value: bson.M{
+	filter := bson.M{
 		"leaderboard_id": leaderboardID,
 		"org_id":         orgID,
 		"app_id":         appID,
-	}}}
-	pipeline = append(pipeline, leaderboardEntryFilter)
-
-	// 2) lookup into scores by user_id + org/app
-	lookup := bson.D{{Key: "$lookup", Value: bson.M{
-		"from": "scores",
-		"let":  bson.M{"uid": "$user_id"},
-		"pipeline": mongo.Pipeline{
-			bson.D{{Key: "$match", Value: bson.M{
-				"$expr": bson.M{"$and": bson.A{
-					bson.M{"$eq": bson.A{"$user_id", "$$uid"}},
-					bson.M{"$eq": bson.A{"$org_id", orgID}},
-					bson.M{"$eq": bson.A{"$app_id", appID}},
-				}},
-			}}},
-		},
-		"as": "scores",
-	}}}
-	pipeline = append(pipeline, lookup)
-
-	// 3) unwind the single-element scoreDoc array
-	unwind := bson.D{{Key: "$unwind", Value: "$scores"}}
-	pipeline = append(pipeline, unwind)
-
-	// 4) replace root with the embedded scoreDoc
-	replaceRoot := bson.D{{Key: "$replaceRoot", Value: bson.M{
-		"newRoot": "$scores",
-	}}}
-	pipeline = append(pipeline, replaceRoot)
-
-	// 5) add a dense‐rank over score descending
-	rankWindow := bson.D{{Key: "$setWindowFields", Value: bson.M{
-		"sortBy": bson.M{"score": -1},
-		"output": bson.M{
-			"rank": bson.M{"$denseRank": bson.M{}},
-		},
-	}}}
-	pipeline = append(pipeline, rankWindow)
-
-	if offset != nil {
-		pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
 	}
 
+	opts := options.Find().SetSort(bson.M{"score": -1})
+	if offset != nil {
+		opts.SetSkip(int64(*offset))
+	}
 	if limit != nil {
-		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
+		opts.SetLimit(int64(*limit))
 	}
 
 	var scores []model.Score
-	err := a.db.leaderboardEntries.Aggregate(a.context, pipeline, &scores, nil)
+	err := a.db.leaderboardEntries.Find(a.context, filter, &scores, opts)
 
 	return scores, err
 }
@@ -333,35 +298,14 @@ func (a *Adapter) GetLeaderboardUserScores(orgID string, appID string, userID st
 	pipeline := mongo.Pipeline{}
 
 	leaderboardEntryFilter := bson.D{{Key: "$match", Value: bson.M{
-		"org_id": orgID,
-		"app_id": appID,
+		"org_id":  orgID,
+		"app_id":  appID,
+		"user_id": userID,
 	}}}
 	pipeline = append(pipeline, leaderboardEntryFilter)
 
-	lookup := bson.D{{Key: "$lookup", Value: bson.M{
-		"from": "scores",
-		"let":  bson.M{"uid": "$user_id"},
-		"pipeline": mongo.Pipeline{
-			// match the same user/org/app
-			{{Key: "$match", Value: bson.M{
-				"$expr": bson.M{"$and": bson.A{
-					bson.M{"$eq": bson.A{"$user_id", "$$uid"}},
-					bson.M{"$eq": bson.A{"$org_id", orgID}},
-					bson.M{"$eq": bson.A{"$app_id", appID}},
-				}},
-			}}},
-		},
-		"as": "scores",
-	}}}
-	pipeline = append(pipeline, lookup)
-
-	unwind := bson.D{{Key: "$unwind", Value: "$scores"}}
-	pipeline = append(pipeline, unwind)
-
-	replaceRoot := bson.D{{Key: "$replaceRoot", Value: bson.M{
-		"newRoot": bson.M{"$mergeObjects": bson.A{"$scores", "$$ROOT"}},
-	}}}
-	pipeline = append(pipeline, replaceRoot)
+	sortStage := bson.D{{Key: "$sort", Value: bson.M{"date_created": -1}}}
+	pipeline = append(pipeline, sortStage)
 
 	// lookup leaderboards for each entry
 	addLeaderboardField := bson.D{{
@@ -374,6 +318,13 @@ func (a *Adapter) GetLeaderboardUserScores(orgID string, appID string, userID st
 	}}
 	pipeline = append(pipeline, addLeaderboardField)
 
+	if offset != nil {
+		pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
+	}
+	if limit != nil {
+		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
+	}
+
 	unwindLeaderboard := bson.D{{
 		Key: "$unwind", Value: bson.M{
 			"path": "$leaderboard",
@@ -381,31 +332,71 @@ func (a *Adapter) GetLeaderboardUserScores(orgID string, appID string, userID st
 	}}
 	pipeline = append(pipeline, unwindLeaderboard)
 
-	rankWindow := bson.D{{Key: "$setWindowFields", Value: bson.M{
-		"partitionBy": "$leaderboard_id",
-		"sortBy":      bson.M{"scores.score": -1},
-		"output": bson.M{
-			"rank": bson.M{"$denseRank": bson.M{}},
-		},
-	}}}
-	pipeline = append(pipeline, rankWindow)
-
-	userIDFilter := bson.D{{Key: "$match", Value: bson.M{"user_id": userID}}}
-	pipeline = append(pipeline, userIDFilter)
-
-	sortByRank := bson.D{{Key: "$sort", Value: bson.M{"rank": 1}}}
-	pipeline = append(pipeline, sortByRank)
-
-	if offset != nil {
-		pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
-	}
-
-	if limit != nil {
-		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
-	}
-
 	var scores []model.Score
 	err := a.db.leaderboardEntries.Aggregate(a.context, pipeline, &scores, nil)
 
 	return scores, err
+}
+
+// InitLeaderboardRanks calculates and updates score and rank fields for all leaderboard entries in the given org/app
+func (a *Adapter) InitLeaderboardRanks(orgID string, appID string) error {
+
+	pipeline := mongo.Pipeline{
+		// Match leaderboard entries for the specific org/app
+		bson.D{{Key: "$match", Value: bson.M{
+			"org_id": orgID,
+			"app_id": appID,
+		}}},
+		// Lookup scores for each user
+		bson.D{{Key: "$lookup", Value: bson.M{
+			"from": "scores",
+			"let":  bson.M{"uid": "$user_id"},
+			"pipeline": mongo.Pipeline{
+				// match the same user/org/app
+				{{Key: "$match", Value: bson.M{
+					"$expr": bson.M{"$and": bson.A{
+						bson.M{"$eq": bson.A{"$user_id", "$$uid"}},
+						bson.M{"$eq": bson.A{"$org_id", orgID}},
+						bson.M{"$eq": bson.A{"$app_id", appID}},
+					}},
+				}}},
+			},
+			"as": "user_scores",
+		}}},
+		// Unwind the scores array (should be single score per user)
+		bson.D{{Key: "$unwind", Value: bson.M{
+			"path":                       "$user_scores",
+			"preserveNullAndEmptyArrays": true,
+		}}},
+		// Add score field from the looked up score document
+		bson.D{{Key: "$addFields", Value: bson.M{
+			"score": bson.M{
+				"$ifNull": bson.A{"$user_scores.score", 0},
+			},
+		}}},
+		// Calculate rank within each leaderboard using window functions
+		bson.D{{Key: "$setWindowFields", Value: bson.M{
+			"partitionBy": "$leaderboard_id",
+			"sortBy":      bson.M{"score": -1},
+			"output": bson.M{
+				"rank": bson.M{"$denseRank": bson.M{}},
+			},
+		}}},
+		// Remove the temporary user_scores field and merge back to leaderboard_entries
+		bson.D{{Key: "$unset", Value: "user_scores"}},
+		bson.D{{Key: "$merge", Value: bson.M{
+			"into":           "leaderboard_entries",
+			"whenMatched":    "merge",
+			"whenNotMatched": "discard",
+		}}},
+	}
+
+	// Execute the aggregation pipeline that updates the documents directly
+	var results []bson.M // We don't need the results since $merge updates in place
+	err := a.db.leaderboardEntries.Aggregate(a.context, pipeline, &results, nil)
+	if err != nil {
+		return errors.WrapErrorAction(logutils.ActionUpdate, model.TypeLeaderboardEntry, &logutils.FieldArgs{"app_id": appID, "org_id": orgID}, err)
+	}
+
+	return nil
 }

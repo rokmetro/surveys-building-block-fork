@@ -130,6 +130,8 @@ func (a Adapter) Start() {
 	adminRouter.HandleFunc("/alert-contacts/{id}", a.wrapFunc(a.adminAPIsHandler.updateAlertContact, a.auth.admin.Permissions)).Methods("PUT")
 	adminRouter.HandleFunc("/alert-contacts/{id}", a.wrapFunc(a.adminAPIsHandler.deleteAlertContact, a.auth.admin.Permissions)).Methods("DELETE")
 
+	adminRouter.HandleFunc("/leaderboard/init-ranks", a.wrapFunc(a.adminAPIsHandler.initRanks, a.auth.admin.Permissions)).Methods("POST")
+
 	// Analytics APIs
 	analyticsRouter := mainRouter.PathPrefix("/analytics").Subrouter()
 	analyticsRouter.HandleFunc("/survey-responses", a.wrapFunc(a.analyticsAPIsHandler.getAnonymousSurveyResponses, a.auth.analytics)).Methods("GET")

@@ -23,6 +23,8 @@ import (
 const (
 	// TypeScore is a message type for score
 	TypeScore logutils.MessageDataType = "score"
+	// TypeRank is a message type for rank
+	TypeRank logutils.MessageDataType = "rank"
 	// SurveyTypeFashionQuiz describes type of survey for fashion quizzes
 	SurveyTypeFashionQuiz string = "fashion_quiz"
 	// ScoreStreakMultiplier multiplies score if streak is true

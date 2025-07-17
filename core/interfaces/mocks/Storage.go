@@ -5,6 +5,7 @@ package mocks
 import (
 	interfaces "application/core/interfaces"
 
+	logs "github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
 	mock "github.com/stretchr/testify/mock"
 
 	model "application/core/model"
@@ -953,9 +954,9 @@ func (_m *Storage) GetSurveysWithResponses(orgID string, appID string, userID *s
 	return r0, r1
 }
 
-// GetTopAndLocalScores provides a mock function with given fields: orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit
-func (_m *Storage) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int) ([]model.Score, error) {
-	ret := _m.Called(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit)
+// GetTopAndLocalScores provides a mock function with given fields: orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit, l
+func (_m *Storage) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int, l *logs.Log) ([]model.Score, error) {
+	ret := _m.Called(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit, l)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTopAndLocalScores")
@@ -963,19 +964,19 @@ func (_m *Storage) GetTopAndLocalScores(orgID string, appID string, userID strin
 
 	var r0 []model.Score
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, *int, *int, *int, *int, *int) ([]model.Score, error)); ok {
-		return rf(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit)
+	if rf, ok := ret.Get(0).(func(string, string, string, *int, *int, *int, *int, *int, *logs.Log) ([]model.Score, error)); ok {
+		return rf(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit, l)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, *int, *int, *int, *int, *int) []model.Score); ok {
-		r0 = rf(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit)
+	if rf, ok := ret.Get(0).(func(string, string, string, *int, *int, *int, *int, *int, *logs.Log) []model.Score); ok {
+		r0 = rf(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit, l)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Score)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, *int, *int, *int, *int, *int) error); ok {
-		r1 = rf(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit)
+	if rf, ok := ret.Get(1).(func(string, string, string, *int, *int, *int, *int, *int, *logs.Log) error); ok {
+		r1 = rf(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit, l)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -154,43 +154,142 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 	if survey.Type == model.SurveyTypeFashionQuiz {
 		var score *model.Score
 		var oldScore model.Score
+		eclipsedEntries := make([]model.LeaderboardEntry, 0)
 
-		score, err = a.app.storage.GetScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
+		transaction := func(storage interfaces.Storage) error {
 
-		// Create a new score if not present
-		// Otherwise update score
-		if score == nil || err != nil {
-			score, err = a.CreateScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, "")
-			if err != nil {
-				return nil, errors.WrapErrorAction(logutils.ActionCreate, model.TypeScore, nil, err)
+			score, err = storage.GetScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID)
+
+			// Create a new score if not present
+			// Otherwise update score
+			if score == nil || err != nil {
+				score, err = a.CreateScore(storage, surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, "")
+				if err != nil {
+					return errors.WrapErrorAction(logutils.ActionCreate, model.TypeScore, nil, err)
+				}
+
+				oldScore = *score
+			} else {
+				// make copy of score before modifying for loaderboard notifications
+				oldScore = *score
+
+				a.UpdateScore(score, surveyResponse, l)
+				err = storage.UpdateScore(*score)
+				if err != nil {
+					return errors.WrapErrorAction(logutils.ActionUpdate, model.TypeScore, nil, err)
+				}
 			}
 
-			oldScore = *score
-		} else {
-			// make copy of score before modifying for loaderboard notifications
-			oldScore = *score
+			//TODO: update leaderboard entry scores
 
-			a.UpdateScore(score, surveyResponse, l)
-			err = a.app.storage.UpdateScore(*score)
+			// update global leaderboard ranks
+			lowestHigherScore, err := storage.FindLowestHigherScore(surveyResponse.OrgID, surveyResponse.AppID, score.Score)
 			if err != nil {
-				return nil, errors.WrapErrorAction(logutils.ActionUpdate, model.TypeScore, nil, err)
+				return errors.WrapErrorAction(logutils.ActionFind, "lowest higher score", nil, err)
 			}
+
+			userRank := uint32(1)
+			if lowestHigherScore != nil {
+				userRank = lowestHigherScore.Rank
+				if score.Score < lowestHigherScore.Score {
+					userRank++
+
+					// since we use a dense rank, user scores below the new score must only be updated if a new rank is created
+					err = storage.UpdateScoreRanks(surveyResponse.OrgID, surveyResponse.AppID, score.Score)
+					if err != nil {
+						return errors.WrapErrorAction(logutils.ActionUpdate, "score ranks", nil, err)
+					}
+				}
+			} else {
+				// update all leaderboard ranks if user is now rank 1 alone
+				err = storage.UpdateScoreRanks(surveyResponse.OrgID, surveyResponse.AppID, score.Score)
+				if err != nil {
+					return errors.WrapErrorAction(logutils.ActionUpdate, "score ranks", nil, err)
+				}
+			}
+
+			err = storage.UpdateUserScoreRank(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, userRank)
+			if err != nil {
+				return errors.WrapErrorAction(logutils.ActionUpdate, "user score rank", nil, err)
+			}
+
+			// update custom leaderboard ranks
+			entries, err := storage.GetLeaderboardEntries(surveyResponse.OrgID, surveyResponse.AppID, nil, &surveyResponse.UserID)
+			if err != nil {
+				return errors.WrapErrorAction(logutils.ActionFind, model.TypeLeaderboardEntry, nil, err)
+			}
+
+			for _, entry := range entries {
+				lowestHigherEntryScore, err := storage.FindLowestHigherLeaderboardEntryScore(entry.LeaderboardID, surveyResponse.OrgID, surveyResponse.AppID, score.Score)
+				if err != nil {
+					return errors.WrapErrorAction(logutils.ActionFind, "lowest higher leaderboard score", nil, err)
+				}
+
+				userLeaderboardRank := uint32(1)
+				if lowestHigherEntryScore != nil {
+					userLeaderboardRank = lowestHigherEntryScore.Rank
+					if score.Score < lowestHigherEntryScore.Score {
+						userLeaderboardRank++
+
+						// only update ranks if user changed rank
+						if userLeaderboardRank >= entry.Rank {
+							continue
+						}
+
+						// if highest lower score (from old score) == nil OR < old score, then ONLY INCREMENT ranks for every score > old score and score < new score, else do existing
+						// since we use a dense rank, user scores below the new score must only be updated if a new rank is created
+						updatedEntries, err := storage.UpdateLeaderboardEntryRanks(entry.LeaderboardID, surveyResponse.OrgID, surveyResponse.AppID, score.Score)
+						if err != nil {
+							return errors.WrapErrorAction(logutils.ActionUpdate, "score leaderboard entry ranks", nil, err)
+						}
+						// leaderboard entries that have had their rank decremented (not only users whose scores have been eclipsed)
+						eclipsedEntries = append(eclipsedEntries, updatedEntries...)
+					}
+					// else if highest lower score (from old score) != nil AND < old score, then DECREMENT ranks for every score < old score
+				} else {
+					// only update ranks if user changed rank
+					if userLeaderboardRank >= entry.Rank {
+						continue
+					}
+
+					// if highest lower score (from old score) == nil OR < old score, then ONLY INCREMENT ranks for every score > old score and score < new score, else do existing
+					// update all leaderboard ranks if user is now rank 1 alone
+					updatedEntries, err := storage.UpdateLeaderboardEntryRanks(entry.LeaderboardID, surveyResponse.OrgID, surveyResponse.AppID, score.Score)
+					if err != nil {
+						return errors.WrapErrorAction(logutils.ActionUpdate, "score leaderboard entry ranks", nil, err)
+					}
+
+					eclipsedEntries = append(eclipsedEntries, updatedEntries...)
+				}
+
+				err = storage.UpdateUserLeaderboardEntryRank(entry.LeaderboardID, surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, userLeaderboardRank)
+				if err != nil {
+					return errors.WrapErrorAction(logutils.ActionUpdate, "user score rank", nil, err)
+				}
+			}
+
+			return nil
 		}
 
-		// send notifications
-		go a.sendFashionQuizNotifications(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, username, score, oldScore)
+		err := a.app.storage.PerformTransaction(transaction)
+		if err != nil {
+			return nil, err
+		}
+
+		go a.sendFashionQuizNotifications(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, username, score, oldScore, eclipsedEntries)
 	}
 
 	return surveyResponsePtr, nil
 }
 
-func (a appClient) sendFashionQuizNotifications(orgID string, appID string, userID string, username string, score *model.Score, oldScore model.Score) {
+func (a appClient) sendFashionQuizNotifications(orgID string, appID string, userID string, username string, score *model.Score, oldScore model.Score, eclipsedEntries []model.LeaderboardEntry) {
 	// get all leaderboards for this user
 	leaderboards, err := a.app.storage.GetLeaderboards(orgID, appID, userID)
 	if err != nil {
 		a.app.logger.WarnWithFields("failed to find leaderboards", logutils.Fields{"user_id": userID, "org_id": orgID, "app_id": appID})
 	}
 
+	topic := notifications.TopicQuizAll
 	for i := range leaderboards {
 		lb := leaderboards[i]
 		notificationData := map[string]string{
@@ -212,34 +311,14 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 			}
 		}
 
-		scores, err := a.app.storage.GetLeaderboardScores(lb.ID, orgID, appID, nil, nil)
-		if err != nil {
-			a.app.logger.WarnWithFields("failed to find scores for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": orgID, "app_id": appID})
-		}
+		if notifyFirstDailyQuiz {
+			entries, err := a.app.storage.GetLeaderboardEntries(orgID, appID, &lb.ID, nil)
+			if err != nil {
+				a.app.logger.WarnWithFields("failed to find entries for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": orgID, "app_id": appID})
+			}
 
-		topic := notifications.TopicQuizAll
-		for _, userScore := range scores {
-			if userScore.UserID != userID {
-				// current user's score has eclipsed this user's score in the leaderboard by completing the fashion quiz
-				if userScore.Score >= oldScore.Score && userScore.Score < score.Score {
-					// notify each user in each leaderboard that has userScore.Score >= oldScore.Score and < score.Score (any other conditions?)
-
-					body := fmt.Sprintf("@%s is Now the Runway Genius of your group %s. Can you reclaim the top spot?", username, lb.Name)
-
-					message := model.NotificationMessage{
-						OrgID: orgID,
-						AppID: appID,
-
-						Subject:    notifications.SubjectVogue,
-						Body:       body,
-						Data:       notificationData,
-						Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
-						Topic:      &topic,
-					}
-					a.app.notifications.SendNotification(message)
-				}
-
-				if notifyFirstDailyQuiz {
+			for _, userScore := range entries {
+				if userScore.UserID != userID {
 					points := 0
 					if score != nil {
 						points = int(score.Score - oldScore.Score)
@@ -259,6 +338,40 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 					a.app.notifications.SendNotification(message)
 				}
 			}
+		}
+	}
+
+	eclipsedEntriesMap := make(map[string][]model.LeaderboardEntry)
+	for _, lb := range leaderboards {
+		for _, entry := range eclipsedEntries {
+			if lb.ID == entry.LeaderboardID {
+				if eclipsedEntriesMap[lb.Name] == nil {
+					eclipsedEntriesMap[lb.Name] = make([]model.LeaderboardEntry, 0)
+				}
+				eclipsedEntriesMap[lb.Name] = append(eclipsedEntriesMap[lb.Name], entry)
+			}
+		}
+	}
+
+	for name, entries := range eclipsedEntriesMap {
+		// notify each user whose rank has decreased for each leaderboard
+		body := fmt.Sprintf("@%s is Now the Runway Genius of your group %s. Can you reclaim the top spot?", username, name)
+		for _, entry := range entries {
+			notificationData := map[string]string{
+				"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, entry.LeaderboardID),
+			}
+
+			message := model.NotificationMessage{
+				OrgID: orgID,
+				AppID: appID,
+
+				Subject:    notifications.SubjectVogue,
+				Body:       body,
+				Data:       notificationData,
+				Recipients: []model.NotificationMessageRecipient{{UserID: entry.UserID}},
+				Topic:      &topic,
+			}
+			a.app.notifications.SendNotification(message)
 		}
 	}
 }
@@ -307,7 +420,7 @@ func (a appClient) CreateSurveyAlert(surveyAlert model.SurveyAlert) error {
 func (a appClient) GetScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
 	score, err := a.app.storage.GetScore(orgID, appID, userID)
 	if score == nil {
-		score, err = a.CreateScore(orgID, appID, userID, externalProfileID)
+		score, err = a.CreateScore(nil, orgID, appID, userID, externalProfileID)
 	}
 	if err != nil || score == nil {
 		return nil, err
@@ -431,8 +544,12 @@ func (a appClient) insertUserScoreIntoLocalScores(scores []model.Score, userScor
 }
 
 // CreateScore Creates a score object by iterating over all previous survey responses
-func (a appClient) CreateScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
-	surveyResponses, err := a.app.storage.GetSurveyResponses(&orgID, &appID, &userID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
+func (a appClient) CreateScore(storage interfaces.Storage, orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
+	if storage == nil {
+		storage = a.app.storage
+	}
+
+	surveyResponses, err := storage.GetSurveyResponses(&orgID, &appID, &userID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -451,10 +568,10 @@ func (a appClient) CreateScore(orgID string, appID string, userID string, extern
 		SurveyType:         model.SurveyTypeFashionQuiz,
 	}
 
-	for i := 0; i < len(surveyResponses); i++ {
-		a.UpdateScore(&score, surveyResponses[i], nil)
+	for _, resp := range surveyResponses {
+		a.UpdateScore(&score, resp, nil)
 	}
-	return &score, a.app.storage.CreateScore(score)
+	return &score, storage.CreateScore(score)
 }
 
 // UpdateScore updates the score model passed in
@@ -679,7 +796,7 @@ func (a appClient) sendJoinLeaderboardNotifications(leaderboardID string, orgID 
 		return
 	}
 
-	leaderboardEntries, err := a.app.storage.GetLeaderboardEntries(leaderboardID, orgID, appID, nil)
+	leaderboardEntries, err := a.app.storage.GetLeaderboardEntries(orgID, appID, &leaderboardID, nil)
 	if err != nil {
 		a.app.logger.WarnWithFields("error getting leaderboard entries", logutils.Fields{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID})
 		return
@@ -729,7 +846,7 @@ func (a appClient) LeaveLeaderboard(leaderboardID string, orgID string, appID st
 }
 
 func (a appClient) requireLeaderboardAdmin(leaderboardID string, orgID string, appID string, userID string) error {
-	leaderboardEntries, err := a.app.storage.GetLeaderboardEntries(leaderboardID, orgID, appID, &userID)
+	leaderboardEntries, err := a.app.storage.GetLeaderboardEntries(orgID, appID, &leaderboardID, &userID)
 	if err != nil {
 		return errors.WrapErrorAction(logutils.ActionGet, model.TypeLeaderboardEntry, &logutils.FieldArgs{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID, "user_id": userID}, err)
 	}

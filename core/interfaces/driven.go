@@ -64,6 +64,9 @@ type Storage interface {
 	UpdateScore(score model.Score) error
 	GetLeaderboardScores(leaderboardID string, orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
 	GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error)
+	UpdateScoreRanks(orgID string, appID string, score float64) error
+	FindLowestHigherScore(orgID string, appID string, score float64) (*model.Score, error)
+	UpdateUserScoreRank(orgID string, appID string, userID string, rank uint32) error
 
 	GetLeaderboard(leaderboardID string, orgID string, appID string) (*model.Leaderboard, error)
 	GetLeaderboardWithUserContext(leaderboardID string, orgID string, appID string, userID string) (*model.Leaderboard, error)
@@ -72,10 +75,13 @@ type Storage interface {
 	UpdateLeaderboard(leaderboard model.Leaderboard) error
 	DeleteLeaderboard(leaderboardID string, orgID string, appID string, userID string) error
 
-	GetLeaderboardEntries(leaderboardID string, orgID string, appID string, userID *string) ([]model.LeaderboardEntry, error)
+	GetLeaderboardEntries(orgID string, appID string, leaderboardID *string, userID *string) ([]model.LeaderboardEntry, error)
 	CreateLeaderboardEntry(leaderboardEntry model.LeaderboardEntry) error
 	DeleteLeaderboardEntries(leaderboardID string, orgID string, appID string, leavingUserIDs []string) error
 	DeleteAllLeaderboardEntries(leaderboardID string, orgID string, appID string) error
+	UpdateLeaderboardEntryRanks(leaderboardID string, orgID string, appID string, score float64) ([]model.LeaderboardEntry, error)
+	FindLowestHigherLeaderboardEntryScore(leaderboardID string, orgID string, appID string, score float64) (*model.LeaderboardEntry, error)
+	UpdateUserLeaderboardEntryRank(leaderboardID string, orgID string, appID string, userID string, rank uint32) error
 }
 
 // StorageListener represents storage listener

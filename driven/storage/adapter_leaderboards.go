@@ -184,13 +184,15 @@ func (a *Adapter) DeleteLeaderboard(leaderboardID, orgID, appID, userID string) 
 }
 
 // GetLeaderboardEntries retrieves a list of leaderboard entry
-func (a *Adapter) GetLeaderboardEntries(leaderboardID string, orgID string, appID string, userID *string) ([]model.LeaderboardEntry, error) {
+func (a *Adapter) GetLeaderboardEntries(orgID string, appID string, leaderboardID *string, userID *string) ([]model.LeaderboardEntry, error) {
 	filter := bson.M{
-		"leaderboard_id": leaderboardID,
-		"org_id":         orgID,
-		"app_id":         appID,
+		"org_id": orgID,
+		"app_id": appID,
 	}
 
+	if leaderboardID != nil && *leaderboardID != "" {
+		filter["leaderboard_id"] = *leaderboardID
+	}
 	if userID != nil && *userID != "" {
 		filter["user_id"] = *userID
 	}
@@ -247,6 +249,21 @@ func (a *Adapter) DeleteAllLeaderboardEntries(leaderboardID string, orgID string
 	}
 
 	return err
+}
+
+// UpdateLeaderboardEntryRanks
+func (a *Adapter) UpdateLeaderboardEntryRanks(leaderboardID string, orgID string, appID string, score float64) ([]model.LeaderboardEntry, error) {
+	// increment rank by 1 for every entry with score < score
+}
+
+// FindLowestHigherLeaderboardEntryScore
+func (a *Adapter) FindLowestHigherLeaderboardEntryScore(leaderboardID string, orgID string, appID string, score float64) (*model.LeaderboardEntry, error) {
+
+}
+
+// UpdateUserLeaderboardEntryRank
+func (a *Adapter) UpdateUserLeaderboardEntryRank(leaderboardID string, orgID string, appID string, userID string, rank uint32) error {
+
 }
 
 // GetLeaderboardScores retrieves paginated scores for a specific leaderboard

@@ -294,3 +294,18 @@ func (a *Adapter) UpdateScore(score model.Score) error {
 
 	return nil
 }
+
+// UpdateScoreRanks updates the score ranks for every score between oldScore and newScore
+func (a *Adapter) UpdateScoreRanks(orgID string, appID string, score float64) error {
+
+}
+
+// FindLowestHigherScore
+func (a *Adapter) FindLowestHigherScore(orgID string, appID string, score float64) (*model.Score, error) {
+	// sort ascending on $gte operator, return first score in list
+}
+
+// UpdateUserScoreRank updates the user's score with the given rank
+func (a *Adapter) UpdateUserScoreRank(orgID string, appID string, userID string, rank uint32) error {
+
+}

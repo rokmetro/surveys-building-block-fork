@@ -27,24 +27,61 @@ import (
 // GetScore finds score object for user
 func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Score, error) {
 	pipeline := mongo.Pipeline{
-		bson.D{{Key: "$match", Value: bson.M{"org_id": orgID, "app_id": appID}}},
-		// add rank
-		bson.D{{Key: "$setWindowFields", Value: bson.M{
-			"sortBy": bson.M{"score": -1},
-			"output": bson.M{
-				"rank": bson.M{"$denseRank": bson.M{}},
+		// 1. Match the specific user
+		bson.D{{Key: "$match", Value: bson.M{
+			"org_id":  orgID,
+			"app_id":  appID,
+			"user_id": userID,
+		}}},
+
+		// 2. Lookup to count distinct scores higher than this user's score
+		bson.D{{Key: "$lookup", Value: bson.M{
+			"from": "scores",
+			"let":  bson.M{"userScore": "$score"},
+			"pipeline": mongo.Pipeline{
+				bson.D{{Key: "$match", Value: bson.M{
+					"$expr": bson.M{"$and": bson.A{
+						bson.M{"$eq": bson.A{"$org_id", orgID}},
+						bson.M{"$eq": bson.A{"$app_id", appID}},
+						bson.M{"$gt": bson.A{"$score", "$$userScore"}},
+					}},
+				}}},
+				bson.D{{Key: "$group", Value: bson.M{
+					"_id": "$score", // Group by distinct scores
+				}}},
+				bson.D{{Key: "$count", Value: "distinct_higher_scores"}},
+			},
+			"as": "rank_data",
+		}}},
+
+		// 3. Add the rank field
+		bson.D{{Key: "$addFields", Value: bson.M{
+			"rank": bson.M{
+				"$add": bson.A{
+					1, // Base rank is 1
+					bson.M{"$ifNull": bson.A{
+						bson.M{"$arrayElemAt": bson.A{"$rank_data.distinct_higher_scores", 0}},
+						0,
+					}},
+				},
 			},
 		}}},
-		bson.D{{Key: "$match", Value: bson.M{"user_id": userID}}},
+
+		// 4. Remove the temporary rank_data field
+		bson.D{{Key: "$unset", Value: "rank_data"}},
 	}
 
 	var scores []model.Score
 	err := a.db.scores.Aggregate(a.context, pipeline, &scores, nil)
-	if len(scores) > 0 {
-		score := scores[0]
-		return &score, err
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.ErrorData(logutils.StatusMissing, model.TypeScore, &logutils.FieldArgs{"user_id": userID})
+
+	if len(scores) == 0 {
+		return nil, errors.ErrorData(logutils.StatusMissing, model.TypeScore, &logutils.FieldArgs{"user_id": userID})
+	}
+
+	return &scores[0], nil
 }
 
 // GetScores returns a list of scores in descending order

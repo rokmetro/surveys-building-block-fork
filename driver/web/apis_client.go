@@ -709,7 +709,7 @@ func (h ClientAPIsHandler) getTopAndLocalScores(l *logs.Log, r *http.Request, cl
 		belowPivotLimit = intParsed
 	}
 
-	scores, err := h.app.Client.GetTopAndLocalScores(claims.OrgID, claims.AppID, claims.Subject, &limit, &offset, &localLimit, &abovePivotLimit, &belowPivotLimit)
+	scores, err := h.app.Client.GetTopAndLocalScores(claims.OrgID, claims.AppID, claims.Subject, &limit, &offset, &localLimit, &abovePivotLimit, &belowPivotLimit, l)
 
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)

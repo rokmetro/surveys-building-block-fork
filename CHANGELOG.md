@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add fashion quiz notification topics [#39](https://github.com/rokmetro/surveys-building-block-fork/issues/39)
 
 ### Fixed
+- Add ranking to the custom and global leaderboard (optimized rankings) [#24](https://github.com/rokmetro/surveys-building-block-fork/issues/24)
 - Update Quizzes Pipeline to Correctly Filter and Paginate [#17](https://github.com/rokmetro/surveys-building-block-fork/issues/17)
 - GetScores API returns scores with 0s [#15](https://github.com/rokmetro/surveys-building-block-fork/issues/15)
 - GetSurveys is returning incorrectly sorted data [#13](https://github.com/rokmetro/surveys-building-block-fork/issues/13)

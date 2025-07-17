@@ -5,6 +5,8 @@ package mocks
 import (
 	interfaces "application/core/interfaces"
 
+	logs "github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
+
 	mock "github.com/stretchr/testify/mock"
 
 	model "application/core/model"
@@ -953,9 +955,9 @@ func (_m *Storage) GetSurveysWithResponses(orgID string, appID string, userID *s
 	return r0, r1
 }
 
-// GetTopAndLocalScores provides a mock function with given fields: orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit
-func (_m *Storage) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int) ([]model.Score, error) {
-	ret := _m.Called(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit)
+// GetTopAndLocalScores provides a mock function with given fields: orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit, l
+func (_m *Storage) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int, l *logs.Log) ([]model.Score, error) {
+	ret := _m.Called(orgID, appID, userID, limit, offset, localLimit, abovePivotLimit, belowPivotLimit, l)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTopAndLocalScores")

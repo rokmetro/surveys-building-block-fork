@@ -594,6 +594,15 @@ func (h AdminAPIsHandler) deleteAlertContact(l *logs.Log, r *http.Request, claim
 	return l.HTTPResponseSuccess()
 }
 
+func (h AdminAPIsHandler) initLeaderboardScores(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	err := h.app.Admin.InitLeaderboardScores(claims.OrgID, claims.AppID)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionUpdate, model.TypeRank, nil, err, http.StatusInternalServerError, true)
+	}
+
+	return l.HTTPResponseSuccess()
+}
+
 // NewAdminAPIsHandler creates new rest Handler instance
 func NewAdminAPIsHandler(app *core.Application) AdminAPIsHandler {
 	return AdminAPIsHandler{app: app}

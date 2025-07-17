@@ -199,7 +199,6 @@ func (a *Adapter) GetTopAndLocalScores(orgID string, appID string, userID string
 				missingBelowScores = *belowPivotLimit - (len(scores) - i - 1)
 			}
 		}
-
 	}
 
 	// Load user's score if not in top scores
@@ -217,7 +216,6 @@ func (a *Adapter) GetTopAndLocalScores(orgID string, appID string, userID string
 		if hasAboveLimit && userScore != nil && userScore.Score < scores[len(scores)-1].Score {
 			missingAboveScores = *abovePivotLimit
 		}
-
 	}
 
 	// Load scores around user's score
@@ -340,6 +338,10 @@ func (a *Adapter) GetTopAndLocalScores(orgID string, appID string, userID string
 
 // CreateScore creates a new score object
 func (a *Adapter) CreateScore(score model.Score) error {
+	// Acquire read lock to allow concurrent score operations but block during rank initialization
+	a.ranksLock.RLock()
+	defer a.ranksLock.RUnlock()
+
 	_, err := a.db.scores.InsertOne(a.context, score)
 	if err != nil {
 		return errors.WrapErrorAction(logutils.ActionCreate, model.TypeScore, nil, err)
@@ -349,6 +351,10 @@ func (a *Adapter) CreateScore(score model.Score) error {
 
 // UpdateScore updates existing score object
 func (a *Adapter) UpdateScore(score model.Score) error {
+	// Acquire read lock to allow concurrent score operations but block during rank initialization
+	a.ranksLock.RLock()
+	defer a.ranksLock.RUnlock()
+
 	if len(score.ID) == 0 {
 		return nil
 	}

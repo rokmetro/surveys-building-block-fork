@@ -50,6 +50,7 @@ type LeaderboardEntry struct {
 	AppID         string     `json:"app_id" bson:"app_id"`
 	UserID        string     `json:"user_id" bson:"user_id"`
 	IsAdmin       bool       `json:"is_admin" bson:"is_admin"`
+	Score         float64    `json:"score" bson:"score"` // Duplicated from score record
 	DateCreated   time.Time  `json:"date_created" bson:"date_created"`
 	DateUpdated   *time.Time `json:"date_updated" bson:"date_updated"`
 }

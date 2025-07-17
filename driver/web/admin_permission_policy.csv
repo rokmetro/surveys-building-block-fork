@@ -28,3 +28,5 @@ p, delete_configs_surveys, /surveys/api/admin/configs/*, (GET)|(DELETE), Delete 
 p, delete_configs_surveys, /surveys/api/admin/configs, (GET),
 
 p, get_survey_responses, /surveys/api/admin/surveys/*/response, (GET), 
+
+p, surveys_init_ranks, /surveys/api/admin/leaderboard/init-ranks, (POST), Initialize ranks for surveys

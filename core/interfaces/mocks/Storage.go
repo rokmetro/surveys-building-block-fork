@@ -1097,6 +1097,24 @@ func (_m *Storage) UpdateScore(score model.Score) error {
 	return r0
 }
 
+// InitRanks provides a mock function with given fields: orgID, appID
+func (_m *Storage) InitRanks(orgID string, appID string) error {
+	ret := _m.Called(orgID, appID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for InitRanks")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(orgID, appID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateSurvey provides a mock function with given fields: survey, admin
 func (_m *Storage) UpdateSurvey(survey model.Survey, admin bool) error {
 	ret := _m.Called(survey, admin)

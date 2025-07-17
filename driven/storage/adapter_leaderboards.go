@@ -207,6 +207,10 @@ func (a *Adapter) GetLeaderboardEntries(leaderboardID string, orgID string, appI
 
 // CreateLeaderboardEntry creates a new leaderboardEntry object
 func (a *Adapter) CreateLeaderboardEntry(leaderboardEntry model.LeaderboardEntry) error {
+	// Acquire read lock to allow concurrent operations but block during rank initialization
+	a.ranksLock.RLock()
+	defer a.ranksLock.RUnlock()
+
 	_, err := a.db.leaderboardEntries.InsertOne(a.context, leaderboardEntry)
 	if err != nil {
 		return errors.WrapErrorAction(logutils.ActionCreate, model.TypeLeaderboardEntry, nil, err)

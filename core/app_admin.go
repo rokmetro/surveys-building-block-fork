@@ -158,6 +158,11 @@ func (a appAdmin) DeleteAlertContact(id string, orgID string, appID string) erro
 	return a.app.storage.DeleteAlertContact(id, orgID, appID)
 }
 
+// InitRanks initializes rank values for all scores in the specified org/app
+func (a appAdmin) InitRanks(orgID string, appID string) error {
+	return a.app.storage.InitRanks(orgID, appID)
+}
+
 func (a appAdmin) GetConfig(id string, claims *tokenauth.Claims) (*model.Config, error) {
 	config, err := a.app.storage.FindConfigByID(id)
 	if err != nil {

@@ -92,6 +92,9 @@ type Admin interface {
 	CreateAlertContact(alertContact model.AlertContact) (*model.AlertContact, error)
 	UpdateAlertContact(alertContact model.AlertContact) error
 	DeleteAlertContact(id string, orgID string, appID string) error
+
+	// Scores
+	InitRanks(orgID string, appID string) error
 }
 
 // Analytics exposes Analytics APIs for the driver adapters

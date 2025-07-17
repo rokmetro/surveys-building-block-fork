@@ -23,6 +23,7 @@ import (
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -250,6 +251,10 @@ func (a *Adapter) GetTopAndLocalScores(orgID string, appID string, userID string
 
 // CreateScore creates a new score object
 func (a *Adapter) CreateScore(score model.Score) error {
+	// Acquire read lock to allow concurrent score operations but block during rank initialization
+	a.ranksLock.RLock()
+	defer a.ranksLock.RUnlock()
+
 	_, err := a.db.scores.InsertOne(a.context, score)
 	if err != nil {
 		return errors.WrapErrorAction(logutils.ActionCreate, model.TypeScore, nil, err)
@@ -259,6 +264,10 @@ func (a *Adapter) CreateScore(score model.Score) error {
 
 // UpdateScore updates existing score object
 func (a *Adapter) UpdateScore(score model.Score) error {
+	// Acquire read lock to allow concurrent score operations but block during rank initialization
+	a.ranksLock.RLock()
+	defer a.ranksLock.RUnlock()
+
 	if len(score.ID) == 0 {
 		return nil
 	}
@@ -281,6 +290,41 @@ func (a *Adapter) UpdateScore(score model.Score) error {
 	}
 	if res.ModifiedCount != 1 {
 		return errors.WrapErrorData(logutils.StatusMissing, model.TypeScore, filterArgs(filter), err)
+	}
+
+	return nil
+}
+
+// InitRanks calculates and updates rank field for all scores in the given org/app
+func (a *Adapter) InitRanks(orgID string, appID string) error {
+	// Acquire write lock to prevent concurrent score operations during rank initialization
+	a.ranksLock.Lock()
+	defer a.ranksLock.Unlock()
+
+	// Use aggregation pipeline with $merge to calculate and update ranks in one operation
+	pipeline := mongo.Pipeline{
+		// Match documents for the specific org/app
+		bson.D{{Key: "$match", Value: bson.M{"org_id": orgID, "app_id": appID}}},
+		// Calculate rank using window functions
+		bson.D{{Key: "$setWindowFields", Value: bson.M{
+			"sortBy": bson.M{"score": -1},
+			"output": bson.M{
+				"rank": bson.M{"$denseRank": bson.M{}},
+			},
+		}}},
+		// Merge the results back into the same collection, updating the rank field
+		bson.D{{Key: "$merge", Value: bson.M{
+			"into":           "scores",
+			"whenMatched":    "merge",
+			"whenNotMatched": "discard",
+		}}},
+	}
+
+	// Execute the aggregation pipeline that updates the documents directly
+	var results []model.Score
+	err := a.db.scores.Aggregate(a.context, pipeline, &results, nil)
+	if err != nil {
+		return errors.WrapErrorAction(logutils.ActionUpdate, model.TypeRank, &logutils.FieldArgs{"app_id": appID, "org_id": orgID}, err)
 	}
 
 	return nil

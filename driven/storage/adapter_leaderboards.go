@@ -343,6 +343,17 @@ func (a *Adapter) GetLeaderboardUserRanks(orgID string, appID string, userID str
 	}}}
 	pipeline = append(pipeline, leaderboardEntryFilter)
 
+	sortByDateCreated := bson.D{{Key: "$sort", Value: bson.M{"date_created": -1}}}
+	pipeline = append(pipeline, sortByDateCreated)
+
+	if offset != nil {
+		pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
+	}
+
+	if limit != nil {
+		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
+	}
+
 	lookup := bson.D{{Key: "$lookup", Value: bson.M{
 		"from": "leaderboard_entries",
 		"let":  bson.M{"userScore": "$score", "lbID": "$leaderboard_id"},
@@ -396,17 +407,6 @@ func (a *Adapter) GetLeaderboardUserRanks(orgID string, appID string, userID str
 		Key: "$unwind", Value: "$leaderboard",
 	}}
 	pipeline = append(pipeline, unwindLeaderboard)
-
-	sortByRank := bson.D{{Key: "$sort", Value: bson.M{"rank": 1}}}
-	pipeline = append(pipeline, sortByRank)
-
-	if offset != nil {
-		pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
-	}
-
-	if limit != nil {
-		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
-	}
 
 	var entries []model.LeaderboardEntry
 	err := a.db.leaderboardEntries.Aggregate(a.context, pipeline, &entries, nil)

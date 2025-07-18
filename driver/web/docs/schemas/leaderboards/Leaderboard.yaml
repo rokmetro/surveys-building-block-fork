@@ -11,6 +11,9 @@ properties:
     type: boolean
     optional: true
     readOnly: true
+  rank:
+    type: integer
+    readOnly: true
   date_created:
     type: string
     format: date-time

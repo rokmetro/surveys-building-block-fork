@@ -212,13 +212,13 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 			}
 		}
 
-		scores, err := a.app.storage.GetLeaderboardScores(lb.ID, orgID, appID, nil, nil)
+		entries, err := a.app.storage.GetLeaderboardEntries(lb.ID, orgID, appID, nil)
 		if err != nil {
 			a.app.logger.WarnWithFields("failed to find scores for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": orgID, "app_id": appID})
 		}
 
 		topic := notifications.TopicQuizAll
-		for _, userScore := range scores {
+		for _, userScore := range entries {
 			if userScore.UserID != userID {
 				// current user's score has eclipsed this user's score in the leaderboard by completing the fashion quiz
 				if userScore.Score >= oldScore.Score && userScore.Score < score.Score {
@@ -457,9 +457,9 @@ func (a appClient) GetLeaderboardScores(leaderboardID string, orgID string, appI
 	return a.app.storage.GetLeaderboardScores(leaderboardID, orgID, appID, limit, offset)
 }
 
-// GetLeaderboardUserScores returns the scores of a user in each leaderboard
-func (a appClient) GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error) {
-	return a.app.storage.GetLeaderboardUserScores(orgID, appID, userID, limit, offset)
+// GetLeaderboardUserRanks returns the scores of a user in each leaderboard
+func (a appClient) GetLeaderboardUserRanks(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Leaderboard, error) {
+	return a.app.storage.GetLeaderboardUserRanks(orgID, appID, userID, limit, offset)
 }
 
 // CreateLeaderboard creates a new leaderboard

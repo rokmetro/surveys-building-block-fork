@@ -69,7 +69,7 @@ type Storage interface {
 	AcquireRanksLock()
 	ReleaseRanksLock()
 	GetLeaderboardScores(leaderboardID string, orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
-	GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error)
+	GetLeaderboardUserRanks(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Leaderboard, error)
 
 	GetLeaderboard(leaderboardID string, orgID string, appID string) (*model.Leaderboard, error)
 	GetLeaderboardWithUserContext(leaderboardID string, orgID string, appID string, userID string) (*model.Leaderboard, error)

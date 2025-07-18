@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix GET surveys time filtering
 - Streak being applied when playing quizzes from quiz list [#37](https://github.com/rokmetro/surveys-building-block-fork/issues/37)
 
+### Changed
+- Optimize ranking counts [#24](https://github.com/rokmetro/surveys-building-block-fork/issues/24)
+
 ## [1.10.0] - 2024-07-30
 ### Added 
 - Add admin GET survey responses API [#66](https://github.com/rokwire/surveys-building-block/issues/66)

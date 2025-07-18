@@ -5,3 +5,4 @@
 Dockerfile
 docker-compose.yml
 docker-compose.env
+load_test/

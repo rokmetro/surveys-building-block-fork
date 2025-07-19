@@ -1,9 +1,9 @@
 get:
   tags:
     - Client
-  summary: Retrieves users's leaderboard scores
+  summary: Retrieves user's leaderboard ranks
   description: |
-    Retrieves scores for every leaderboard the user is in.
+    Retrieves ranks for every leaderboard the user is in.
   security:
     - bearerAuth: []
   parameters:
@@ -31,7 +31,7 @@ get:
           schema:
             type: array
             items:
-              $ref: "../../schemas/scores/Score.yaml"
+              $ref: "../../schemas/leaderboards/Leaderboard.yaml"
     400:
       description: Bad request
     401:

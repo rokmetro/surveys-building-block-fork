@@ -59,6 +59,8 @@ paths:
     $ref: "./resources/client/leaderboardsid-join.yaml"
   /api/leaderboards/{id}/leave:
     $ref: "./resources/client/leaderboardsid-leave.yaml"
+  /api/leaderboards/ranks:
+    $ref: "./resources/client/leaderboards-ranks.yaml"
 
   # Admin
   /api/admin/configs:
@@ -73,11 +75,13 @@ paths:
   /api/admin/surveys/{id}/responses:
     $ref: "./resources/admin/surveysid-responses.yaml"
   /api/admin/alert-contacts:
-    $ref: "./resources/admin/alert-contact.yaml"     
+    $ref: "./resources/admin/alert-contact.yaml"
   /api/admin/alert-contacts/{id}:
-    $ref: "./resources/admin/alert-contactids.yaml" 
+    $ref: "./resources/admin/alert-contactids.yaml"
   /api/admin/surveys/{id}/response:
-    $ref: "./resources/admin/surveys_responses.yaml"  
+    $ref: "./resources/admin/surveys_responses.yaml"
+  /api/admin/leaderboard/init-scores:
+    $ref: "./resources/admin/leaderboard-init-scores.yaml"
 
   # Analytics
   /api/analytics/survey-responses:

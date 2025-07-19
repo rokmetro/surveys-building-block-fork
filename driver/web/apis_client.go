@@ -709,7 +709,7 @@ func (h ClientAPIsHandler) getTopAndLocalScores(l *logs.Log, r *http.Request, cl
 		belowPivotLimit = intParsed
 	}
 
-	scores, err := h.app.Client.GetTopAndLocalScores(claims.OrgID, claims.AppID, claims.Subject, &limit, &offset, &localLimit, &abovePivotLimit, &belowPivotLimit)
+	scores, err := h.app.Client.GetTopAndLocalScores(claims.OrgID, claims.AppID, claims.Subject, &limit, &offset, &localLimit, &abovePivotLimit, &belowPivotLimit, l)
 
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
@@ -887,7 +887,7 @@ func (h ClientAPIsHandler) getLeaderboardScores(l *logs.Log, r *http.Request, cl
 	return l.HTTPResponseSuccessJSON(rdata)
 }
 
-func (h ClientAPIsHandler) getLeaderboardUserScores(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+func (h ClientAPIsHandler) getLeaderboardUserRanks(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
 
 	limitRaw := r.URL.Query().Get("limit")
 	limit := 20
@@ -909,12 +909,12 @@ func (h ClientAPIsHandler) getLeaderboardUserScores(l *logs.Log, r *http.Request
 		offset = intParsed
 	}
 
-	scores, err := h.app.Client.GetLeaderboardUserScores(claims.OrgID, claims.AppID, claims.Subject, &limit, &offset)
+	leaderboards, err := h.app.Client.GetLeaderboardUserRanks(claims.OrgID, claims.AppID, claims.Subject, &limit, &offset)
 	if err != nil {
-		return l.HTTPResponseErrorAction(logutils.ActionGet, "scores", nil, err, http.StatusInternalServerError, true)
+		return l.HTTPResponseErrorAction(logutils.ActionGet, "leaderboards", nil, err, http.StatusInternalServerError, true)
 	}
 
-	rdata, err := json.Marshal(scores)
+	rdata, err := json.Marshal(leaderboards)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
 	}

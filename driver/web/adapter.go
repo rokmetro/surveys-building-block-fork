@@ -100,7 +100,7 @@ func (a Adapter) Start() {
 	// Leaderboard endpoints
 	mainRouter.HandleFunc("/leaderboards", a.wrapFunc(a.clientAPIsHandler.getLeaderboards, a.auth.client.User)).Methods("GET")
 	mainRouter.HandleFunc("/leaderboards", a.wrapFunc(a.clientAPIsHandler.createLeaderboard, a.auth.client.User)).Methods("POST")
-	mainRouter.HandleFunc("/leaderboards/scores", a.wrapFunc(a.clientAPIsHandler.getLeaderboardUserScores, a.auth.client.User)).Methods("GET")
+	mainRouter.HandleFunc("/leaderboards/ranks", a.wrapFunc(a.clientAPIsHandler.getLeaderboardUserRanks, a.auth.client.User)).Methods("GET")
 	mainRouter.HandleFunc("/leaderboards/{id}", a.wrapFunc(a.clientAPIsHandler.getLeaderboard, a.auth.client.User)).Methods("GET")
 	mainRouter.HandleFunc("/leaderboards/{id}", a.wrapFunc(a.clientAPIsHandler.updateLeaderboard, a.auth.client.User)).Methods("PUT")
 	mainRouter.HandleFunc("/leaderboards/{id}", a.wrapFunc(a.clientAPIsHandler.deleteLeaderboard, a.auth.client.User)).Methods("DELETE")
@@ -129,6 +129,8 @@ func (a Adapter) Start() {
 	adminRouter.HandleFunc("/alert-contacts", a.wrapFunc(a.adminAPIsHandler.createAlertContact, a.auth.admin.Permissions)).Methods("POST")
 	adminRouter.HandleFunc("/alert-contacts/{id}", a.wrapFunc(a.adminAPIsHandler.updateAlertContact, a.auth.admin.Permissions)).Methods("PUT")
 	adminRouter.HandleFunc("/alert-contacts/{id}", a.wrapFunc(a.adminAPIsHandler.deleteAlertContact, a.auth.admin.Permissions)).Methods("DELETE")
+
+	adminRouter.HandleFunc("/leaderboard/init-scores", a.wrapFunc(a.adminAPIsHandler.initLeaderboardScores, a.auth.admin.Permissions)).Methods("POST")
 
 	// Analytics APIs
 	analyticsRouter := mainRouter.PathPrefix("/analytics").Subrouter()

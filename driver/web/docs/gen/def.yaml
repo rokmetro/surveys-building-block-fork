@@ -1078,6 +1078,47 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error
+  /api/leaderboards/ranks:
+    get:
+      tags:
+        - Client
+      summary: Retrieves user's leaderboard ranks
+      description: |
+        Retrieves ranks for every leaderboard the user is in.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: The number of results to be loaded in one page
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+        - name: offset
+          in: query
+          description: The number of results previously loaded
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Leaderboard'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error
   /api/admin/configs:
     get:
       tags:
@@ -1872,6 +1913,34 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error
+  /api/admin/leaderboard/init-scores:
+    post:
+      tags:
+        - Admin
+      summary: Initialize scores for all leaderboard entries
+      description: |
+        Calculates and updates score values for all leaderboard entries in the specified organization and application.
+
+        **Auth:** Requires admin token with appropriate permissions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Success - Scores have been successfully initialized/updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Success
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error - Failed to initialize scores
   /api/analytics/survey-responses:
     get:
       tags:
@@ -2344,6 +2413,9 @@ components:
         is_admin:
           type: boolean
           optional: true
+          readOnly: true
+        rank:
+          type: integer
           readOnly: true
         date_created:
           type: string

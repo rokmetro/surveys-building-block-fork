@@ -35,6 +35,7 @@ type Leaderboard struct {
 	AppID   string `json:"app_id" bson:"app_id"`               // application ID
 	Name    string `json:"name" bson:"name"`                   // required "name"
 	IsAdmin *bool  `json:"is_admin" bson:"is_admin,omitempty"` // indicates if the user is an admin of the leaderboard
+	Rank    uint32 `json:"rank" bson:"rank,omitempty"`
 
 	LastQuizTime *time.Time `json:"last_quiz_time" bson:"last_quiz_time"`
 
@@ -50,6 +51,7 @@ type LeaderboardEntry struct {
 	AppID         string     `json:"app_id" bson:"app_id"`
 	UserID        string     `json:"user_id" bson:"user_id"`
 	IsAdmin       bool       `json:"is_admin" bson:"is_admin"`
+	Score         float64    `json:"score" bson:"score"` // Duplicated from score record
 	DateCreated   time.Time  `json:"date_created" bson:"date_created"`
 	DateUpdated   *time.Time `json:"date_updated" bson:"date_updated"`
 }

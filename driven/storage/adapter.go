@@ -42,6 +42,10 @@ type Adapter struct {
 
 	cachedConfigs *syncmap.Map
 	configsLock   *sync.RWMutex
+
+	// ranksLock protects rank initialization operations to prevent concurrent writes
+	// Uses RWMutex: InitRanks takes write lock, score operations take read lock
+	ranksLock *sync.RWMutex
 }
 
 // Start starts the storage
@@ -71,7 +75,7 @@ func (a *Adapter) RegisterStorageListener(listener interfaces.StorageListener) {
 
 // Creates a new Adapter with provided context
 func (a *Adapter) withContext(context mongo.SessionContext) *Adapter {
-	return &Adapter{db: a.db, context: context, cachedConfigs: a.cachedConfigs, configsLock: a.configsLock}
+	return &Adapter{db: a.db, context: context, cachedConfigs: a.cachedConfigs, configsLock: a.configsLock, ranksLock: a.ranksLock}
 }
 
 // cacheConfigs caches the configs from the DB
@@ -348,7 +352,18 @@ func NewStorageAdapter(mongoDBAuth string, mongoDBName string, mongoTimeout stri
 
 	cachedConfigs := &syncmap.Map{}
 	configsLock := &sync.RWMutex{}
+	ranksLock := &sync.RWMutex{}
 
 	db := &database{mongoDBAuth: mongoDBAuth, mongoDBName: mongoDBName, mongoTimeout: time.Millisecond * time.Duration(timeout), logger: logger}
-	return &Adapter{db: db, cachedConfigs: cachedConfigs, configsLock: configsLock}
+	return &Adapter{db: db, cachedConfigs: cachedConfigs, configsLock: configsLock, ranksLock: ranksLock}
+}
+
+// AcquireRanksLock acquires the write lock for rank operations
+func (a *Adapter) AcquireRanksLock() {
+	a.ranksLock.Lock()
+}
+
+// ReleaseRanksLock releases the write lock for rank operations
+func (a *Adapter) ReleaseRanksLock() {
+	a.ranksLock.Unlock()
 }

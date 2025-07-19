@@ -167,13 +167,31 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 
 			oldScore = *score
 		} else {
-			// make copy of score before modifying for loaderboard notifications
+			// make copy of score before modifying for leaderboard notifications
 			oldScore = *score
 
 			a.UpdateScore(score, surveyResponse, l)
-			err = a.app.storage.UpdateScore(*score)
+
+			// Use transaction to update both score and leaderboard entries
+			transaction := func(storage interfaces.Storage) error {
+				// Update the score
+				err := storage.UpdateScore(*score)
+				if err != nil {
+					return err
+				}
+
+				// Update leaderboard entry scores for this user
+				err = storage.UpdateLeaderboardEntryScore(score.OrgID, score.AppID, score.UserID, score.Score)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			}
+
+			err = a.app.storage.PerformTransaction(transaction)
 			if err != nil {
-				return nil, errors.WrapErrorAction(logutils.ActionUpdate, model.TypeScore, nil, err)
+				return nil, errors.WrapErrorAction("performing", "score and leaderboard update transaction", nil, err)
 			}
 		}
 
@@ -212,13 +230,13 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 			}
 		}
 
-		scores, err := a.app.storage.GetLeaderboardScores(lb.ID, orgID, appID, nil, nil)
+		entries, err := a.app.storage.GetLeaderboardEntries(lb.ID, orgID, appID, nil)
 		if err != nil {
 			a.app.logger.WarnWithFields("failed to find scores for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": orgID, "app_id": appID})
 		}
 
 		topic := notifications.TopicQuizAll
-		for _, userScore := range scores {
+		for _, userScore := range entries {
 			if userScore.UserID != userID {
 				// current user's score has eclipsed this user's score in the leaderboard by completing the fashion quiz
 				if userScore.Score >= oldScore.Score && userScore.Score < score.Score {
@@ -329,105 +347,9 @@ func (a appClient) GetScores(orgID string, appID string, limit *int, offset *int
 }
 
 // GetScoresWithPivot retrieves scores closest to the user's score
-func (a appClient) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int) ([]model.Score, error) {
+func (a appClient) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int, l *logs.Log) ([]model.Score, error) {
 	// We replace the local limit with the equal limit when getting scores from database
-	scores, err := a.app.storage.GetTopAndLocalScores(orgID, appID, userID, limit, offset, abovePivotLimit, localLimit, belowPivotLimit)
-	if err != nil {
-		return nil, err
-	}
-
-	userScore := scores[0]
-	scores = scores[1:]
-
-	userInTopScoresIdx := -1
-	for i, score := range scores {
-		if score.UserID == userID {
-			userInTopScoresIdx = i
-			break
-		}
-	}
-
-	if len(scores) > *limit {
-		if userInTopScoresIdx == -1 {
-			// Insert user's score into section with surrounding local scores if user is not in top scores
-			localScores := a.insertUserScoreIntoLocalScores(scores[*limit:], userScore, *localLimit)
-			scores = scores[:*limit]
-			scores = append(scores, localScores...)
-		} else if userInTopScoresIdx >= *limit-*belowPivotLimit {
-			// If user is in top scores, but close to the bottom, we append scores according to the local and belowPivot limits
-			scoresLength := userInTopScoresIdx + *belowPivotLimit + 1
-			if scoresLength > len(scores) {
-				scoresLength = len(scores)
-			}
-			scores = scores[:scoresLength]
-		} else {
-			// If user is in top scores, but not close to the bottom, we trim the scores to the limit
-			scores = scores[:*limit]
-		}
-	}
-
-	return scores, nil
-}
-
-func (a appClient) insertUserScoreIntoLocalScores(scores []model.Score, userScore model.Score, maxNumScores int) []model.Score {
-	insertionIndex := (len(scores) + 1) / 2
-
-	// We take the first and last occurrences of equal scores to the user's
-	firstEqual, lastEqual := -1, -1
-	for i, s := range scores {
-		if s.Score == userScore.Score {
-			firstEqual = i
-			break
-		}
-	}
-	for i := len(scores) - 1; i >= 0; i-- {
-		if scores[i].Score == userScore.Score {
-			lastEqual = i
-			break
-		}
-	}
-
-	if firstEqual == -1 {
-		// We insert the user's score in its obvious place if no other
-		// scores are equal
-		insertionIndex = len(scores)
-		for i, s := range scores {
-			if s.Score < userScore.Score {
-				insertionIndex = i
-				break
-			}
-		}
-	}
-
-	// if there were equal scores, clamp insertionIndex so it
-	// sits beside them
-	if firstEqual != -1 {
-		if insertionIndex < firstEqual {
-			insertionIndex = firstEqual
-		} else if insertionIndex > lastEqual+1 {
-			insertionIndex = lastEqual + 1
-		}
-	}
-
-	// actually insert userScore
-	buf := make([]model.Score, 0, len(scores)+1)
-	buf = append(buf, scores[:insertionIndex]...)
-	buf = append(buf, userScore)
-	buf = append(buf, scores[insertionIndex:]...)
-	scores = buf
-
-	// Take a centered window of length maxNumScores
-	half := int(maxNumScores / 2)
-	start := insertionIndex - half
-	if start < 0 {
-		start = 0
-	}
-	end := start + maxNumScores
-	if end > len(scores) {
-		end = len(scores)
-	}
-
-	return scores[start:end]
+	return a.app.storage.GetTopAndLocalScores(orgID, appID, userID, limit, offset, abovePivotLimit, localLimit, belowPivotLimit, l)
 }
 
 // CreateScore Creates a score object by iterating over all previous survey responses
@@ -553,9 +475,9 @@ func (a appClient) GetLeaderboardScores(leaderboardID string, orgID string, appI
 	return a.app.storage.GetLeaderboardScores(leaderboardID, orgID, appID, limit, offset)
 }
 
-// GetLeaderboardUserScores returns the scores of a user in each leaderboard
-func (a appClient) GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error) {
-	return a.app.storage.GetLeaderboardUserScores(orgID, appID, userID, limit, offset)
+// GetLeaderboardUserRanks returns the scores of a user in each leaderboard
+func (a appClient) GetLeaderboardUserRanks(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Leaderboard, error) {
+	return a.app.storage.GetLeaderboardUserRanks(orgID, appID, userID, limit, offset)
 }
 
 // CreateLeaderboard creates a new leaderboard
@@ -659,6 +581,16 @@ func (a appClient) JoinLeaderboard(leaderboardID string, orgID string, appID str
 
 // createLeaderboardEntry creates a model.LeaderboardEntry with the provided parameters
 func (a appClient) createLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string, isAdmin bool) model.LeaderboardEntry {
+	// Get the user's current score to populate the leaderboard entry
+	userScore := 0.0
+	score, err := a.app.storage.GetScore(orgID, appID, userID)
+	if err == nil && score != nil {
+		userScore = score.Score
+	} else if err != nil {
+		// Log the error but continue with score 0.0 - this allows users to join leaderboards even if they haven't taken any quizzes yet
+		a.app.logger.WarnWithFields("failed to get user score for leaderboard entry, setting score to 0.0", logutils.Fields{"user_id": userID, "org_id": orgID, "app_id": appID, "error": err.Error()})
+	}
+
 	return model.LeaderboardEntry{
 		ID:            uuid.NewString(),
 		LeaderboardID: leaderboardID,
@@ -666,6 +598,7 @@ func (a appClient) createLeaderboardEntry(leaderboardID string, orgID string, ap
 		AppID:         appID,
 		UserID:        userID,
 		IsAdmin:       isAdmin,
+		Score:         userScore,
 		DateCreated:   time.Now().UTC(),
 		DateUpdated:   nil,
 	}

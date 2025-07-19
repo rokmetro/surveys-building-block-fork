@@ -18,6 +18,8 @@ import (
 	"application/core/model"
 	"application/driven/calendar"
 	"time"
+
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
 )
 
 // Storage is used by core to storage data - DB storage adapter, file storage adapter etc
@@ -59,11 +61,15 @@ type Storage interface {
 
 	GetScore(orgID string, appID string, userID string) (*model.Score, error)
 	GetScores(orgID *string, appID *string, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error)
-	GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int) ([]model.Score, error)
+	GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int, l *logs.Log) ([]model.Score, error)
 	CreateScore(score model.Score) error
 	UpdateScore(score model.Score) error
+
+	// Lock management for rank operations
+	AcquireRanksLock()
+	ReleaseRanksLock()
 	GetLeaderboardScores(leaderboardID string, orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
-	GetLeaderboardUserScores(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Score, error)
+	GetLeaderboardUserRanks(orgID string, appID string, userID string, limit *int, offset *int) ([]model.Leaderboard, error)
 
 	GetLeaderboard(leaderboardID string, orgID string, appID string) (*model.Leaderboard, error)
 	GetLeaderboardWithUserContext(leaderboardID string, orgID string, appID string, userID string) (*model.Leaderboard, error)
@@ -74,8 +80,10 @@ type Storage interface {
 
 	GetLeaderboardEntries(leaderboardID string, orgID string, appID string, userID *string) ([]model.LeaderboardEntry, error)
 	CreateLeaderboardEntry(leaderboardEntry model.LeaderboardEntry) error
+	UpdateLeaderboardEntryScore(orgID string, appID string, userID string, newScore float64) error
 	DeleteLeaderboardEntries(leaderboardID string, orgID string, appID string, leavingUserIDs []string) error
 	DeleteAllLeaderboardEntries(leaderboardID string, orgID string, appID string) error
+	InitLeaderboardEntryScores(orgID string, appID string) error
 }
 
 // StorageListener represents storage listener

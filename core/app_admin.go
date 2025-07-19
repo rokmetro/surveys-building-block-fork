@@ -158,6 +158,16 @@ func (a appAdmin) DeleteAlertContact(id string, orgID string, appID string) erro
 	return a.app.storage.DeleteAlertContact(id, orgID, appID)
 }
 
+// InitLeaderboardScores initializes score values for all leaderboard entries in the specified org/app
+func (a appAdmin) InitLeaderboardScores(orgID string, appID string) error {
+	// Acquire write lock to prevent concurrent operations during rank initialization
+	a.app.storage.AcquireRanksLock()
+	defer a.app.storage.ReleaseRanksLock()
+
+	// Initialize ranks for scores
+	return a.app.storage.InitLeaderboardEntryScores(orgID, appID)
+}
+
 func (a appAdmin) GetConfig(id string, claims *tokenauth.Claims) (*model.Config, error) {
 	config, err := a.app.storage.FindConfigByID(id)
 	if err != nil {

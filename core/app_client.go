@@ -242,7 +242,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 				if userScore.Score >= oldScore.Score && userScore.Score < score.Score {
 					// notify each user in each leaderboard that has userScore.Score >= oldScore.Score and < score.Score (any other conditions?)
 
-					body := fmt.Sprintf("@%s is Now the Runway Genius of your group %s. Can you reclaim the top spot?", username, lb.Name)
+					body := fmt.Sprintf("@%s just passed you in your Runway Genius leaderboard %s. Ready to take your spot back?", username, lb.Name)
 
 					message := model.NotificationMessage{
 						OrgID: orgID,

@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix survey completed field [#69](https://github.com/rokwire/surveys-building-block/issues/69)
 - Fix GET surveys time filtering
 - Streak being applied when playing quizzes from quiz list [#37](https://github.com/rokmetro/surveys-building-block-fork/issues/37)
+- Fix user score eclipsed notification text [#43](https://github.com/rokmetro/surveys-building-block-fork/issues/43)
 
 ### Changed
 - Optimize ranking counts [#24](https://github.com/rokmetro/surveys-building-block-fork/issues/24)

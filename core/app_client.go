@@ -167,13 +167,31 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 
 			oldScore = *score
 		} else {
-			// make copy of score before modifying for loaderboard notifications
+			// make copy of score before modifying for leaderboard notifications
 			oldScore = *score
 
 			a.UpdateScore(score, surveyResponse, l)
-			err = a.app.storage.UpdateScore(*score)
+
+			// Use transaction to update both score and leaderboard entries
+			transaction := func(storage interfaces.Storage) error {
+				// Update the score
+				err := storage.UpdateScore(*score)
+				if err != nil {
+					return err
+				}
+
+				// Update leaderboard entry scores for this user
+				err = storage.UpdateLeaderboardEntryScore(score.OrgID, score.AppID, score.UserID, score.Score)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			}
+
+			err = a.app.storage.PerformTransaction(transaction)
 			if err != nil {
-				return nil, errors.WrapErrorAction(logutils.ActionUpdate, model.TypeScore, nil, err)
+				return nil, errors.WrapErrorAction("performing", "score and leaderboard update transaction", nil, err)
 			}
 		}
 
@@ -563,6 +581,16 @@ func (a appClient) JoinLeaderboard(leaderboardID string, orgID string, appID str
 
 // createLeaderboardEntry creates a model.LeaderboardEntry with the provided parameters
 func (a appClient) createLeaderboardEntry(leaderboardID string, orgID string, appID string, userID string, isAdmin bool) model.LeaderboardEntry {
+	// Get the user's current score to populate the leaderboard entry
+	userScore := 0.0
+	score, err := a.app.storage.GetScore(orgID, appID, userID)
+	if err == nil && score != nil {
+		userScore = score.Score
+	} else if err != nil {
+		// Log the error but continue with score 0.0 - this allows users to join leaderboards even if they haven't taken any quizzes yet
+		a.app.logger.WarnWithFields("failed to get user score for leaderboard entry, setting score to 0.0", logutils.Fields{"user_id": userID, "org_id": orgID, "app_id": appID, "error": err.Error()})
+	}
+
 	return model.LeaderboardEntry{
 		ID:            uuid.NewString(),
 		LeaderboardID: leaderboardID,
@@ -570,6 +598,7 @@ func (a appClient) createLeaderboardEntry(leaderboardID string, orgID string, ap
 		AppID:         appID,
 		UserID:        userID,
 		IsAdmin:       isAdmin,
+		Score:         userScore,
 		DateCreated:   time.Now().UTC(),
 		DateUpdated:   nil,
 	}

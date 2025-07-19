@@ -75,7 +75,7 @@ func (a *Adapter) RegisterStorageListener(listener interfaces.StorageListener) {
 
 // Creates a new Adapter with provided context
 func (a *Adapter) withContext(context mongo.SessionContext) *Adapter {
-	return &Adapter{db: a.db, context: context, cachedConfigs: a.cachedConfigs, configsLock: a.configsLock}
+	return &Adapter{db: a.db, context: context, cachedConfigs: a.cachedConfigs, configsLock: a.configsLock, ranksLock: a.ranksLock}
 }
 
 // cacheConfigs caches the configs from the DB

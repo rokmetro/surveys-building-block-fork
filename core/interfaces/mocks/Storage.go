@@ -1107,6 +1107,24 @@ func (_m *Storage) UpdateLeaderboard(leaderboard model.Leaderboard) error {
 	return r0
 }
 
+// UpdateLeaderboardEntryScore provides a mock function with given fields: orgID, appID, userID, newScore
+func (_m *Storage) UpdateLeaderboardEntryScore(orgID string, appID string, userID string, newScore float64) error {
+	ret := _m.Called(orgID, appID, userID, newScore)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateLeaderboardEntryScore")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, string, float64) error); ok {
+		r0 = rf(orgID, appID, userID, newScore)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateScore provides a mock function with given fields: score
 func (_m *Storage) UpdateScore(score model.Score) error {
 	ret := _m.Called(score)

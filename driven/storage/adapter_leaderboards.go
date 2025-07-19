@@ -16,6 +16,7 @@ package storage
 
 import (
 	"application/core/model"
+	"time"
 
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
@@ -458,6 +459,33 @@ func (a *Adapter) GetLeaderboardUserRanks(orgID string, appID string, userID str
 	}
 
 	return leaderboards, err
+}
+
+// UpdateLeaderboardEntryScore updates the score field for a specific user's leaderboard entries
+func (a *Adapter) UpdateLeaderboardEntryScore(orgID string, appID string, userID string, newScore float64) error {
+	// Acquire read lock to allow concurrent operations but block during rank initialization
+	a.ranksLock.RLock()
+	defer a.ranksLock.RUnlock()
+
+	filter := bson.M{
+		"org_id":  orgID,
+		"app_id":  appID,
+		"user_id": userID,
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"score":        newScore,
+			"date_updated": time.Now().UTC(),
+		},
+	}
+
+	_, err := a.db.leaderboardEntries.UpdateMany(a.context, filter, update, nil)
+	if err != nil {
+		return errors.WrapErrorAction(logutils.ActionUpdate, model.TypeLeaderboardEntry, &logutils.FieldArgs{"org_id": orgID, "app_id": appID, "user_id": userID}, err)
+	}
+
+	return nil
 }
 
 // InitLeaderboardEntryScores finds and updates score fields for all leaderboard entries in the given org/app

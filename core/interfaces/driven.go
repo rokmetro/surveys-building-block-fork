@@ -80,6 +80,7 @@ type Storage interface {
 
 	GetLeaderboardEntries(leaderboardID string, orgID string, appID string, userID *string) ([]model.LeaderboardEntry, error)
 	CreateLeaderboardEntry(leaderboardEntry model.LeaderboardEntry) error
+	UpdateLeaderboardEntryScore(orgID string, appID string, userID string, newScore float64) error
 	DeleteLeaderboardEntries(leaderboardID string, orgID string, appID string, leavingUserIDs []string) error
 	DeleteAllLeaderboardEntries(leaderboardID string, orgID string, appID string) error
 	InitLeaderboardEntryScores(orgID string, appID string) error

@@ -45,18 +45,13 @@ type Leaderboard struct {
 
 // LeaderboardEntry represents an entry in a leaderboard.
 type LeaderboardEntry struct {
-	ID            string  `json:"id" bson:"_id"`
-	LeaderboardID string  `json:"leaderboard_id" bson:"leaderboard_id"`
-	OrgID         string  `json:"org_id" bson:"org_id"`
-	AppID         string  `json:"app_id" bson:"app_id"`
-	UserID        string  `json:"user_id" bson:"user_id"`
-	IsAdmin       bool    `json:"is_admin" bson:"is_admin"`
-	Score         float64 `json:"score" bson:"score"` // Duplicated from score record
-
-	// these two fields should not be returned in an HTTP response
-	Rank        uint32      `bson:"rank"`
-	Leaderboard Leaderboard `bson:"leaderboard"`
-
-	DateCreated time.Time  `json:"date_created" bson:"date_created"`
-	DateUpdated *time.Time `json:"date_updated" bson:"date_updated"`
+	ID            string     `json:"id" bson:"_id"`
+	LeaderboardID string     `json:"leaderboard_id" bson:"leaderboard_id"`
+	OrgID         string     `json:"org_id" bson:"org_id"`
+	AppID         string     `json:"app_id" bson:"app_id"`
+	UserID        string     `json:"user_id" bson:"user_id"`
+	IsAdmin       bool       `json:"is_admin" bson:"is_admin"`
+	Score         float64    `json:"score" bson:"score"` // Duplicated from score record
+	DateCreated   time.Time  `json:"date_created" bson:"date_created"`
+	DateUpdated   *time.Time `json:"date_updated" bson:"date_updated"`
 }

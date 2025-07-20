@@ -29,63 +29,32 @@ import (
 
 // GetScore finds score object for user
 func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Score, error) {
-	pipeline := mongo.Pipeline{
-		// 1. Match the specific user
-		bson.D{{Key: "$match", Value: bson.M{
-			"org_id":  orgID,
-			"app_id":  appID,
-			"user_id": userID,
-		}}},
-
-		// 2. Lookup to count distinct scores higher than this user's score
-		bson.D{{Key: "$lookup", Value: bson.M{
-			"from": "scores",
-			"let":  bson.M{"userScore": "$score"},
-			"pipeline": mongo.Pipeline{
-				bson.D{{Key: "$match", Value: bson.M{
-					"$expr": bson.M{"$and": bson.A{
-						bson.M{"$eq": bson.A{"$org_id", orgID}},
-						bson.M{"$eq": bson.A{"$app_id", appID}},
-						bson.M{"$ne": bson.A{"$external_profile_id", ""}},
-						bson.M{"$gt": bson.A{"$score", "$$userScore"}},
-					}},
-				}}},
-				bson.D{{Key: "$group", Value: bson.M{
-					"_id": "$score", // Group by distinct scores
-				}}},
-				bson.D{{Key: "$count", Value: "distinct_higher_scores"}},
-			},
-			"as": "rank_data",
-		}}},
-
-		// 3. Add the rank field
-		bson.D{{Key: "$addFields", Value: bson.M{
-			"rank": bson.M{
-				"$add": bson.A{
-					1, // Base rank is 1
-					bson.M{"$ifNull": bson.A{
-						bson.M{"$arrayElemAt": bson.A{"$rank_data.distinct_higher_scores", 0}},
-						0,
-					}},
-				},
-			},
-		}}},
-
-		// 4. Remove the temporary rank_data field
-		bson.D{{Key: "$unset", Value: "rank_data"}},
+	// 1. Find the user's score using a simple query
+	filter := bson.M{
+		"org_id":  orgID,
+		"app_id":  appID,
+		"user_id": userID,
 	}
 
-	var scores []model.Score
-	err := a.db.scores.Aggregate(a.context, pipeline, &scores, nil)
+	var score model.Score
+	err := a.db.scores.FindOne(a.context, filter, &score, nil)
 	if err != nil {
-		return nil, err
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.ErrorData(logutils.StatusMissing, model.TypeScore, &logutils.FieldArgs{"user_id": userID})
+		}
+		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeScore, filterArgs(filter), err)
 	}
 
-	if len(scores) == 0 {
-		return nil, errors.ErrorData(logutils.StatusMissing, model.TypeScore, &logutils.FieldArgs{"user_id": userID})
+	// 2. Calculate the rank using the existing findRankForScore function
+	rank, err := a.findRankForScore(score.Score, orgID, appID)
+	if err != nil {
+		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeRank, &logutils.FieldArgs{"score": score.Score}, err)
 	}
 
-	return &scores[0], nil
+	// 3. Set the rank on the score object
+	score.Rank = rank
+
+	return &score, nil
 }
 
 // GetScores returns a list of scores in descending order
@@ -438,9 +407,9 @@ func (a *Adapter) findRankForScore(score float64, orgID string, appID string) (u
 	filter := bson.M{
 		"org_id": orgID,
 		"app_id": appID,
-		"external_profile_id": bson.M{
-			"$ne": "",
-		},
+		// "external_profile_id": bson.M{ // This prevents the use of PROJECTION_COVERED/DISTINCT_SCAN
+		// 	"$ne": "",
+		// },
 		"score": bson.M{
 			"$gt": score, // Only scores higher than the given score
 		},

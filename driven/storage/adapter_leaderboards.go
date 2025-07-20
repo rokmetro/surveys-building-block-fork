@@ -287,7 +287,7 @@ func (a *Adapter) GetLeaderboardScores(leaderboardID string, orgID string, appID
 		"pipeline": mongo.Pipeline{
 			// Match entries in same leaderboard with higher scores
 			bson.D{{Key: "$match", Value: bson.M{
-				"$expr": bson.M{"$and": bson.A{
+				"$expr": bson.M{"$and": bson.A{ // TODO: Using $expr prevents the use of PROJECTION_COVERED/DISTINCT_SCAN
 					bson.M{"$eq": bson.A{"$leaderboard_id", "$$lbID"}},
 					bson.M{"$eq": bson.A{"$org_id", orgID}},
 					bson.M{"$eq": bson.A{"$app_id", appID}},
@@ -388,7 +388,7 @@ func (a *Adapter) GetLeaderboardUserRanks(orgID string, appID string, userID str
 		"pipeline": bson.A{
 			// match the same leaderboard/org/app
 			bson.D{{Key: "$match", Value: bson.M{
-				"$expr": bson.M{"$and": bson.A{
+				"$expr": bson.M{"$and": bson.A{ // TODO: Using $expr prevents the use of PROJECTION_COVERED/DISTINCT_SCAN
 					bson.M{"$eq": bson.A{"$org_id", orgID}},
 					bson.M{"$eq": bson.A{"$app_id", appID}},
 					bson.M{"$eq": bson.A{"$leaderboard_id", "$$lbID"}},

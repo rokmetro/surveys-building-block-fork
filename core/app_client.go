@@ -262,7 +262,11 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 					if score != nil {
 						points = int(score.Score - oldScore.Score)
 					}
-					body := fmt.Sprintf("@%s just scored %d points in today's Runway Genius. Can you outplay them?", username, points)
+					pointsString := "points"
+					if points == 1 {
+						pointsString = "point"
+					}
+					body := fmt.Sprintf("@%s just scored %d %s in today's Runway Genius. Can you outplay them?", username, points, pointsString)
 
 					message := model.NotificationMessage{
 						OrgID: orgID,

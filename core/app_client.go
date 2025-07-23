@@ -335,6 +335,13 @@ func (a appClient) GetScore(orgID string, appID string, userID string, externalP
 		return nil, err
 	}
 
+	if !utils.IsNextOrSameDay(score.PrevSurveyResponseDate, time.Now().UTC()) {
+		// Reset streak to day 0 if day is not same or next day
+		score.CurrentStreak = 0
+		a.app.logger.Warnf("Reset streak to 0")
+
+	}
+
 	// If score object doesn't have externalID, store the one that's client-provided
 	if score.ExternalProfileID == "" && externalProfileID != "" {
 		score.ExternalProfileID = externalProfileID
@@ -440,8 +447,8 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 		}
 		// Only set prev survey response date if today's quiz
 		score.PrevSurveyResponseDate = responseTime
-	} else if !utils.IsPrevOrSameDay(score.PrevSurveyResponseDate, responseTime) {
-		// Reset streak to day 0 if day is not same or previous day
+	} else if !utils.IsNextOrSameDay(score.PrevSurveyResponseDate, responseTime) {
+		// Reset streak to day 0 if day is not same or next day
 		score.CurrentStreak = 0
 		l.Info("Reset streak to 0")
 	}

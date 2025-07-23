@@ -435,6 +435,7 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 		a.app.logger.Warnf("error determining whether survey %s is today's quiz", survey.ID)
 	}
 
+	scoreMult := 1.0
 	if isTodaysQuiz {
 		if utils.IsNextDay(score.PrevSurveyResponseDate, responseTime) {
 			// Update streak
@@ -445,6 +446,10 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 			score.CurrentStreak = 1
 			l.Info("Reset streak to 1")
 		}
+		// Only apply streak multiplier if today's quiz and streak is >= min days
+		if score.CurrentStreak >= model.ScoreStreakMinDays {
+			scoreMult = model.ScoreStreakMultiplier
+		}
 		// Only set prev survey response date if today's quiz
 		score.PrevSurveyResponseDate = responseTime
 	} else if !utils.IsNextOrSameDay(score.PrevSurveyResponseDate, responseTime) {
@@ -453,11 +458,7 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 		l.Info("Reset streak to 0")
 	}
 
-	if score.CurrentStreak >= model.ScoreStreakMinDays {
-		score.Score += pointsForResponse * model.ScoreStreakMultiplier
-	} else {
-		score.Score += pointsForResponse
-	}
+	score.Score += pointsForResponse * scoreMult
 }
 
 // GetLeaderboard gets the leaderboard with the provided ID

@@ -335,8 +335,8 @@ func (a appClient) GetScore(orgID string, appID string, userID string, externalP
 		return nil, err
 	}
 
-	if !utils.IsPrevOrSameDay(score.PrevSurveyResponseDate, time.Now().UTC()) {
-		// Reset streak to day 0 if day is not same or previous day
+	if !utils.IsNextOrSameDay(score.PrevSurveyResponseDate, time.Now().UTC()) {
+		// Reset streak to day 0 if day is not same or next day
 		score.CurrentStreak = 0
 		a.app.logger.Warnf("Reset streak to 0")
 

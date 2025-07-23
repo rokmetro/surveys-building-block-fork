@@ -65,19 +65,32 @@ func SHA256Hash(data []byte) []byte {
 // IsNextDay checks if compare is exactly one day after current
 func IsNextDay(current time.Time, compare time.Time) bool {
 	// Normalize both dates to midnight
-	current = time.Date(current.Year(), current.Month(), current.Day(), 0, 0, 0, 0, current.Location())
-	compare = time.Date(compare.Year(), compare.Month(), compare.Day(), 0, 0, 0, 0, compare.Location())
+	current = GetTimeDay(current)
+	compare = GetTimeDay(compare)
 
 	return compare.Equal(current.AddDate(0, 0, 1))
+}
+
+// IsNextOrSameDay checks if compare is exactly current or one day after current
+func IsNextOrSameDay(current time.Time, compare time.Time) bool {
+	// Normalize both dates to midnight
+	current = GetTimeDay(current)
+	compare = GetTimeDay(compare)
+
+	return compare.Equal(current) || compare.Equal(current.AddDate(0, 0, 1))
 }
 
 // IsPrevOrSameDay checks if compare is exactly current or before
 func IsPrevOrSameDay(current time.Time, compare time.Time) bool {
 	// Normalize both dates to midnight
-	current = time.Date(current.Year(), current.Month(), current.Day(), 0, 0, 0, 0, current.Location())
-	compare = time.Date(compare.Year(), compare.Month(), compare.Day(), 0, 0, 0, 0, compare.Location())
+	current = GetTimeDay(current)
+	compare = GetTimeDay(compare)
 
 	return compare.Equal(current) || compare.Before(current)
+}
+
+func GetTimeDay(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 }
 
 // StartTimer starts a timer with the given name, period, and function to call when the timer goes off

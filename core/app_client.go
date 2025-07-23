@@ -430,35 +430,22 @@ func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyRe
 		}
 	}
 
-	isTodaysQuiz, err := survey.IsLive(&responseTime)
-	if err != nil {
-		a.app.logger.Warnf("error determining whether survey %s is today's quiz", survey.ID)
+	if utils.IsPrevOrSameDay(score.PrevSurveyResponseDate, responseTime) {
+		// Don't update streak if day is same or previous
+	} else if utils.IsNextDay(score.PrevSurveyResponseDate, responseTime) {
+		// Update streak
+		score.CurrentStreak++
+	} else {
+		// Reset streak to day 1
+		score.CurrentStreak = 1
 	}
+	score.PrevSurveyResponseDate = responseTime
 
-	scoreMult := 1.0
-	if isTodaysQuiz {
-		if utils.IsNextDay(score.PrevSurveyResponseDate, responseTime) {
-			// Update streak
-			score.CurrentStreak++
-			l.Info("Incremented streak")
-		} else {
-			// Reset streak to day 1 if day is not same or previous day
-			score.CurrentStreak = 1
-			l.Info("Reset streak to 1")
-		}
-		// Only apply streak multiplier if today's quiz and streak is >= min days
-		if score.CurrentStreak >= model.ScoreStreakMinDays {
-			scoreMult = model.ScoreStreakMultiplier
-		}
-		// Only set prev survey response date if today's quiz
-		score.PrevSurveyResponseDate = responseTime
-	} else if !utils.IsNextOrSameDay(score.PrevSurveyResponseDate, responseTime) {
-		// Reset streak to day 0 if day is not same or next day
-		score.CurrentStreak = 0
-		l.Info("Reset streak to 0")
+	if score.CurrentStreak >= model.ScoreStreakMinDays {
+		score.Score += pointsForResponse * model.ScoreStreakMultiplier
+	} else {
+		score.Score += pointsForResponse
 	}
-
-	score.Score += pointsForResponse * scoreMult
 }
 
 // GetLeaderboard gets the leaderboard with the provided ID

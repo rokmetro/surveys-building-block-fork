@@ -80,15 +80,6 @@ func IsNextOrSameDay(current time.Time, compare time.Time) bool {
 	return compare.Equal(current) || compare.Equal(current.AddDate(0, 0, 1))
 }
 
-// IsPrevOrSameDay checks if compare is exactly current or before
-func IsPrevOrSameDay(current time.Time, compare time.Time) bool {
-	// Normalize both dates to midnight
-	current = GetTimeDay(current)
-	compare = GetTimeDay(compare)
-
-	return compare.Equal(current) || compare.Before(current)
-}
-
 func GetTimeDay(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 }

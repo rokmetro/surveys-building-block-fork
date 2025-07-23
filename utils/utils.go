@@ -80,6 +80,7 @@ func IsNextOrSameDay(current time.Time, compare time.Time) bool {
 	return compare.Equal(current) || compare.Equal(current.AddDate(0, 0, 1))
 }
 
+// GetTimeDay gets the time for the start of the day for the given time
 func GetTimeDay(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 }

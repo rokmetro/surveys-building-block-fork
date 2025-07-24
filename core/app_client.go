@@ -160,7 +160,7 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 		// Create a new score if not present
 		// Otherwise update score
 		if score == nil || err != nil {
-			score, err = a.CreateScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, "")
+			score, err = a.app.shared.createScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, "", true)
 			if err != nil {
 				return nil, errors.WrapErrorAction(logutils.ActionCreate, model.TypeScore, nil, err)
 			}
@@ -170,7 +170,7 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 			// make copy of score before modifying for leaderboard notifications
 			oldScore = *score
 
-			a.UpdateScore(score, surveyResponse, l)
+			a.app.shared.updateScore(score, surveyResponse, l)
 
 			// Use transaction to update both score and leaderboard entries
 			transaction := func(storage interfaces.Storage) error {
@@ -329,7 +329,7 @@ func (a appClient) CreateSurveyAlert(surveyAlert model.SurveyAlert) error {
 func (a appClient) GetScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
 	score, err := a.app.storage.GetScore(orgID, appID, userID)
 	if score == nil {
-		score, err = a.CreateScore(orgID, appID, userID, externalProfileID)
+		score, err = a.app.shared.createScore(orgID, appID, userID, externalProfileID, true)
 	}
 	if err != nil || score == nil {
 		return nil, err
@@ -361,91 +361,6 @@ func (a appClient) GetScores(orgID string, appID string, limit *int, offset *int
 func (a appClient) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int, l *logs.Log) ([]model.Score, error) {
 	// We replace the local limit with the equal limit when getting scores from database
 	return a.app.storage.GetTopAndLocalScores(orgID, appID, userID, limit, offset, abovePivotLimit, localLimit, belowPivotLimit, l)
-}
-
-// CreateScore Creates a score object by iterating over all previous survey responses
-func (a appClient) CreateScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
-	surveyResponses, err := a.app.storage.GetSurveyResponses(&orgID, &appID, &userID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	score := model.Score{
-		ID:                 uuid.NewString(),
-		OrgID:              orgID,
-		AppID:              appID,
-		UserID:             userID,
-		ExternalProfileID:  externalProfileID,
-		Score:              0,
-		ResponseCount:      0,
-		CurrentStreak:      0,
-		AnswerCount:        0,
-		CorrectAnswerCount: 0,
-		SurveyType:         model.SurveyTypeFashionQuiz,
-	}
-
-	for i := 0; i < len(surveyResponses); i++ {
-		a.UpdateScore(&score, surveyResponses[i], nil)
-	}
-	return &score, a.app.storage.CreateScore(score)
-}
-
-// UpdateScore updates the score model passed in
-// Assumes that surveyResponse is a fashion quiz
-func (a appClient) UpdateScore(score *model.Score, surveyResponse model.SurveyResponse, l *logs.Log) {
-	survey := surveyResponse.Survey
-	score.ResponseCount++
-	score.AnswerCount += uint32(survey.SurveyStats.Total)
-	pointsForResponse := float64(survey.SurveyStats.Scores[""])
-
-	if survey.SurveyStats.CorrectAnswerCount == 0 && pointsForResponse >= 0 {
-		// Handle clients that don't send correct answer count by assuming
-		// pointsForResponse == correct answer count
-		score.CorrectAnswerCount += uint32(pointsForResponse)
-	} else {
-		score.CorrectAnswerCount += uint32(survey.SurveyStats.CorrectAnswerCount)
-	}
-
-	responseTime := surveyResponse.DateCreated
-	unstructProps := survey.UnstructuredProperties
-	if unstructProps != nil {
-		externalProfileIDRaw, exists := unstructProps["external_profile_id"]
-		if exists {
-			externalProfileIDStr, isString := externalProfileIDRaw.(string)
-			if isString {
-				score.ExternalProfileID = externalProfileIDStr
-			}
-		}
-
-		localResponseTimeRaw, exists := unstructProps["local_time"]
-		if exists {
-			localResponseTimeStr, isString := localResponseTimeRaw.(string)
-			if isString {
-				localResponseTime, err := time.Parse(time.DateTime, localResponseTimeStr)
-
-				if err == nil && time.Since(localResponseTime).Abs().Hours() < 24 {
-					responseTime = localResponseTime
-				}
-			}
-		}
-	}
-
-	if utils.IsPrevOrSameDay(score.PrevSurveyResponseDate, responseTime) {
-		// Don't update streak if day is same or previous
-	} else if utils.IsNextDay(score.PrevSurveyResponseDate, responseTime) {
-		// Update streak
-		score.CurrentStreak++
-	} else {
-		// Reset streak to day 1
-		score.CurrentStreak = 1
-	}
-	score.PrevSurveyResponseDate = responseTime
-
-	if score.CurrentStreak >= model.ScoreStreakMinDays {
-		score.Score += pointsForResponse * model.ScoreStreakMultiplier
-	} else {
-		score.Score += pointsForResponse
-	}
 }
 
 // GetLeaderboard gets the leaderboard with the provided ID

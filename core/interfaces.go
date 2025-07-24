@@ -14,7 +14,11 @@
 
 package core
 
-import "application/core/model"
+import (
+	"application/core/model"
+
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
+)
 
 // Shared exposes shared APIs for other interface implementations
 type Shared interface {
@@ -27,6 +31,9 @@ type Shared interface {
 
 	isEventAdmin(orgID string, appID string, eventID string, userID string, externalIDs map[string]string) (bool, error)
 	hasAttendedEvent(orgID string, appID string, eventID string, userID string, externalIDs map[string]string) (bool, error)
+
+	createScore(orgID string, appID string, userID string, externalProfileID string, apply bool) (*model.Score, error)
+	updateScore(score *model.Score, surveyResponse model.SurveyResponse, l *logs.Log)
 }
 
 // Core exposes Core APIs for the driver adapters

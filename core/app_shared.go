@@ -18,10 +18,12 @@ import (
 	"application/core/interfaces"
 	"application/core/model"
 	"application/driven/calendar"
+	"application/utils"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
@@ -144,6 +146,98 @@ func (a appShared) hasAttendedEvent(orgID string, appID string, eventID string, 
 	}
 
 	return false, nil
+}
+
+// createScore Creates a score object by iterating over all previous survey responses
+func (a appShared) createScore(orgID string, appID string, userID string, externalProfileID string, apply bool) (*model.Score, error) {
+	surveyResponses, err := a.app.storage.GetSurveyResponses(&orgID, &appID, &userID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	score := model.Score{
+		ID:                 uuid.NewString(),
+		OrgID:              orgID,
+		AppID:              appID,
+		UserID:             userID,
+		ExternalProfileID:  externalProfileID,
+		Score:              0,
+		ResponseCount:      0,
+		CurrentStreak:      0,
+		AnswerCount:        0,
+		CorrectAnswerCount: 0,
+		SurveyType:         model.SurveyTypeFashionQuiz,
+	}
+
+	for _, response := range surveyResponses {
+		a.updateScore(&score, response, nil)
+	}
+
+	if apply {
+		err = a.app.storage.CreateScore(score)
+		if err != nil {
+			return nil, errors.WrapErrorAction(logutils.ActionCreate, model.TypeScore, nil, err)
+		}
+	}
+	return &score, nil
+}
+
+// updateScore updates the score model passed in
+// Assumes that surveyResponse is a fashion quiz
+func (a appShared) updateScore(score *model.Score, surveyResponse model.SurveyResponse, l *logs.Log) {
+	survey := surveyResponse.Survey
+	score.ResponseCount++
+	score.AnswerCount += uint32(survey.SurveyStats.Total)
+	pointsForResponse := float64(survey.SurveyStats.Scores[""])
+
+	if survey.SurveyStats.CorrectAnswerCount == 0 && pointsForResponse >= 0 {
+		// Handle clients that don't send correct answer count by assuming
+		// pointsForResponse == correct answer count
+		score.CorrectAnswerCount += uint32(pointsForResponse)
+	} else {
+		score.CorrectAnswerCount += uint32(survey.SurveyStats.CorrectAnswerCount)
+	}
+
+	responseTime := surveyResponse.DateCreated
+	unstructProps := survey.UnstructuredProperties
+	if unstructProps != nil {
+		externalProfileIDRaw, exists := unstructProps["external_profile_id"]
+		if exists {
+			externalProfileIDStr, isString := externalProfileIDRaw.(string)
+			if isString {
+				score.ExternalProfileID = externalProfileIDStr
+			}
+		}
+
+		localResponseTimeRaw, exists := unstructProps["local_time"]
+		if exists {
+			localResponseTimeStr, isString := localResponseTimeRaw.(string)
+			if isString {
+				localResponseTime, err := time.Parse(time.DateTime, localResponseTimeStr)
+
+				if err == nil && time.Since(localResponseTime).Abs().Hours() < 24 {
+					responseTime = localResponseTime
+				}
+			}
+		}
+	}
+
+	if utils.IsPrevOrSameDay(score.PrevSurveyResponseDate, responseTime) {
+		// Don't update streak if day is same or previous
+	} else if utils.IsNextDay(score.PrevSurveyResponseDate, responseTime) {
+		// Update streak
+		score.CurrentStreak++
+	} else {
+		// Reset streak to day 1
+		score.CurrentStreak = 1
+	}
+	score.PrevSurveyResponseDate = responseTime
+
+	if score.CurrentStreak >= model.ScoreStreakMinDays {
+		score.Score += pointsForResponse * model.ScoreStreakMultiplier
+	} else {
+		score.Score += pointsForResponse
+	}
 }
 
 // newAppShared creates new appShared

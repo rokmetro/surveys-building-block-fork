@@ -17,6 +17,7 @@ package web
 import (
 	"application/core"
 	"application/core/model"
+	Def "application/driver/web/docs/gen"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -601,6 +602,40 @@ func (h AdminAPIsHandler) initLeaderboardScores(l *logs.Log, r *http.Request, cl
 	}
 
 	return l.HTTPResponseSuccess()
+}
+
+func (h AdminAPIsHandler) getUserScore(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if len(id) <= 0 {
+		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
+	}
+
+	current, expected, err := h.app.Admin.GetUserScore(claims.OrgID, claims.AppID, id)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionUpdate, model.TypeRank, nil, err, http.StatusInternalServerError, true)
+	}
+
+	currentScore := scoreToDef(current)
+	if currentScore == nil {
+		return l.HTTPResponseErrorData(logutils.StatusMissing, "current user score", nil, nil, http.StatusInternalServerError, true)
+	}
+	expectedScore := scoreToDef(expected)
+	if expectedScore == nil {
+		return l.HTTPResponseErrorData(logutils.StatusMissing, "expected user score", nil, nil, http.StatusInternalServerError, true)
+	}
+
+	scores := Def.AdminResGetUserScore{
+		Current:  *currentScore,
+		Expected: *expectedScore,
+	}
+
+	data, err := json.Marshal(scores)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionMarshal, logutils.TypeResponseBody, nil, err, http.StatusInternalServerError, false)
+	}
+
+	return l.HTTPResponseSuccessJSON(data)
 }
 
 // NewAdminAPIsHandler creates new rest Handler instance

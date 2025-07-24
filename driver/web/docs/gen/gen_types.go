@@ -81,20 +81,20 @@ type OptionData struct {
 
 // Score defines model for Score.
 type Score struct {
-	AnswerCount            *float32                `json:"answer_count,omitempty"`
-	AppId                  *string                 `json:"app_id,omitempty"`
-	CorrectAnswerCount     *float32                `json:"correct_answer_count,omitempty"`
-	CurrentStreak          *float32                `json:"current_streak,omitempty"`
-	ExternalProfileId      *string                 `json:"external_profile_id,omitempty"`
-	Id                     *string                 `json:"id,omitempty"`
-	OrgId                  *string                 `json:"org_id,omitempty"`
-	PrevSurveyResponseDate *map[string]interface{} `json:"prev_survey_response_date,omitempty"`
-	Rank                   *float32                `json:"rank,omitempty"`
-	ResponseCount          *float32                `json:"response_count,omitempty"`
-	Score                  *float32                `json:"score,omitempty"`
-	StreakMultiplier       *float32                `json:"streak_multiplier,omitempty"`
-	SurveyType             *string                 `json:"survey_type,omitempty"`
-	UserId                 *string                 `json:"user_id,omitempty"`
+	AnswerCount            *float32 `json:"answer_count,omitempty"`
+	AppId                  *string  `json:"app_id,omitempty"`
+	CorrectAnswerCount     *float32 `json:"correct_answer_count,omitempty"`
+	CurrentStreak          *float32 `json:"current_streak,omitempty"`
+	ExternalProfileId      *string  `json:"external_profile_id,omitempty"`
+	Id                     *string  `json:"id,omitempty"`
+	OrgId                  *string  `json:"org_id,omitempty"`
+	PrevSurveyResponseDate *string  `json:"prev_survey_response_date,omitempty"`
+	Rank                   *float32 `json:"rank,omitempty"`
+	ResponseCount          *float32 `json:"response_count,omitempty"`
+	Score                  *float32 `json:"score,omitempty"`
+	StreakMultiplier       *float32 `json:"streak_multiplier,omitempty"`
+	SurveyType             *string  `json:"survey_type,omitempty"`
+	UserId                 *string  `json:"user_id,omitempty"`
 }
 
 // Survey defines model for Survey.
@@ -202,6 +202,12 @@ type SurveyStats struct {
 	Scored             *int                `json:"scored,omitempty"`
 	Scores             *map[string]float64 `json:"scores,omitempty"`
 	Total              *int                `json:"total,omitempty"`
+}
+
+// AdminResGetUserScore defines model for _admin_res_get-user-score.
+type AdminResGetUserScore struct {
+	Current  Score `json:"current"`
+	Expected Score `json:"expected"`
 }
 
 // GetApiAdminConfigsParams defines parameters for GetApiAdminConfigs.

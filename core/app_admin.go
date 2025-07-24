@@ -168,6 +168,21 @@ func (a appAdmin) InitLeaderboardScores(orgID string, appID string) error {
 	return a.app.storage.InitLeaderboardEntryScores(orgID, appID)
 }
 
+// GetUserScore gets the current score and calculates the expected score for the given user ID
+func (a appAdmin) GetUserScore(orgID string, appID string, userID string) (*model.Score, *model.Score, error) {
+	score, err := a.app.storage.GetScore(orgID, appID, userID)
+	if err != nil {
+		return nil, nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeScore, nil, err)
+	}
+
+	expected, err := a.app.shared.createScore(orgID, appID, userID, "", false)
+	if err != nil {
+		return nil, nil, errors.WrapErrorAction(logutils.ActionCreate, "expected user score", nil, err)
+	}
+
+	return score, expected, nil
+}
+
 func (a appAdmin) GetConfig(id string, claims *tokenauth.Claims) (*model.Config, error) {
 	config, err := a.app.storage.FindConfigByID(id)
 	if err != nil {

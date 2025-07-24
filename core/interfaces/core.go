@@ -95,6 +95,7 @@ type Admin interface {
 
 	// Scores
 	InitLeaderboardScores(orgID string, appID string) error
+	GetUserScore(orgID string, appID string, userID string) (*model.Score, *model.Score, error)
 }
 
 // Analytics exposes Analytics APIs for the driver adapters

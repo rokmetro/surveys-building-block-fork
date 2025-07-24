@@ -25,7 +25,7 @@ properties:
     type: number
     readOnly: true
   prev_survey_response_date:
-    type: object
+    type: string
   current_streak:
     type: number
     readOnly: true

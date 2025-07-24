@@ -604,14 +604,14 @@ func (h AdminAPIsHandler) initLeaderboardScores(l *logs.Log, r *http.Request, cl
 	return l.HTTPResponseSuccess()
 }
 
-func (h AdminAPIsHandler) getUserScore(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+func (h AdminAPIsHandler) calculateUserScore(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if len(id) <= 0 {
 		return l.HTTPResponseErrorData(logutils.StatusMissing, logutils.TypePathParam, logutils.StringArgs("id"), nil, http.StatusBadRequest, false)
 	}
 
-	current, expected, err := h.app.Admin.GetUserScore(claims.OrgID, claims.AppID, id)
+	current, expected, err := h.app.Admin.CalculateUserScore(claims.OrgID, claims.AppID, id)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionUpdate, model.TypeRank, nil, err, http.StatusInternalServerError, true)
 	}
@@ -625,7 +625,7 @@ func (h AdminAPIsHandler) getUserScore(l *logs.Log, r *http.Request, claims *tok
 		return l.HTTPResponseErrorData(logutils.StatusMissing, "expected user score", nil, nil, http.StatusInternalServerError, true)
 	}
 
-	scores := Def.AdminResGetUserScore{
+	scores := Def.AdminResCalculateScore{
 		Current:  *currentScore,
 		Expected: *expectedScore,
 	}

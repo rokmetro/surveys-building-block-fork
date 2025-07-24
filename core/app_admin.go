@@ -168,8 +168,8 @@ func (a appAdmin) InitLeaderboardScores(orgID string, appID string) error {
 	return a.app.storage.InitLeaderboardEntryScores(orgID, appID)
 }
 
-// GetUserScore gets the current score and calculates the expected score for the given user ID
-func (a appAdmin) GetUserScore(orgID string, appID string, userID string) (*model.Score, *model.Score, error) {
+// CalculateUserScore gets the current score and calculates the expected score for the given user ID
+func (a appAdmin) CalculateUserScore(orgID string, appID string, userID string) (*model.Score, *model.Score, error) {
 	score, err := a.app.storage.GetScore(orgID, appID, userID)
 	if err != nil {
 		return nil, nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeScore, nil, err)

@@ -1941,7 +1941,7 @@ paths:
           description: Unauthorized
         '500':
           description: Internal error - Failed to initialize scores
-  '/api/admin/users/{id}score':
+  '/api/admin/users/{id}/calculate-score':
     get:
       tags:
         - Admin
@@ -1967,7 +1967,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/_admin_res_get-user-score'
+                $ref: '#/components/schemas/_admin_res_calculate-score'
         '400':
           description: Bad request
         '401':
@@ -2504,7 +2504,7 @@ components:
           anyOf:
             - $ref: '#/components/schemas/EnvConfigData'
             - $ref: '#/components/schemas/NotificationsConfigData'
-    _admin_res_get-user-score:
+    _admin_res_calculate-score:
       required:
         - current
         - expected

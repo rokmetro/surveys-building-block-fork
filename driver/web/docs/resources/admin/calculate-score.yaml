@@ -23,7 +23,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: "../../schemas/apis/admin/get-user-score/Response.yaml"
+            $ref: "../../schemas/apis/admin/calculate-score/Response.yaml"
     400:
       description: Bad request
     401:

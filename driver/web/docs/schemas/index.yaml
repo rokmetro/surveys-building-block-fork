@@ -37,7 +37,7 @@ _admin_req_update-configs:
   $ref: "./apis/admin/update-configs/Request.yaml"
 
 ## admin user scores API
-_admin_res_get-user-score:
-  $ref: "./apis/admin/get-user-score/Response.yaml"
+_admin_res_calculate-score:
+  $ref: "./apis/admin/calculate-score/Response.yaml"
 
 # end ADMIN section

@@ -169,8 +169,9 @@ func (a appShared) createScore(orgID string, appID string, userID string, extern
 		SurveyType:         model.SurveyTypeFashionQuiz,
 	}
 
-	for _, response := range surveyResponses {
-		a.updateScore(&score, response, nil)
+	// Iterate over responses in reverse order (need to start with oldest first, date sorted descending by default)
+	for i := len(surveyResponses) - 1; i >= 0; i-- {
+		a.updateScore(&score, surveyResponses[i], nil)
 	}
 
 	if apply {
@@ -214,8 +215,8 @@ func (a appShared) updateScore(score *model.Score, surveyResponse model.SurveyRe
 			localResponseTimeStr, isString := localResponseTimeRaw.(string)
 			if isString {
 				localResponseTime, err := time.Parse(time.DateTime, localResponseTimeStr)
-
-				if err == nil && time.Since(localResponseTime).Abs().Hours() < 24 {
+				// Ensure that local time (from user's device clock) is current (within 24 hours of survey response date)
+				if err == nil && surveyResponse.DateCreated.Sub(localResponseTime).Abs().Hours() < 24 {
 					responseTime = localResponseTime
 				}
 			}

@@ -82,6 +82,8 @@ paths:
     $ref: "./resources/admin/surveys_responses.yaml"
   /api/admin/leaderboard/init-scores:
     $ref: "./resources/admin/leaderboard-init-scores.yaml"
+  /api/admin/users/{id}/calculate-score:
+    $ref: "./resources/admin/calculate-score.yaml"
 
   # Analytics
   /api/analytics/survey-responses:

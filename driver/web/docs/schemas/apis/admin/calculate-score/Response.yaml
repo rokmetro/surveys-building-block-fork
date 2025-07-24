@@ -1,0 +1,9 @@
+required:
+  - current
+  - expected
+type: object
+properties:
+  current:
+    $ref: "../../../scores/Score.yaml"
+  expected:
+    $ref: "../../../scores/Score.yaml"

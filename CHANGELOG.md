@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Optimize ranking counts [#24](https://github.com/rokmetro/surveys-building-block-fork/issues/24)
+- Reimplement streak for all quizzes logic [#49](https://github.com/rokmetro/surveys-building-block-fork/issues/49)
 
 ## [1.10.0] - 2024-07-30
 ### Added 

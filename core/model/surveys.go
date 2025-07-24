@@ -17,7 +17,6 @@ package model
 import (
 	"time"
 
-	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
 )
 
@@ -72,28 +71,6 @@ type Survey struct {
 	SurveyResponses         []*SurveyResponse      `json:"survey_response" bson:"survey_response"`
 	Completed               *bool                  `json:"completed" bson:"completed"`
 	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties" bson:"unstructured_properties"`
-}
-
-// IsLive returns whether the given time or the current time is after the start date and/or before the end date
-func (s *Survey) IsLive(now *time.Time) (bool, error) {
-	if s == nil {
-		return false, errors.ErrorData(logutils.StatusMissing, TypeSurvey, nil)
-	}
-	if s.StartDate == nil && s.EndDate == nil {
-		return false, errors.ErrorData(logutils.StatusInvalid, TypeSurvey, logutils.StringArgs("missing start date and end date"))
-	}
-
-	if now == nil {
-		nowVal := time.Now().UTC()
-		now = &nowVal
-	}
-	if s.EndDate == nil {
-		return now.After(*s.StartDate), nil
-	}
-	if s.StartDate == nil {
-		return now.Before(*s.EndDate), nil
-	}
-	return now.After(*s.StartDate) && now.Before(*s.EndDate), nil
 }
 
 // SurveyResponseAnonymous represents an anonymized survey response

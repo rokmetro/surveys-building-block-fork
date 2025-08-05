@@ -71,6 +71,8 @@ type Survey struct {
 	SurveyResponses         []*SurveyResponse      `json:"survey_response" bson:"survey_response"`
 	Completed               *bool                  `json:"completed" bson:"completed"`
 	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties" bson:"unstructured_properties"`
+	// Deprecated: Use UnstructuredProperties instead
+	UnstructuredPropertiesDep map[string]interface{} `json:"unstructuredproperties" bson:"unstructuredproperties"`
 }
 
 // SurveyResponseAnonymous represents an anonymized survey response

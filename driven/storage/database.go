@@ -168,7 +168,7 @@ func (d *database) applySurveysChecks(surveys *collectionWrapper) error {
 func (d *database) applySurveyResponsesChecks(surveyResponses *collectionWrapper) error {
 	d.logger.Info("apply survey responses checks.....")
 
-	err := surveyResponses.AddIndex(nil, bson.D{primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "user_id", Value: 1}}, false, nil)
+	err := surveyResponses.AddIndex(nil, bson.D{primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "user_id", Value: 1}, primitive.E{Key: "survey._id", Value: 1}}, true, nil)
 	if err != nil {
 		return err
 	}

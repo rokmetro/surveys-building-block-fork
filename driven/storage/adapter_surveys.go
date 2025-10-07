@@ -219,6 +219,33 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		bson.D{{Key: "$match", Value: surveyFilter}},
 	}
 
+	// sort and paginate before responses lookup if not handling public surveys
+	if public == nil || !*public {
+		if sortByDateCreated == nil || !*sortByDateCreated {
+			if timeFilter.StartTimeBefore != nil {
+				pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "start_date", Value: -1}}}})
+			} else if timeFilter.StartTimeAfter != nil {
+				pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "start_date", Value: 1}}}})
+			}
+
+			if timeFilter.EndTimeBefore != nil {
+				pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "end_date", Value: -1}}}})
+			} else if timeFilter.EndTimeAfter != nil {
+				pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "end_date", Value: 1}}}})
+			}
+		} else {
+			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "start_date", Value: -1}}}})
+		}
+
+		// Add pagination stages
+		if offset != nil && *offset > 0 {
+			pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
+		}
+		if limit != nil && *limit > 0 {
+			pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
+		}
+	}
+
 	userIDStr := ""
 	if userID != nil {
 		userIDStr = *userID
@@ -340,28 +367,14 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		unwindStage := bson.D{{Key: "$unwind", Value: "$sortedResults"}}
 		replaceRootStage := bson.D{{Key: "$replaceRoot", Value: bson.D{{Key: "newRoot", Value: "$sortedResults"}}}}
 		pipeline = append(pipeline, unwindStage, replaceRootStage)
-	} else if sortByDateCreated == nil || !*sortByDateCreated {
-		if timeFilter.StartTimeBefore != nil {
-			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "start_date", Value: -1}}}})
-		} else if timeFilter.StartTimeAfter != nil {
-			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "start_date", Value: 1}}}})
-		}
 
-		if timeFilter.EndTimeBefore != nil {
-			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "end_date", Value: -1}}}})
-		} else if timeFilter.EndTimeAfter != nil {
-			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "end_date", Value: 1}}}})
+		// Add pagination stages
+		if offset != nil && *offset > 0 {
+			pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
 		}
-	} else {
-		pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "start_date", Value: -1}}}})
-	}
-
-	// Add pagination stages
-	if offset != nil && *offset > 0 {
-		pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
-	}
-	if limit != nil && *limit > 0 {
-		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
+		if limit != nil && *limit > 0 {
+			pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
+		}
 	}
 
 	var surveys []model.Survey

@@ -219,8 +219,10 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		bson.D{{Key: "$match", Value: surveyFilter}},
 	}
 
-	// sort and paginate before responses lookup if not handling public surveys
-	if public == nil || !*public {
+	resultDependsOnResponses := (public != nil && *public) || completed != nil
+
+	// sort and paginate before responses lookup if not handling public surveys or checking completion
+	if !resultDependsOnResponses {
 		if sortByDateCreated == nil || !*sortByDateCreated {
 			if timeFilter.StartTimeBefore != nil {
 				pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "start_date", Value: -1}}}})
@@ -367,7 +369,9 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		unwindStage := bson.D{{Key: "$unwind", Value: "$sortedResults"}}
 		replaceRootStage := bson.D{{Key: "$replaceRoot", Value: bson.D{{Key: "newRoot", Value: "$sortedResults"}}}}
 		pipeline = append(pipeline, unwindStage, replaceRootStage)
+	}
 
+	if resultDependsOnResponses {
 		// Add pagination stages
 		if offset != nil && *offset > 0 {
 			pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})

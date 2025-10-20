@@ -143,6 +143,10 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		{Key: "app_id", Value: appID},
 	}
 
+	if timeFilter == nil {
+		timeFilter = &model.SurveyTimeFilter{}
+	}
+
 	if creatorID != nil {
 		surveyFilter = append(surveyFilter, bson.E{Key: "creator_id", Value: *creatorID})
 	}

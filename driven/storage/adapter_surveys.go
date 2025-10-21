@@ -389,9 +389,7 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		unwindStage := bson.D{{Key: "$unwind", Value: "$sortedResults"}}
 		replaceRootStage := bson.D{{Key: "$replaceRoot", Value: bson.D{{Key: "newRoot", Value: "$sortedResults"}}}}
 		pipeline = append(pipeline, unwindStage, replaceRootStage)
-	}
 
-	if sortByCompletion {
 		// Add pagination stages
 		if offset != nil && *offset > 0 {
 			pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})

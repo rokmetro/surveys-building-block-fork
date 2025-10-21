@@ -223,9 +223,10 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		bson.D{{Key: "$match", Value: surveyFilter}},
 	}
 
-	sortByCompletion := (public != nil && *public)
-	// sort and paginate before responses lookup if not sorting public surveys by completion status
-	if !sortByCompletion {
+	sortByCompleted := (public != nil && *public)
+	filterByCompleted := (completed != nil)
+	// sort before responses lookup if not sorting public surveys by completion status
+	if !sortByCompleted {
 		// Consolidate to a single $sort stage
 		var sortFields bson.D
 		if sortByDateCreated == nil || !*sortByDateCreated {
@@ -247,12 +248,14 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: sortFields}})
 		}
 
-		// Add pagination stages
-		if offset != nil && *offset > 0 {
-			pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
-		}
-		if limit != nil && *limit > 0 {
-			pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
+		// paginate if not filtering by completion status
+		if !filterByCompleted {
+			if offset != nil && *offset > 0 {
+				pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
+			}
+			if limit != nil && *limit > 0 {
+				pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
+			}
 		}
 	}
 
@@ -263,8 +266,7 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 
 	// Conditionally include lookup
 	keepResponses := includeResponses == nil || *includeResponses
-	filterByCompleted := (completed != nil)
-	needLookup := userIDStr != "" && (sortByCompletion || keepResponses || filterByCompleted)
+	needLookup := userIDStr != "" && (sortByCompleted || filterByCompleted || keepResponses)
 	if needLookup {
 		// Build lookup pipeline and add $limit: 1 only when includeResponses is false
 		responseLookupPipeline := bson.A{
@@ -338,7 +340,7 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 	}
 
 	// Sort survey results. Branch based on whether public sorting is desired.
-	if sortByCompletion {
+	if sortByCompleted {
 		// Facet the pipeline into three sections:
 		//   - incompleteSurveys: not completed and have a non-null endDate; sorted by endDate ASC.
 		//   - noEndDateSurveys: not completed and endDate is null; sorted by startDate DESC or dateCreated DESC.
@@ -389,7 +391,9 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		unwindStage := bson.D{{Key: "$unwind", Value: "$sortedResults"}}
 		replaceRootStage := bson.D{{Key: "$replaceRoot", Value: bson.D{{Key: "newRoot", Value: "$sortedResults"}}}}
 		pipeline = append(pipeline, unwindStage, replaceRootStage)
+	}
 
+	if sortByCompleted || filterByCompleted {
 		// Add pagination stages
 		if offset != nil && *offset > 0 {
 			pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})

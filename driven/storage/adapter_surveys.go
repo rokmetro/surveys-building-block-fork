@@ -263,7 +263,8 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 
 	// Conditionally include lookup
 	keepResponses := includeResponses == nil || *includeResponses
-	needLookup := userIDStr != "" && (sortByCompletion || keepResponses || completed != nil)
+	filterByCompleted := (completed != nil)
+	needLookup := userIDStr != "" && (sortByCompletion || keepResponses || filterByCompleted)
 	if needLookup {
 		// Build lookup pipeline and add $limit: 1 only when includeResponses is false
 		responseLookupPipeline := bson.A{
@@ -329,7 +330,7 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 	}
 
 	// Apply completed filter if specified
-	if completed != nil {
+	if filterByCompleted {
 		matchCriteria := bson.D{
 			{Key: "completed", Value: *completed},
 		}
@@ -337,7 +338,7 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 	}
 
 	// Sort survey results. Branch based on whether public sorting is desired.
-	if public != nil && *public {
+	if sortByCompletion {
 		// Facet the pipeline into three sections:
 		//   - incompleteSurveys: not completed and have a non-null endDate; sorted by endDate ASC.
 		//   - noEndDateSurveys: not completed and endDate is null; sorted by startDate DESC or dateCreated DESC.

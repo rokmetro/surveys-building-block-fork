@@ -223,10 +223,9 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		bson.D{{Key: "$match", Value: surveyFilter}},
 	}
 
-	resultDependsOnResponses := (public != nil && *public) || completed != nil
-
-	// sort and paginate before responses lookup if not handling public surveys or checking completion
-	if !resultDependsOnResponses {
+	sortByCompletion := (public != nil && *public)
+	// sort and paginate before responses lookup if not sorting public surveys by completion status
+	if !sortByCompletion {
 		// Consolidate to a single $sort stage
 		var sortFields bson.D
 		if sortByDateCreated == nil || !*sortByDateCreated {
@@ -262,9 +261,9 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		userIDStr = *userID
 	}
 
-	// Conditionally include lookup and completed derivation only when needed
-	keepResponses := includeResponses != nil && *includeResponses
-	needLookup := userIDStr != "" && (resultDependsOnResponses || keepResponses)
+	// Conditionally include lookup
+	keepResponses := includeResponses == nil || *includeResponses
+	needLookup := userIDStr != "" && (sortByCompletion || keepResponses || completed != nil)
 	if needLookup {
 		// Build lookup pipeline and add $limit: 1 only when includeResponses is false
 		responseLookupPipeline := bson.A{
@@ -391,7 +390,7 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		pipeline = append(pipeline, unwindStage, replaceRootStage)
 	}
 
-	if resultDependsOnResponses {
+	if sortByCompletion {
 		// Add pagination stages
 		if offset != nil && *offset > 0 {
 			pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})

@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Improve efficiency of get surveys database operations
 - Support Quiz Archive Query [#35] (https://github.com/rokmetro/surveys-building-block-fork/issues/35)
 - Support Unstructured Properties in Surveys [#33] (https://github.com/rokmetro/surveys-building-block-fork/issues/33)
 - Quiz Leaderboard Data Migration [#11](https://github.com/rokmetro/surveys-building-block-fork/issues/11)

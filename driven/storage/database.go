@@ -151,6 +151,11 @@ func (d *database) applySurveysChecks(surveys *collectionWrapper) error {
 		return err
 	}
 
+	err = surveys.AddIndex(nil, bson.D{primitive.E{Key: "org_id", Value: 1}, primitive.E{Key: "app_id", Value: 1}, primitive.E{Key: "start_date", Value: 1}, primitive.E{Key: "end_date", Value: 1}}, false, nil)
+	if err != nil {
+		return err
+	}
+
 	err = surveys.AddIndex(nil, bson.D{primitive.E{Key: "calendar_event_id", Value: 1}}, true, bson.D{primitive.E{Key: "calendar_event_id", Value: bson.M{"$gt": ""}}})
 	if err != nil {
 		return err

@@ -143,6 +143,10 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		{Key: "app_id", Value: appID},
 	}
 
+	if timeFilter == nil {
+		timeFilter = &model.SurveyTimeFilter{}
+	}
+
 	if creatorID != nil {
 		surveyFilter = append(surveyFilter, bson.E{Key: "creator_id", Value: *creatorID})
 	}
@@ -219,69 +223,116 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		bson.D{{Key: "$match", Value: surveyFilter}},
 	}
 
+	sortByCompleted := (public != nil && *public)
+	filterByCompleted := (completed != nil)
+	// sort before responses lookup if not sorting public surveys by completion status
+	if !sortByCompleted {
+		// Consolidate to a single $sort stage
+		var sortFields bson.D
+		if sortByDateCreated == nil || !*sortByDateCreated {
+			if timeFilter.StartTimeBefore != nil {
+				sortFields = append(sortFields, bson.E{Key: "start_date", Value: -1})
+			} else if timeFilter.StartTimeAfter != nil {
+				sortFields = append(sortFields, bson.E{Key: "start_date", Value: 1})
+			}
+
+			if timeFilter.EndTimeBefore != nil {
+				sortFields = append(sortFields, bson.E{Key: "end_date", Value: -1})
+			} else if timeFilter.EndTimeAfter != nil {
+				sortFields = append(sortFields, bson.E{Key: "end_date", Value: 1})
+			}
+		} else {
+			sortFields = append(sortFields, bson.E{Key: "start_date", Value: -1})
+		}
+		if len(sortFields) > 0 {
+			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: sortFields}})
+		}
+
+		// paginate if not filtering by completion status
+		if !filterByCompleted {
+			if offset != nil && *offset > 0 {
+				pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
+			}
+			if limit != nil && *limit > 0 {
+				pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
+			}
+		}
+	}
+
 	userIDStr := ""
 	if userID != nil {
 		userIDStr = *userID
 	}
 
-	// Lookup survey_responses for each survey matching the survey_id and user_id.
-	lookupStage := bson.D{
-		{Key: "$lookup", Value: bson.D{
-			{Key: "from", Value: "survey_responses"},
-			// `surveyIdVar` holds the value of the survey's _id
-			{Key: "let", Value: bson.D{{Key: "surveyIdVar", Value: "$_id"}}},
-			{Key: "pipeline", Value: bson.A{
-				bson.D{{Key: "$match", Value: bson.M{
-					"$expr": bson.M{
-						"$and": bson.A{
-							bson.M{"$eq": bson.A{"$survey._id", "$$surveyIdVar"}},
-							bson.M{"$eq": bson.A{"$org_id", orgID}},
-							bson.M{"$eq": bson.A{"$app_id", appID}},
-							bson.M{"$eq": bson.A{"$user_id", userIDStr}},
-						},
+	// Conditionally include lookup
+	keepResponses := includeResponses == nil || *includeResponses
+	needLookup := userIDStr != "" && (sortByCompleted || filterByCompleted || keepResponses)
+	if needLookup {
+		// Build lookup pipeline and add $limit: 1 only when includeResponses is false
+		responseLookupPipeline := bson.A{
+			bson.D{{Key: "$match", Value: bson.M{
+				"$expr": bson.M{
+					"$and": bson.A{
+						bson.M{"$eq": bson.A{"$survey._id", "$$surveyIdVar"}},
+						bson.M{"$eq": bson.A{"$org_id", orgID}},
+						bson.M{"$eq": bson.A{"$app_id", appID}},
+						bson.M{"$eq": bson.A{"$user_id", userIDStr}},
 					},
-				}}},
-				bson.D{{Key: "$project", Value: bson.D{
-					{Key: "_id", Value: 1},
-					{Key: "user_id", Value: 1},
-					{Key: "date_created", Value: 1},
-					{Key: "survey", Value: 1},
-				}}},
-			}},
-			{Key: "as", Value: "survey_responses"},
-		}},
-	}
-	pipeline = append(pipeline, lookupStage)
+				},
+			}}},
+		}
+		if !keepResponses {
+			responseLookupPipeline = append(responseLookupPipeline, bson.D{{Key: "$limit", Value: 1}})
+		}
+		responseLookupPipeline = append(responseLookupPipeline, bson.D{{Key: "$project", Value: bson.D{
+			{Key: "_id", Value: 1},
+			{Key: "user_id", Value: 1},
+			{Key: "date_created", Value: 1},
+			{Key: "survey", Value: 1},
+		}}})
 
-	// Compute a boolean field "Completed" based on whether a response exists
-	addCompletedFieldStage := bson.D{
-		{Key: "$addFields", Value: bson.D{
-			{Key: "completed", Value: bson.D{
-				{Key: "$cond", Value: bson.A{
-					bson.D{{Key: "$gt", Value: bson.A{
-						bson.D{{Key: "$size", Value: "$survey_responses"}},
-						0,
-					}}},
-					true,
-					false,
-				}},
-			}},
-		}},
-	}
-	pipeline = append(pipeline, addCompletedFieldStage)
-
-	// Optionally remove the joined survey responses from the output.
-	if includeResponses != nil && (!*includeResponses) {
-		projectStage := bson.D{
-			{Key: "$project", Value: bson.D{
-				{Key: "survey_responses", Value: 0},
+		// Lookup survey_responses for each survey matching the survey_id and user_id.
+		lookupStage := bson.D{
+			{Key: "$lookup", Value: bson.D{
+				{Key: "from", Value: "survey_responses"},
+				// `surveyIdVar` holds the value of the survey's _id
+				{Key: "let", Value: bson.D{{Key: "surveyIdVar", Value: "$_id"}}},
+				{Key: "pipeline", Value: responseLookupPipeline},
+				{Key: "as", Value: "survey_responses"},
 			}},
 		}
-		pipeline = append(pipeline, projectStage)
+		pipeline = append(pipeline, lookupStage)
+
+		// Compute a boolean field "Completed" based on whether a response exists
+		addCompletedFieldStage := bson.D{
+			{Key: "$addFields", Value: bson.D{
+				{Key: "completed", Value: bson.D{
+					{Key: "$cond", Value: bson.A{
+						bson.D{{Key: "$gt", Value: bson.A{
+							bson.D{{Key: "$size", Value: "$survey_responses"}},
+							0,
+						}}},
+						true,
+						false,
+					}},
+				}},
+			}},
+		}
+		pipeline = append(pipeline, addCompletedFieldStage)
+
+		// Optionally remove the joined survey responses from the output.
+		if !keepResponses {
+			projectStage := bson.D{
+				{Key: "$project", Value: bson.D{
+					{Key: "survey_responses", Value: 0},
+				}},
+			}
+			pipeline = append(pipeline, projectStage)
+		}
 	}
 
 	// Apply completed filter if specified
-	if completed != nil {
+	if filterByCompleted {
 		matchCriteria := bson.D{
 			{Key: "completed", Value: *completed},
 		}
@@ -289,7 +340,7 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 	}
 
 	// Sort survey results. Branch based on whether public sorting is desired.
-	if public != nil && *public {
+	if sortByCompleted {
 		// Facet the pipeline into three sections:
 		//   - incompleteSurveys: not completed and have a non-null endDate; sorted by endDate ASC.
 		//   - noEndDateSurveys: not completed and endDate is null; sorted by startDate DESC or dateCreated DESC.
@@ -340,28 +391,16 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 		unwindStage := bson.D{{Key: "$unwind", Value: "$sortedResults"}}
 		replaceRootStage := bson.D{{Key: "$replaceRoot", Value: bson.D{{Key: "newRoot", Value: "$sortedResults"}}}}
 		pipeline = append(pipeline, unwindStage, replaceRootStage)
-	} else if sortByDateCreated == nil || !*sortByDateCreated {
-		if timeFilter.StartTimeBefore != nil {
-			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "start_date", Value: -1}}}})
-		} else if timeFilter.StartTimeAfter != nil {
-			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "start_date", Value: 1}}}})
-		}
-
-		if timeFilter.EndTimeBefore != nil {
-			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "end_date", Value: -1}}}})
-		} else if timeFilter.EndTimeAfter != nil {
-			pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "end_date", Value: 1}}}})
-		}
-	} else {
-		pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{{Key: "start_date", Value: -1}}}})
 	}
 
-	// Add pagination stages
-	if offset != nil && *offset > 0 {
-		pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
-	}
-	if limit != nil && *limit > 0 {
-		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
+	if sortByCompleted || filterByCompleted {
+		// Add pagination stages
+		if offset != nil && *offset > 0 {
+			pipeline = append(pipeline, bson.D{{Key: "$skip", Value: *offset}})
+		}
+		if limit != nil && *limit > 0 {
+			pipeline = append(pipeline, bson.D{{Key: "$limit", Value: *limit}})
+		}
 	}
 
 	var surveys []model.Survey

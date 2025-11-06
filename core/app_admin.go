@@ -290,6 +290,11 @@ func (a appAdmin) DeleteConfig(id string, claims *tokenauth.Claims) error {
 	return nil
 }
 
+// MigrateScoreExternalUserIDs triggers the migration to populate external_user_id fields
+func (a appAdmin) MigrateScoreExternalUserIDs(orgID string, appID string, batchSize int) error {
+	return a.app.MigrateScoreExternalUserIDs(orgID, appID, batchSize)
+}
+
 // newAppAdmin creates new appAdmin
 func newAppAdmin(app *Application) appAdmin {
 	return appAdmin{app: app}

@@ -349,6 +349,10 @@ func (a appClient) GetScore(orgID string, appID string, userID string, externalP
 	}
 
 	score.StreakMultiplier = model.ScoreStreakMultiplier
+
+	// NEW: Prepare score for response based on feature flag
+	a.app.PrepareScoreForResponse(score)
+
 	return score, err
 }
 

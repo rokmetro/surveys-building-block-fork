@@ -103,7 +103,7 @@ func NewApplication(version string, build string, storage interfaces.Storage, no
 	deleteDataLogic := deleteDataLogic{logger: *logger, core: coreBB, serviceID: serviceID, storage: storage}
 
 	application := Application{version: version, build: build, storage: storage, notifications: notifications,
-		calendar: calendar, deleteDataLogic: deleteDataLogic, logger: logger}
+		calendar: calendar, corebb: coreBB, deleteDataLogic: deleteDataLogic, logger: logger}
 
 	streakNotificationsTimerDone := make(chan bool)
 	streakNotifications := streakNotifications{application: &application, logger: logger, storage: storage, notifications: notifications, streakNotificationsTimerDone: streakNotificationsTimerDone}

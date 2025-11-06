@@ -342,6 +342,37 @@ func filterArgs(filter bson.M) *logutils.FieldArgs {
 	return &args
 }
 
+// FindScores finds scores based on filter
+func (a *Adapter) FindScores(filter interface{}, limit *int, offset *int) ([]model.Score, error) {
+	ctx := context.Background()
+	if a.context != nil {
+		ctx = a.context
+	}
+
+	var scores []model.Score
+	err := a.db.scores.Find(ctx, filter, &scores, nil)
+	if err != nil {
+		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeScore, filterArgs(filter.(bson.M)), err)
+	}
+
+	return scores, nil
+}
+
+// UpdateScoreByFilter updates a score based on filter
+func (a *Adapter) UpdateScoreByFilter(filter interface{}, update interface{}) error {
+	ctx := context.Background()
+	if a.context != nil {
+		ctx = a.context
+	}
+
+	_, err := a.db.scores.UpdateOne(ctx, filter, update, nil)
+	if err != nil {
+		return errors.WrapErrorAction(logutils.ActionUpdate, model.TypeScore, filterArgs(filter.(bson.M)), err)
+	}
+
+	return nil
+}
+
 // NewStorageAdapter creates a new storage adapter instance
 func NewStorageAdapter(mongoDBAuth string, mongoDBName string, mongoTimeout string, logger *logs.Logger) *Adapter {
 	timeout, err := strconv.Atoi(mongoTimeout)

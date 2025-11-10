@@ -5,19 +5,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## [1.13.0] - 2025-05-07
-### Changed
-- Support Google Trust Services as CA [#90](https://github.com/rokwire/surveys-building-block/issues/90)
-
-## [1.12.0] - 2025-01-30
-### Changed
-- Fix consolidate the information, and make it accessible with a single API call [#86](https://github.com/rokwire/surveys-building-block/issues/86)
-
-## [1.11.1] - 2024-11-26
-### Fixed
-- User survey responses not accessible [#78](https://github.com/rokwire/surveys-building-block/issues/78)
-
-## [1.11.0] - 2024-10-07
 ### Added
 - Improve efficiency of get surveys database operations
 - Support Quiz Archive Query [#35] (https://github.com/rokmetro/surveys-building-block-fork/issues/35)

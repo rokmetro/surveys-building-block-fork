@@ -198,32 +198,3 @@ func sortIfpublicIsTrue(list []model.SurveysResponseData, public *bool) []model.
 
 	return result
 }
-
-func surveyTimeFilter(item *model.SurveyTimeFilterRequest) *model.SurveyTimeFilter {
-
-	filter := model.SurveyTimeFilter{}
-
-	if item.StartTimeBefore != nil {
-		beforeStartTime, _ := time.Parse(time.RFC3339, *item.StartTimeBefore)
-		filter.StartTimeBefore = &beforeStartTime
-	}
-	if item.StartTimeAfter != nil {
-		afterStartTime, _ := time.Parse(time.RFC3339, *item.StartTimeAfter)
-		filter.StartTimeAfter = &afterStartTime
-	}
-
-	if item.EndTimeBefore != nil {
-		beforeEndTime, _ := time.Parse(time.RFC3339, *item.EndTimeBefore)
-		filter.EndTimeBefore = &beforeEndTime
-	}
-	if item.EndTimeAfter != nil {
-		afterEndTime, _ := time.Parse(time.RFC3339, *item.EndTimeAfter)
-		filter.EndTimeAfter = &afterEndTime
-	}
-
-	return &model.SurveyTimeFilter{
-		StartTimeAfter:  filter.StartTimeAfter,
-		StartTimeBefore: filter.StartTimeBefore,
-		EndTimeAfter:    filter.EndTimeAfter,
-		EndTimeBefore:   filter.EndTimeBefore}
-}

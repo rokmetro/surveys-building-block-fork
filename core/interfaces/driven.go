@@ -52,8 +52,6 @@ type Storage interface {
 	DeleteSurveyResponses(orgID string, appID string, userID string, surveyIDs []string, surveyTypes []string, startDate *time.Time, endDate *time.Time) error
 	DeleteSurveyResponsesWithIDs(orgID string, appID string, accountsIDs []string) error
 
-	GetSurveysAndSurveyResponses(orgID string, appID string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, public *bool, archived *bool, limit *int, offset *int, userID *string, filter *model.SurveyTimeFilter) ([]model.Survey, []model.SurveyResponse, error)
-
 	GetAlertContacts(orgID string, appID string) ([]model.AlertContact, error)
 	GetAlertContact(id string, orgID string, appID string) (*model.AlertContact, error)
 	GetAlertContactsByKey(key string, orgID string, appID string) ([]model.AlertContact, error)
@@ -86,6 +84,9 @@ type Storage interface {
 	DeleteLeaderboardEntries(leaderboardID string, orgID string, appID string, leavingUserIDs []string) error
 	DeleteAllLeaderboardEntries(leaderboardID string, orgID string, appID string) error
 	InitLeaderboardEntryScores(orgID string, appID string) error
+
+	FindScores(filter interface{}, limit *int, offset *int) ([]model.Score, error)
+	UpdateScoreByFilter(filter interface{}, update interface{}) error
 }
 
 // StorageListener represents storage listener

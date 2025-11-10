@@ -86,6 +86,7 @@ func (a *Adapter) LoadDeletedMemberships() ([]model.DeletedUserData, error) {
 	return deletedMemberships, nil
 }
 
+// RetrieveCoreUserAccountByCriteria retrieves Core user accounts by criteria
 func (a *Adapter) RetrieveCoreUserAccountByCriteria(accountCriteria map[string]interface{}, appID *string, orgID *string) ([]model.CoreAccount, error) {
 	if a.serviceAccountManager == nil {
 		log.Println("RetrieveCoreUserAccountByCriteria: service account manager is nil")

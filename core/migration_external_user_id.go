@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"log"
 
+	"application/driven/storage"
+
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -84,15 +86,7 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 			}
 
 			// Look up the AmgUUID from Core BB using the Mastodon ID
-			// Core BB uses identifiers array with code/identifier pairs
-			accountCriteria := map[string]interface{}{
-				"identifiers": map[string]interface{}{
-					"$elemMatch": map[string]interface{}{
-						"code":       "mastodon_id",
-						"identifier": score.ExternalProfileID,
-					},
-				},
-			}
+			accountCriteria := storage.BuildCoreAccountCriteriaByMastodonID(score.ExternalProfileID)
 
 			coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria(accountCriteria, &appID, &orgID)
 			if err != nil {

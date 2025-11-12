@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // Storage is used by core to storage data - DB storage adapter, file storage adapter etc
@@ -85,8 +86,10 @@ type Storage interface {
 	DeleteAllLeaderboardEntries(leaderboardID string, orgID string, appID string) error
 	InitLeaderboardEntryScores(orgID string, appID string) error
 
-	FindScores(filter interface{}, limit *int, offset *int) ([]model.Score, error)
-	UpdateScoreByFilter(filter interface{}, update interface{}) error
+	// FindScores finds scores using MongoDB query filter
+	FindScores(filter bson.M, limit *int, offset *int) ([]model.Score, error)
+	// UpdateScoreByFilter updates a score using MongoDB query filter and update document
+	UpdateScoreByFilter(filter bson.M, update bson.M) error
 }
 
 // StorageListener represents storage listener

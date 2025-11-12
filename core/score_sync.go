@@ -16,6 +16,7 @@ package core
 
 import (
 	"application/core/model"
+	"application/driven/storage"
 	"log"
 )
 
@@ -35,14 +36,7 @@ func (app *Application) SyncAmgUUIDForScore(score *model.Score, externalIDs map[
 	}
 
 	// Look up the AmgUUID from Core BB
-	accountCriteria := map[string]interface{}{
-		"identifiers": map[string]interface{}{
-			"$elemMatch": map[string]interface{}{
-				"code":       "mastodon_id",
-				"identifier": mastodonID,
-			},
-		},
-	}
+	accountCriteria := storage.BuildCoreAccountCriteriaByMastodonID(mastodonID)
 
 	coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria(accountCriteria, &score.AppID, &score.OrgID)
 	if err != nil {

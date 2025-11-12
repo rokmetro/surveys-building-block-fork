@@ -10,6 +10,8 @@ import (
 
 	model "application/core/model"
 
+	bson "go.mongodb.org/mongo-driver/bson"
+
 	time "time"
 )
 
@@ -480,7 +482,7 @@ func (_m *Storage) FindConfigs(configType *string) ([]model.Config, error) {
 }
 
 // FindScores provides a mock function with given fields: filter, limit, offset
-func (_m *Storage) FindScores(filter interface{}, limit *int, offset *int) ([]model.Score, error) {
+func (_m *Storage) FindScores(filter bson.M, limit *int, offset *int) ([]model.Score, error) {
 	ret := _m.Called(filter, limit, offset)
 
 	if len(ret) == 0 {
@@ -489,10 +491,10 @@ func (_m *Storage) FindScores(filter interface{}, limit *int, offset *int) ([]mo
 
 	var r0 []model.Score
 	var r1 error
-	if rf, ok := ret.Get(0).(func(interface{}, *int, *int) ([]model.Score, error)); ok {
+	if rf, ok := ret.Get(0).(func(bson.M, *int, *int) ([]model.Score, error)); ok {
 		return rf(filter, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(interface{}, *int, *int) []model.Score); ok {
+	if rf, ok := ret.Get(0).(func(bson.M, *int, *int) []model.Score); ok {
 		r0 = rf(filter, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
@@ -500,7 +502,7 @@ func (_m *Storage) FindScores(filter interface{}, limit *int, offset *int) ([]mo
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(interface{}, *int, *int) error); ok {
+	if rf, ok := ret.Get(1).(func(bson.M, *int, *int) error); ok {
 		r1 = rf(filter, limit, offset)
 	} else {
 		r1 = ret.Error(1)
@@ -1174,7 +1176,7 @@ func (_m *Storage) UpdateScore(score model.Score) error {
 }
 
 // UpdateScoreByFilter provides a mock function with given fields: filter, update
-func (_m *Storage) UpdateScoreByFilter(filter interface{}, update interface{}) error {
+func (_m *Storage) UpdateScoreByFilter(filter bson.M, update bson.M) error {
 	ret := _m.Called(filter, update)
 
 	if len(ret) == 0 {
@@ -1182,7 +1184,7 @@ func (_m *Storage) UpdateScoreByFilter(filter interface{}, update interface{}) e
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(interface{}, interface{}) error); ok {
+	if rf, ok := ret.Get(0).(func(bson.M, bson.M) error); ok {
 		r0 = rf(filter, update)
 	} else {
 		r0 = ret.Error(0)

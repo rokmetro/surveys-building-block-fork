@@ -343,24 +343,37 @@ func filterArgs(filter bson.M) *logutils.FieldArgs {
 }
 
 // FindScores finds scores based on filter
-func (a *Adapter) FindScores(filter interface{}, limit *int, offset *int) ([]model.Score, error) {
+func (a *Adapter) FindScores(filter bson.M, limit *int, offset *int) ([]model.Score, error) {
 	var scores []model.Score
 	err := a.db.scores.Find(a.context, filter, &scores, nil)
 	if err != nil {
-		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeScore, filterArgs(filter.(bson.M)), err)
+		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeScore, filterArgs(filter), err)
 	}
 
 	return scores, nil
 }
 
 // UpdateScoreByFilter updates a score based on filter
-func (a *Adapter) UpdateScoreByFilter(filter interface{}, update interface{}) error {
+func (a *Adapter) UpdateScoreByFilter(filter bson.M, update bson.M) error {
 	_, err := a.db.scores.UpdateOne(a.context, filter, update, nil)
 	if err != nil {
-		return errors.WrapErrorAction(logutils.ActionUpdate, model.TypeScore, filterArgs(filter.(bson.M)), err)
+		return errors.WrapErrorAction(logutils.ActionUpdate, model.TypeScore, filterArgs(filter), err)
 	}
 
 	return nil
+}
+
+// BuildCoreAccountCriteriaByMastodonID builds MongoDB query criteria for finding Core BB accounts by mastodon_id
+// This returns a map that can be used with RetrieveCoreUserAccountByCriteria
+func BuildCoreAccountCriteriaByMastodonID(mastodonID string) map[string]interface{} {
+	return map[string]interface{}{
+		"identifiers": map[string]interface{}{
+			"$elemMatch": map[string]interface{}{
+				"code":       "mastodon_id",
+				"identifier": mastodonID,
+			},
+		},
+	}
 }
 
 // NewStorageAdapter creates a new storage adapter instance

@@ -17,8 +17,6 @@ package core
 import (
 	"application/core/model"
 	"log"
-	"os"
-	"strconv"
 )
 
 // SyncAmgUUIDForScore fetches the AmgUUID from Core BB and populates the external_user_id field
@@ -84,18 +82,7 @@ func (app *Application) PrepareScoresForResponse(scores []model.Score) {
 	}
 }
 
-// shouldUseExternalUserID reads the feature flag from environment variables
+// shouldUseExternalUserID returns the feature flag value
 func (app *Application) shouldUseExternalUserID() bool {
-	useExternalUserIDStr := os.Getenv("USE_EXTERNAL_USER_ID")
-	if useExternalUserIDStr == "" {
-		return false // Default to false
-	}
-
-	useExternalUserID, err := strconv.ParseBool(useExternalUserIDStr)
-	if err != nil {
-		log.Printf("Warning: invalid USE_EXTERNAL_USER_ID value '%s', defaulting to false", useExternalUserIDStr)
-		return false
-	}
-
-	return useExternalUserID
+	return app.useExternalUserID
 }

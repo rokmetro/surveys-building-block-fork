@@ -22,6 +22,7 @@ import (
 	"application/driven/notifications"
 	"application/driven/storage"
 	"application/driver/web"
+	"strconv"
 	"strings"
 
 	"github.com/rokwire/rokwire-building-block-sdk-go/services/core/auth/keys"
@@ -147,9 +148,21 @@ func main() {
 	//core adapter
 	coreAdapter := corebb.NewCoreAdapter(coreBBBaseURL, serviceAccountManager)
 
+	// Parse USE_EXTERNAL_USER_ID environment variable
+	useExternalUserIDStr := envLoader.GetAndLogEnvVar("USE_EXTERNAL_USER_ID", false, false)
+	useExternalUserID := false
+	if useExternalUserIDStr != "" {
+		var err error
+		useExternalUserID, err = strconv.ParseBool(useExternalUserIDStr)
+		if err != nil {
+			logger.Warnf("Invalid USE_EXTERNAL_USER_ID value '%s', defaulting to false", useExternalUserIDStr)
+			useExternalUserID = false
+		}
+	}
+
 	// Application
 	application := core.NewApplication(Version, Build, storageAdapter, notificationsAdapter,
-		calendarAdapter, coreAdapter, serviceID, logger)
+		calendarAdapter, coreAdapter, serviceID, logger, useExternalUserID)
 	application.Start()
 
 	// read CORS parameters from stored env config

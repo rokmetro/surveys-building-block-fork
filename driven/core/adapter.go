@@ -102,19 +102,7 @@ func (a *Adapter) RetrieveCoreUserAccountByCriteria(accountCriteria map[string]i
 		orgIDVal = *orgID
 	}
 
-	url := fmt.Sprintf("%s/bbs/accounts", a.coreURL)
-	queryString := ""
-	if appID != nil {
-		queryString += "?app_id=" + appIDVal
-	}
-	if orgID != nil {
-		if queryString == "" {
-			queryString += "?"
-		} else {
-			queryString += "&"
-		}
-		queryString += "org_id=" + orgIDVal
-	}
+	url := fmt.Sprintf("%s/bbs/accounts?app_id=%s&org_id=%s", a.coreURL, appIDVal, orgIDVal)
 
 	bodyBytes, err := json.Marshal(accountCriteria)
 	if err != nil {
@@ -122,7 +110,7 @@ func (a *Adapter) RetrieveCoreUserAccountByCriteria(accountCriteria map[string]i
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", url+queryString, bytes.NewReader(bodyBytes))
+	req, err := http.NewRequest("POST", url, bytes.NewReader(bodyBytes))
 	if err != nil {
 		log.Printf("RetrieveCoreUserAccountByCriteria: error creating request - %s", err)
 		return nil, err

@@ -175,7 +175,7 @@ func (a appAdmin) CalculateUserScore(orgID string, appID string, userID string) 
 		return nil, nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeScore, nil, err)
 	}
 
-	expected, err := a.app.shared.createScore(orgID, appID, userID, "", false)
+	expected, err := a.app.shared.createScore(orgID, appID, userID, "", false, nil)
 	if err != nil {
 		return nil, nil, errors.WrapErrorAction(logutils.ActionCreate, "expected user score", nil, err)
 	}

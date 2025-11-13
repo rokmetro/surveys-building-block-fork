@@ -32,7 +32,7 @@ type Shared interface {
 	isEventAdmin(orgID string, appID string, eventID string, userID string, externalIDs map[string]string) (bool, error)
 	hasAttendedEvent(orgID string, appID string, eventID string, userID string, externalIDs map[string]string) (bool, error)
 
-	createScore(orgID string, appID string, userID string, externalProfileID string, apply bool) (*model.Score, error)
+	createScore(orgID string, appID string, userID string, externalProfileID string, apply bool, externalIDs map[string]string) (*model.Score, error)
 	updateScore(score *model.Score, surveyResponse model.SurveyResponse, l *logs.Log)
 }
 

@@ -149,7 +149,7 @@ func (a appShared) hasAttendedEvent(orgID string, appID string, eventID string, 
 }
 
 // createScore Creates a score object by iterating over all previous survey responses
-func (a appShared) createScore(orgID string, appID string, userID string, externalProfileID string, apply bool) (*model.Score, error) {
+func (a appShared) createScore(orgID string, appID string, userID string, externalProfileID string, apply bool, externalIDs map[string]string) (*model.Score, error) {
 	surveyResponses, err := a.app.storage.GetSurveyResponses(&orgID, &appID, &userID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
 	if err != nil {
 		return nil, err
@@ -173,6 +173,11 @@ func (a appShared) createScore(orgID string, appID string, userID string, extern
 	for i := len(surveyResponses) - 1; i >= 0; i-- {
 		a.updateScore(&score, surveyResponses[i], nil)
 	}
+
+	// Sync AmgUUID from Core BB before saving the score
+	// This populates the external_user_id field if we have a mastodon_id
+	// Note: SyncAmgUUIDForScore handles errors gracefully (returns nil on errors, logs internally)
+	_ = a.app.SyncAmgUUIDForScore(&score, externalIDs)
 
 	if apply {
 		err = a.app.storage.CreateScore(score)

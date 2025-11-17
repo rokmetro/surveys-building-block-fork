@@ -134,9 +134,5 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 		return fmt.Errorf("migration failed: no scores were successfully migrated (%d errors)", errorCount)
 	}
 
-	if errorCount > total/2 {
-		log.Printf("WARNING: High error rate - %d/%d scores failed to migrate", errorCount, total)
-	}
-
 	return nil
 }

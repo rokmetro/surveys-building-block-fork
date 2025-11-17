@@ -61,17 +61,16 @@ func (app *Application) SyncAmgUUIDForScore(score *model.Score, externalIDs map[
 	return nil
 }
 
-// PrepareScoreForResponse modifies a score for API response based on feature flag
-func (app *Application) PrepareScoreForResponse(score *model.Score) {
-	if app.useExternalUserID && score.ExternalUserID != "" {
-		// When flag is enabled and we have an AmgUUID, use it in the external_profile_id field
-		score.ExternalProfileID = score.ExternalUserID
-	}
-}
-
-// PrepareScoresForResponse prepares multiple scores for API response
+// PrepareScoresForResponse prepares multiple scores for API response based on feature flag
 func (app *Application) PrepareScoresForResponse(scores []model.Score) {
+	if !app.shouldUseExternalUserID() {
+		return
+	}
+
 	for i := range scores {
-		app.PrepareScoreForResponse(&scores[i])
+		if scores[i].ExternalUserID != "" {
+			// When flag is enabled and we have an AmgUUID, use it in the external_profile_id field
+			scores[i].ExternalProfileID = scores[i].ExternalUserID
+		}
 	}
 }

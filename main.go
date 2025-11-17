@@ -156,7 +156,6 @@ func main() {
 		useExternalUserID, err = strconv.ParseBool(useExternalUserIDStr)
 		if err != nil {
 			logger.Warnf("Invalid USE_EXTERNAL_USER_ID value '%s', defaulting to false", useExternalUserIDStr)
-			useExternalUserID = false
 		}
 	}
 

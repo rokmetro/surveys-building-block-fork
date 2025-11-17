@@ -19,8 +19,6 @@ import (
 	"log"
 
 	"application/driven/storage"
-
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 // MigrateScoreExternalUserIDs migrates all score records to populate external_user_id with AmgUUID from Core BB
@@ -35,16 +33,7 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 	}
 
 	// Get all scores that don't have external_user_id populated
-	filter := bson.M{
-		"org_id": orgID,
-		"app_id": appID,
-		"$or": []bson.M{
-			{"external_user_id": bson.M{"$exists": false}},
-			{"external_user_id": ""},
-		},
-	}
-
-	scores, err := app.storage.FindScores(filter, nil, nil)
+	scores, err := app.storage.FindScoresWithoutExternalUserID(orgID, appID, nil, nil)
 	if err != nil {
 		return fmt.Errorf("error fetching scores: %v", err)
 	}
@@ -117,14 +106,7 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 			}
 
 			// Update the score with the AmgUUID
-			updateFilter := bson.M{"_id": score.ID}
-			update := bson.M{
-				"$set": bson.M{
-					"external_user_id": amgUUID,
-				},
-			}
-
-			err = app.storage.UpdateScoreByFilter(updateFilter, update)
+			err = app.storage.UpdateScoreExternalUserID(score.ID, amgUUID)
 			if err != nil {
 				log.Printf("Error updating score %s: %v", score.ID, err)
 				errorCount++

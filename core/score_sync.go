@@ -16,7 +16,7 @@ package core
 
 import (
 	"application/core/model"
-	"application/driven/storage"
+	"application/driven/corebb"
 	"log"
 )
 
@@ -36,7 +36,7 @@ func (app *Application) SyncAmgUUIDForScore(score *model.Score, externalIDs map[
 	}
 
 	// Look up the AmgUUID from Core BB
-	accountCriteria := storage.BuildCoreAccountCriteriaByMastodonID(mastodonID)
+	accountCriteria := corebb.BuildCoreAccountCriteriaByMastodonID(mastodonID)
 
 	coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria(accountCriteria, &score.AppID, &score.OrgID)
 	if err != nil {
@@ -60,6 +60,10 @@ func (app *Application) SyncAmgUUIDForScore(score *model.Score, externalIDs map[
 		log.Printf("SyncAmgUUIDForScore: no amg_uuid identifier found for mastodon_id %s", mastodonID)
 		return nil
 	}
+
+	// Set the AmgUUID on the score
+	score.ExternalUserID = amgUUID
+	log.Printf("SyncAmgUUIDForScore: synced AmgUUID %s for mastodon_id %s", score.ExternalUserID, mastodonID)
 
 	return nil
 }

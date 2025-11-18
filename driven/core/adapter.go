@@ -144,3 +144,34 @@ func (a *Adapter) RetrieveCoreUserAccountByCriteria(accountCriteria map[string]i
 
 	return coreAccounts, nil
 }
+
+// BuildCoreAccountCriteriaByMastodonID builds Core BB query criteria for finding accounts by mastodon_id
+func BuildCoreAccountCriteriaByMastodonID(mastodonID string) map[string]interface{} {
+	return map[string]interface{}{
+		"identifiers": map[string]interface{}{
+			"operation": "any",
+			"value": map[string]interface{}{
+				"code":       "mastodon_id",
+				"identifier": mastodonID,
+			},
+		},
+	}
+}
+
+// BuildCoreAccountCriteriaByMastodonIDs builds Core BB query criteria for finding accounts by multiple mastodon_ids
+func BuildCoreAccountCriteriaByMastodonIDs(mastodonIDs []string) map[string]interface{} {
+	identifierValues := make([]map[string]interface{}, len(mastodonIDs))
+	for i, id := range mastodonIDs {
+		identifierValues[i] = map[string]interface{}{
+			"code":       "mastodon_id",
+			"identifier": id,
+		}
+	}
+
+	return map[string]interface{}{
+		"identifiers": map[string]interface{}{
+			"operation": "any",
+			"value":     identifierValues,
+		},
+	}
+}

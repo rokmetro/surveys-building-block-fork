@@ -377,19 +377,6 @@ func (a *Adapter) UpdateScoreExternalUserID(scoreID string, externalUserID strin
 	return nil
 }
 
-// BuildCoreAccountCriteriaByMastodonID builds MongoDB query criteria for finding Core BB accounts by mastodon_id
-// This returns a map that can be used with RetrieveCoreUserAccountByCriteria
-func BuildCoreAccountCriteriaByMastodonID(mastodonID string) map[string]interface{} {
-	return map[string]interface{}{
-		"identifiers": map[string]interface{}{
-			"$elemMatch": map[string]interface{}{
-				"code":       "mastodon_id",
-				"identifier": mastodonID,
-			},
-		},
-	}
-}
-
 // NewStorageAdapter creates a new storage adapter instance
 func NewStorageAdapter(mongoDBAuth string, mongoDBName string, mongoTimeout string, logger *logs.Logger) *Adapter {
 	timeout, err := strconv.Atoi(mongoTimeout)

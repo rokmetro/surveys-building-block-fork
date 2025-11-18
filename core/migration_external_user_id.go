@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"log"
 
-	"application/driven/storage"
+	"application/driven/corebb"
 )
 
 // MigrateScoreExternalUserIDs migrates all score records to populate external_user_id with AmgUUID from Core BB
@@ -75,7 +75,7 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 			}
 
 			// Look up the AmgUUID from Core BB using the Mastodon ID
-			accountCriteria := storage.BuildCoreAccountCriteriaByMastodonID(score.ExternalProfileID)
+			accountCriteria := corebb.BuildCoreAccountCriteriaByMastodonID(score.ExternalProfileID)
 
 			coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria(accountCriteria, &appID, &orgID)
 			if err != nil {

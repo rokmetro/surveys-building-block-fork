@@ -60,7 +60,11 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 		batch := scores[i:end]
 		log.Printf("Processing batch %d-%d of %d", i+1, end, total)
 
-		for _, score := range batch {
+		// Group scores by mastodon_id and collect unique mastodon_ids
+		scoresByMastodonID := make(map[string][]int) // map[mastodonID][]scoreIndex
+		mastodonIDs := []string{}
+
+		for idx, score := range batch {
 			// Skip if already has external_user_id
 			if score.ExternalUserID != "" {
 				skippedCount++
@@ -74,55 +78,70 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 				continue
 			}
 
-			// Look up the AmgUUID from Core BB using the Mastodon ID
-			accountCriteria := corebb.BuildCoreAccountCriteriaByMastodonID(score.ExternalProfileID)
-
-			coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria(accountCriteria, &appID, &orgID)
-			if err != nil {
-				log.Printf("Error retrieving Core account for score %s (mastodon_id: %s): %v",
-					score.ID, score.ExternalProfileID, err)
-				errorCount++
-				continue
+			// Track which scores have which mastodon_id
+			if _, exists := scoresByMastodonID[score.ExternalProfileID]; !exists {
+				mastodonIDs = append(mastodonIDs, score.ExternalProfileID)
+				scoresByMastodonID[score.ExternalProfileID] = []int{}
 			}
-
-			if len(coreAccounts) == 0 {
-				log.Printf("No Core account found for score %s (mastodon_id: %s)",
-					score.ID, score.ExternalProfileID)
-				errorCount++
-				continue
-			}
-
-			if len(coreAccounts) > 1 {
-				log.Printf("WARNING: Multiple Core accounts found for mastodon_id %s, using first one",
-					score.ExternalProfileID)
-			}
-
-			// Get the AmgUUID from the first matching account
-			amgUUID := coreAccounts[0].GetAmgUUID()
-			if amgUUID == "" {
-				log.Printf("Core account has no amg_uuid identifier for score %s", score.ID)
-				errorCount++
-				continue
-			}
-
-			// Update the score with the AmgUUID
-			err = app.storage.UpdateScoreExternalUserID(score.ID, amgUUID)
-			if err != nil {
-				log.Printf("Error updating score %s: %v", score.ID, err)
-				errorCount++
-				continue
-			}
-
-			log.Printf("✓ Score %s: external_profile_id=%s → external_user_id=%s",
-				score.ID, score.ExternalProfileID, amgUUID)
-			successCount++
+			scoresByMastodonID[score.ExternalProfileID] = append(scoresByMastodonID[score.ExternalProfileID], idx)
 		}
 
-		// // Sleep between batches to avoid rate limiting
-		// if end < total {
-		// 	log.Println("Sleeping 2 seconds before next batch...")
-		// 	time.Sleep(2 * time.Second)
-		// }
+		if len(mastodonIDs) == 0 {
+			log.Printf("No valid mastodon IDs in this batch, skipping")
+			continue
+		}
+
+		log.Printf("Fetching Core BB accounts for %d unique mastodon IDs", len(mastodonIDs))
+
+		// Look up all AmgUUIDs from Core BB in one call
+		accountCriteria := corebb.BuildCoreAccountCriteriaByMastodonIDs(mastodonIDs)
+
+		coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria(accountCriteria, &appID, &orgID)
+		if err != nil {
+			log.Printf("Error retrieving Core accounts for batch: %v", err)
+			errorCount += len(mastodonIDs)
+			continue
+		}
+
+		log.Printf("Retrieved %d Core BB accounts", len(coreAccounts))
+
+		// Build a map of mastodon_id -> amg_uuid for quick lookup
+		mastodonToAmgUUID := make(map[string]string)
+		for _, account := range coreAccounts {
+			mastodonID := account.GetExternalID("mastodon_id")
+			amgUUID := account.GetAmgUUID()
+
+			if mastodonID != "" && amgUUID != "" {
+				mastodonToAmgUUID[mastodonID] = amgUUID
+			}
+		}
+
+		// Update scores with their corresponding AmgUUIDs
+		for mastodonID, scoreIndices := range scoresByMastodonID {
+			amgUUID, found := mastodonToAmgUUID[mastodonID]
+
+			if !found {
+				log.Printf("No Core account found for mastodon_id: %s (%d scores affected)", mastodonID, len(scoreIndices))
+				errorCount += len(scoreIndices)
+				continue
+			}
+
+			// Update all scores with this mastodon_id
+			for _, idx := range scoreIndices {
+				score := batch[idx]
+
+				err = app.storage.UpdateScoreExternalUserID(score.ID, amgUUID)
+				if err != nil {
+					log.Printf("Error updating score %s: %v", score.ID, err)
+					errorCount++
+					continue
+				}
+
+				log.Printf("✓ Score %s: external_profile_id=%s → external_user_id=%s",
+					score.ID, score.ExternalProfileID, amgUUID)
+				successCount++
+			}
+		}
 	}
 
 	log.Println("Migration complete!")

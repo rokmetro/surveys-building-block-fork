@@ -17,15 +17,15 @@ package model
 // CoreAccount represents an account from the Core BB
 // This matches the actual Core BB Account structure
 type CoreAccount struct {
-	ID          string                  `json:"id"`          // This is the AmgUUID
-	Identifiers []CoreAccountIdentifier `json:"identifiers"` // Contains all identifiers including mastodon_id
+	ID          string                  `json:"id"`          // This is the Core BB internal account ID
+	Identifiers []CoreAccountIdentifier `json:"identifiers"` // Contains all identifiers including mastodon_id and amg_uuid
 	Profile     CoreProfile             `json:"profile"`     // Basic profile info (optional)
 }
 
 // CoreAccountIdentifier represents an identifier in a Core BB account
 type CoreAccountIdentifier struct {
 	ID         string `json:"id"`
-	Code       string `json:"code"`       // e.g., "mastodon_id", "email", etc.
+	Code       string `json:"code"`       // e.g., "mastodon_id", "email", "amg_uuid", etc.
 	Identifier string `json:"identifier"` // The actual identifier value
 	Verified   bool   `json:"verified"`
 }
@@ -44,4 +44,9 @@ func (ca CoreAccount) GetExternalID(code string) string {
 		}
 	}
 	return ""
+}
+
+// GetAmgUUID returns the AmgUUID from the identifiers
+func (ca CoreAccount) GetAmgUUID() string {
+	return ca.GetExternalID("amg_uuid")
 }

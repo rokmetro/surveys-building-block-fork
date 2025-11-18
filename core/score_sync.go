@@ -54,9 +54,12 @@ func (app *Application) SyncAmgUUIDForScore(score *model.Score, externalIDs map[
 		log.Printf("SyncAmgUUIDForScore: WARNING - multiple Core accounts found for mastodon_id %s, using first one", mastodonID)
 	}
 
-	// Set the AmgUUID
-	score.ExternalUserID = coreAccounts[0].ID
-	log.Printf("SyncAmgUUIDForScore: synced AmgUUID %s for mastodon_id %s", score.ExternalUserID, mastodonID)
+	// Get the AmgUUID from the identifiers
+	amgUUID := coreAccounts[0].GetAmgUUID()
+	if amgUUID == "" {
+		log.Printf("SyncAmgUUIDForScore: no amg_uuid identifier found for mastodon_id %s", mastodonID)
+		return nil
+	}
 
 	return nil
 }

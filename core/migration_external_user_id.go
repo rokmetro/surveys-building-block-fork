@@ -98,9 +98,9 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 			}
 
 			// Get the AmgUUID from the first matching account
-			amgUUID := coreAccounts[0].ID
+			amgUUID := coreAccounts[0].GetAmgUUID()
 			if amgUUID == "" {
-				log.Printf("Core account has empty ID for score %s", score.ID)
+				log.Printf("Core account has no amg_uuid identifier for score %s", score.ID)
 				errorCount++
 				continue
 			}

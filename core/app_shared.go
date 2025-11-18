@@ -177,7 +177,7 @@ func (a appShared) createScore(orgID string, appID string, userID string, extern
 	// Sync AmgUUID from Core BB before saving the score
 	// This populates the external_user_id field if we have a mastodon_id
 	// Note: SyncAmgUUIDForScore handles errors gracefully (returns nil on errors, logs internally)
-	_ = a.app.SyncAmgUUIDForScore(&score, externalIDs)
+	a.app.SyncAmgUUIDForScore(&score, externalIDs)
 
 	if apply {
 		err = a.app.storage.CreateScore(score)

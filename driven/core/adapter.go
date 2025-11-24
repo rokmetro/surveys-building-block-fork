@@ -87,7 +87,7 @@ func (a *Adapter) LoadDeletedMemberships() ([]model.DeletedUserData, error) {
 }
 
 // RetrieveCoreUserAccountByCriteria retrieves Core user accounts by criteria
-func (a *Adapter) RetrieveCoreUserAccountByCriteria(accountCriteria map[string]interface{}, appID *string, orgID *string) ([]model.CoreAccount, error) {
+func (a *Adapter) RetrieveCoreUserAccountByCriteria(mastodonIDs []string, appID *string, orgID *string) ([]model.CoreAccount, error) {
 	if a.serviceAccountManager == nil {
 		log.Println("RetrieveCoreUserAccountByCriteria: service account manager is nil")
 		return nil, errors.New("service account manager is nil")
@@ -103,6 +103,17 @@ func (a *Adapter) RetrieveCoreUserAccountByCriteria(accountCriteria map[string]i
 	}
 
 	url := fmt.Sprintf("%s/bbs/accounts?app_id=%s&org_id=%s", a.coreURL, appIDVal, orgIDVal)
+
+	accountCriteria := map[string]interface{}{
+		"identifiers": map[string]interface{}{
+			"$elemMatch": map[string]interface{}{
+				"code": "mastodon_id",
+				"identifier": map[string]interface{}{
+					"$in": mastodonIDs,
+				},
+			},
+		},
+	}
 
 	bodyBytes, err := json.Marshal(accountCriteria)
 	if err != nil {
@@ -143,35 +154,4 @@ func (a *Adapter) RetrieveCoreUserAccountByCriteria(accountCriteria map[string]i
 	}
 
 	return coreAccounts, nil
-}
-
-// BuildCoreAccountCriteriaByMastodonID builds Core BB query criteria for finding accounts by mastodon_id
-func BuildCoreAccountCriteriaByMastodonID(mastodonID string) map[string]interface{} {
-	return map[string]interface{}{
-		"identifiers": map[string]interface{}{
-			"operation": "any",
-			"value": map[string]interface{}{
-				"code":       "mastodon_id",
-				"identifier": mastodonID,
-			},
-		},
-	}
-}
-
-// BuildCoreAccountCriteriaByMastodonIDs builds Core BB query criteria for finding accounts by multiple mastodon_ids
-func BuildCoreAccountCriteriaByMastodonIDs(mastodonIDs []string) map[string]interface{} {
-	identifierValues := make([]map[string]interface{}, len(mastodonIDs))
-	for i, id := range mastodonIDs {
-		identifierValues[i] = map[string]interface{}{
-			"code":       "mastodon_id",
-			"identifier": id,
-		}
-	}
-
-	return map[string]interface{}{
-		"identifiers": map[string]interface{}{
-			"operation": "any",
-			"value":     identifierValues,
-		},
-	}
 }

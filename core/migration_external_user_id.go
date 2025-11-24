@@ -17,8 +17,6 @@ package core
 import (
 	"fmt"
 	"log"
-
-	"application/driven/corebb"
 )
 
 // MigrateScoreExternalUserIDs migrates all score records to populate external_user_id with AmgUUID from Core BB
@@ -71,19 +69,24 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 				continue
 			}
 
-			// Skip if no external_profile_id (Mastodon ID)
-			if score.ExternalProfileID == "" {
-				log.Printf("Score %s has no external_profile_id, skipping", score.ID)
+			lookupID := score.UserID
+			if lookupID == "" {
+				// Fallback to ExternalProfileID if UserID is empty
+				lookupID = score.ExternalProfileID
+			}
+
+			if lookupID == "" {
+				log.Printf("Score %s has no identifier for lookup, skipping", score.ID)
 				skippedCount++
 				continue
 			}
 
 			// Track which scores have which mastodon_id
-			if _, exists := scoresByMastodonID[score.ExternalProfileID]; !exists {
-				mastodonIDs = append(mastodonIDs, score.ExternalProfileID)
-				scoresByMastodonID[score.ExternalProfileID] = []int{}
+			if _, exists := scoresByMastodonID[lookupID]; !exists {
+				mastodonIDs = append(mastodonIDs, lookupID)
+				scoresByMastodonID[lookupID] = []int{}
 			}
-			scoresByMastodonID[score.ExternalProfileID] = append(scoresByMastodonID[score.ExternalProfileID], idx)
+			scoresByMastodonID[lookupID] = append(scoresByMastodonID[lookupID], idx)
 		}
 
 		if len(mastodonIDs) == 0 {
@@ -94,9 +97,7 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 		log.Printf("Fetching Core BB accounts for %d unique mastodon IDs", len(mastodonIDs))
 
 		// Look up all AmgUUIDs from Core BB in one call
-		accountCriteria := corebb.BuildCoreAccountCriteriaByMastodonIDs(mastodonIDs)
-
-		coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria(accountCriteria, &appID, &orgID)
+		coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria(mastodonIDs, &appID, &orgID)
 		if err != nil {
 			log.Printf("Error retrieving Core accounts for batch: %v", err)
 			errorCount += len(mastodonIDs)

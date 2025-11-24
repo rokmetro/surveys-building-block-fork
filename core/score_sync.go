@@ -16,7 +16,6 @@ package core
 
 import (
 	"application/core/model"
-	"application/driven/corebb"
 	"log"
 )
 
@@ -36,9 +35,7 @@ func (app *Application) SyncAmgUUIDForScore(score *model.Score, externalIDs map[
 	}
 
 	// Look up the AmgUUID from Core BB
-	accountCriteria := corebb.BuildCoreAccountCriteriaByMastodonID(mastodonID)
-
-	coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria(accountCriteria, &score.AppID, &score.OrgID)
+	coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria([]string{mastodonID}, &score.AppID, &score.OrgID)
 	if err != nil {
 		log.Printf("SyncAmgUUIDForScore: error retrieving Core account: %v", err)
 		// Don't fail the score creation if Core BB lookup fails, just log it
@@ -70,7 +67,7 @@ func (app *Application) SyncAmgUUIDForScore(score *model.Score, externalIDs map[
 
 // PrepareScoresForResponse prepares multiple scores for API response based on feature flag
 func (app *Application) PrepareScoresForResponse(scores []model.Score) {
-	if !app.shouldUseExternalUserID() {
+	if !app.useExternalUserID {
 		return
 	}
 

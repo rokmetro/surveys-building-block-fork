@@ -58,9 +58,9 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 		batch := scores[i:end]
 		log.Printf("Processing batch %d-%d of %d", i+1, end, total)
 
-		// Group scores by mastodon_id and collect unique mastodon_ids
-		scoresByMastodonID := make(map[string][]int) // map[mastodonID][]scoreIndex
-		mastodonIDs := []string{}
+		// Group scores by account ID and collect unique account IDs
+		scoresByAccountID := make(map[string][]int) // map[accountID][]scoreIndex
+		accountIDs := []string{}
 
 		for idx, score := range batch {
 			// Skip if already has external_user_id
@@ -69,65 +69,59 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 				continue
 			}
 
-			lookupID := score.UserID
-			if lookupID == "" {
-				// Fallback to ExternalProfileID if UserID is empty
-				lookupID = score.ExternalProfileID
-			}
-
-			if lookupID == "" {
-				log.Printf("Score %s has no identifier for lookup, skipping", score.ID)
+			// Use UserID which contains Core BB account IDs
+			accountID := score.UserID
+			if accountID == "" {
+				log.Printf("Score %s has no UserID (Core BB account ID), skipping", score.ID)
 				skippedCount++
 				continue
 			}
 
-			// Track which scores have which mastodon_id
-			if _, exists := scoresByMastodonID[lookupID]; !exists {
-				mastodonIDs = append(mastodonIDs, lookupID)
-				scoresByMastodonID[lookupID] = []int{}
+			// Track which scores have which account ID
+			if _, exists := scoresByAccountID[accountID]; !exists {
+				accountIDs = append(accountIDs, accountID)
+				scoresByAccountID[accountID] = []int{}
 			}
-			scoresByMastodonID[lookupID] = append(scoresByMastodonID[lookupID], idx)
+			scoresByAccountID[accountID] = append(scoresByAccountID[accountID], idx)
 		}
 
-		if len(mastodonIDs) == 0 {
-			log.Printf("No valid mastodon IDs in this batch, skipping")
+		if len(accountIDs) == 0 {
+			log.Printf("No valid account IDs in this batch, skipping")
 			continue
 		}
 
-		log.Printf("Fetching Core BB accounts for %d unique mastodon IDs", len(mastodonIDs))
+		log.Printf("Fetching Core BB accounts for %d unique account IDs", len(accountIDs))
 
 		// Look up all AmgUUIDs from Core BB in one call
-		coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria(mastodonIDs, &appID, &orgID)
+		coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria(accountIDs, &appID, &orgID)
 		if err != nil {
 			log.Printf("Error retrieving Core accounts for batch: %v", err)
-			errorCount += len(mastodonIDs)
+			errorCount += len(accountIDs)
 			continue
 		}
 
 		log.Printf("Retrieved %d Core BB accounts", len(coreAccounts))
 
-		// Build a map of mastodon_id -> amg_uuid for quick lookup
-		mastodonToAmgUUID := make(map[string]string)
+		// Build a map of account ID -> amg_uuid for quick lookup
+		accountIDToAmgUUID := make(map[string]string)
 		for _, account := range coreAccounts {
-			mastodonID := account.GetExternalID("mastodon_id")
 			amgUUID := account.GetAmgUUID()
-
-			if mastodonID != "" && amgUUID != "" {
-				mastodonToAmgUUID[mastodonID] = amgUUID
+			if account.ID != "" && amgUUID != "" {
+				accountIDToAmgUUID[account.ID] = amgUUID
 			}
 		}
 
 		// Update scores with their corresponding AmgUUIDs
-		for mastodonID, scoreIndices := range scoresByMastodonID {
-			amgUUID, found := mastodonToAmgUUID[mastodonID]
+		for accountID, scoreIndices := range scoresByAccountID {
+			amgUUID, found := accountIDToAmgUUID[accountID]
 
 			if !found {
-				log.Printf("No Core account found for mastodon_id: %s (%d scores affected)", mastodonID, len(scoreIndices))
+				log.Printf("No Core account found for account ID: %s (%d scores affected)", accountID, len(scoreIndices))
 				errorCount += len(scoreIndices)
 				continue
 			}
 
-			// Update all scores with this mastodon_id
+			// Update all scores with this account ID
 			for _, idx := range scoreIndices {
 				score := batch[idx]
 
@@ -138,8 +132,8 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 					continue
 				}
 
-				log.Printf("✓ Score %s: external_profile_id=%s → external_user_id=%s",
-					score.ID, score.ExternalProfileID, amgUUID)
+				log.Printf("✓ Score %s: UserID=%s → external_user_id=%s",
+					score.ID, score.UserID, amgUUID)
 				successCount++
 			}
 		}

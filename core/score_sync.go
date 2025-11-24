@@ -21,21 +21,15 @@ import (
 
 // SyncAmgUUIDForScore fetches the AmgUUID from Core BB and populates the external_user_id field
 func (app *Application) SyncAmgUUIDForScore(score *model.Score, externalIDs map[string]string) error {
-	// Get Mastodon ID from externalIDs if provided, otherwise use the one already in score
-	mastodonID := score.ExternalProfileID
-	if externalIDs != nil {
-		if mastodonIDFromMap, ok := externalIDs["mastodon_id"]; ok && mastodonIDFromMap != "" {
-			mastodonID = mastodonIDFromMap
-		}
-	}
-
-	if mastodonID == "" {
-		log.Printf("SyncAmgUUIDForScore: no mastodon_id provided for score, skipping AmgUUID sync")
+	// Use UserID which contains the Core BB account ID
+	accountID := score.UserID
+	if accountID == "" {
+		log.Printf("SyncAmgUUIDForScore: no UserID (Core BB account ID) provided for score, skipping AmgUUID sync")
 		return nil
 	}
 
-	// Look up the AmgUUID from Core BB
-	coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria([]string{mastodonID}, &score.AppID, &score.OrgID)
+	// Look up the AmgUUID from Core BB by account ID
+	coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria([]string{accountID}, &score.AppID, &score.OrgID)
 	if err != nil {
 		log.Printf("SyncAmgUUIDForScore: error retrieving Core account: %v", err)
 		// Don't fail the score creation if Core BB lookup fails, just log it
@@ -43,24 +37,24 @@ func (app *Application) SyncAmgUUIDForScore(score *model.Score, externalIDs map[
 	}
 
 	if len(coreAccounts) == 0 {
-		log.Printf("SyncAmgUUIDForScore: no Core account found for mastodon_id %s", mastodonID)
+		log.Printf("SyncAmgUUIDForScore: no Core account found for account ID %s", accountID)
 		return nil
 	}
 
 	if len(coreAccounts) > 1 {
-		log.Printf("SyncAmgUUIDForScore: WARNING - multiple Core accounts found for mastodon_id %s, using first one", mastodonID)
+		log.Printf("SyncAmgUUIDForScore: WARNING - multiple Core accounts found for account ID %s, using first one", accountID)
 	}
 
 	// Get the AmgUUID from the identifiers
 	amgUUID := coreAccounts[0].GetAmgUUID()
 	if amgUUID == "" {
-		log.Printf("SyncAmgUUIDForScore: no amg_uuid identifier found for mastodon_id %s", mastodonID)
+		log.Printf("SyncAmgUUIDForScore: no amg_uuid identifier found for account ID %s", accountID)
 		return nil
 	}
 
 	// Set the AmgUUID on the score
 	score.ExternalUserID = amgUUID
-	log.Printf("SyncAmgUUIDForScore: synced AmgUUID %s for mastodon_id %s", score.ExternalUserID, mastodonID)
+	log.Printf("SyncAmgUUIDForScore: synced AmgUUID %s for account ID %s", score.ExternalUserID, accountID)
 
 	return nil
 }

@@ -86,8 +86,8 @@ func (a *Adapter) LoadDeletedMemberships() ([]model.DeletedUserData, error) {
 	return deletedMemberships, nil
 }
 
-// RetrieveCoreUserAccountByCriteria retrieves Core user accounts by criteria
-func (a *Adapter) RetrieveCoreUserAccountByCriteria(mastodonIDs []string, appID *string, orgID *string) ([]model.CoreAccount, error) {
+// RetrieveCoreUserAccountByCriteria retrieves Core user accounts by account IDs
+func (a *Adapter) RetrieveCoreUserAccountByCriteria(accountIDs []string, appID *string, orgID *string) ([]model.CoreAccount, error) {
 	if a.serviceAccountManager == nil {
 		log.Println("RetrieveCoreUserAccountByCriteria: service account manager is nil")
 		return nil, errors.New("service account manager is nil")
@@ -105,13 +105,8 @@ func (a *Adapter) RetrieveCoreUserAccountByCriteria(mastodonIDs []string, appID 
 	url := fmt.Sprintf("%s/bbs/accounts?app_id=%s&org_id=%s", a.coreURL, appIDVal, orgIDVal)
 
 	accountCriteria := map[string]interface{}{
-		"identifiers": map[string]interface{}{
-			"$elemMatch": map[string]interface{}{
-				"code": "mastodon_id",
-				"identifier": map[string]interface{}{
-					"$in": mastodonIDs,
-				},
-			},
+		"id": map[string]interface{}{
+			"$in": accountIDs,
 		},
 	}
 

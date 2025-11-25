@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -70,14 +69,8 @@ func (a *Adapter) LoadDeletedMemberships() ([]model.DeletedUserData, error) {
 		return nil, fmt.Errorf("LoadDeletedMemberships: error with response code != 200")
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("LoadDeletedMemberships: unable to read json: %s", err)
-		return nil, fmt.Errorf("LoadDeletedMemberships: unable to parse json: %s", err)
-	}
-
 	var deletedMemberships []model.DeletedUserData
-	err = json.Unmarshal(data, &deletedMemberships)
+	err = json.NewDecoder(resp.Body).Decode(&deletedMemberships)
 	if err != nil {
 		log.Printf("LoadDeletedMemberships: unable to parse json: %s", err)
 		return nil, fmt.Errorf("LoadDeletedMemberships: unable to parse json: %s", err)
@@ -105,9 +98,7 @@ func (a *Adapter) RetrieveCoreUserAccountByCriteria(accountIDs []string, appID *
 	url := fmt.Sprintf("%s/bbs/accounts?app_id=%s&org_id=%s", a.coreURL, appIDVal, orgIDVal)
 
 	accountCriteria := map[string]interface{}{
-		"id": map[string]interface{}{
-			"$in": accountIDs,
-		},
+		"id": accountIDs,
 	}
 
 	bodyBytes, err := json.Marshal(accountCriteria)
@@ -135,14 +126,8 @@ func (a *Adapter) RetrieveCoreUserAccountByCriteria(accountIDs []string, appID *
 		return nil, fmt.Errorf("RetrieveCoreUserAccountByCriteria: error with response code != 200")
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("RetrieveCoreUserAccountByCriteria: unable to read json: %s", err)
-		return nil, fmt.Errorf("RetrieveCoreUserAccountByCriteria: unable to parse json: %s", err)
-	}
-
 	var coreAccounts []model.CoreAccount
-	err = json.Unmarshal(data, &coreAccounts)
+	err = json.NewDecoder(resp.Body).Decode(&coreAccounts)
 	if err != nil {
 		log.Printf("RetrieveCoreUserAccountByCriteria: unable to parse json: %s", err)
 		return nil, fmt.Errorf("RetrieveCoreUserAccountByCriteria: unable to parse json: %s", err)

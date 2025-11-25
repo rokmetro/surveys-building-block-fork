@@ -17,6 +17,7 @@ package main
 import (
 	"application/core"
 	"application/core/model"
+	"application/driven/airship"
 	"application/driven/calendar"
 	corebb "application/driven/core"
 	"application/driven/notifications"
@@ -145,6 +146,12 @@ func main() {
 		logger.Fatalf("Error initializing calendar adapter: %v", err)
 	}
 
+	//airship adapter
+	airshipHost := envLoader.GetAndLogEnvVar(envPrefix+"AIRSHIP_HOST", false, false)
+	airshipBearerToken := envLoader.GetAndLogEnvVar(envPrefix+"AIRSHIP_BEARER_TOKEN", false, true)
+	airshipTagGroup := envLoader.GetAndLogEnvVar(envPrefix+"AIRSHIP_TAG_GROUP", false, false)
+	airshipAdapter := airship.NewAirshipAdapter(airshipHost, airshipBearerToken, airshipTagGroup)
+
 	//core adapter
 	coreAdapter := corebb.NewCoreAdapter(coreBBBaseURL, serviceAccountManager)
 
@@ -161,7 +168,7 @@ func main() {
 
 	// Application
 	application := core.NewApplication(Version, Build, storageAdapter, notificationsAdapter,
-		calendarAdapter, coreAdapter, serviceID, logger, useExternalUserID)
+		calendarAdapter, coreAdapter, airshipAdapter, serviceID, logger, useExternalUserID)
 	application.Start()
 
 	// read CORS parameters from stored env config

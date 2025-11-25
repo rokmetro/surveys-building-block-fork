@@ -17,6 +17,7 @@ package core
 import (
 	"application/core/interfaces"
 	"application/core/model"
+	"application/driven/airship"
 	corebb "application/driven/core"
 	"time"
 
@@ -58,6 +59,7 @@ type Application struct {
 	notifications       interfaces.Notifications
 	calendar            interfaces.Calendar
 	corebb              *corebb.Adapter
+	airship             *airship.Adapter
 	deleteDataLogic     deleteDataLogic
 	streakNotifications streakNotifications
 	useExternalUserID   bool
@@ -100,14 +102,16 @@ func (a *Application) CheckTimersConfig(key string, filterTime time.Time, update
 
 // NewApplication creates new Application
 func NewApplication(version string, build string, storage interfaces.Storage, notifications interfaces.Notifications, calendar interfaces.Calendar,
-	coreBB *corebb.Adapter, serviceID string, logger *logs.Logger, useExternalUserID bool) *Application {
+	coreBB *corebb.Adapter, airship *airship.Adapter, serviceID string, logger *logs.Logger, useExternalUserID bool) *Application {
 	deleteDataLogic := deleteDataLogic{logger: *logger, core: coreBB, serviceID: serviceID, storage: storage}
 
 	application := Application{version: version, build: build, storage: storage, notifications: notifications,
-		calendar: calendar, corebb: coreBB, deleteDataLogic: deleteDataLogic, logger: logger, useExternalUserID: useExternalUserID}
+		calendar: calendar, corebb: coreBB, airship: airship, deleteDataLogic: deleteDataLogic, logger: logger,
+		useExternalUserID: useExternalUserID}
 
 	streakNotificationsTimerDone := make(chan bool)
-	streakNotifications := streakNotifications{application: &application, logger: logger, storage: storage, notifications: notifications, streakNotificationsTimerDone: streakNotificationsTimerDone}
+	streakNotifications := streakNotifications{application: &application, logger: logger, storage: storage, airship: airship,
+		streakNotificationsTimerDone: streakNotificationsTimerDone}
 
 	application.streakNotifications = streakNotifications
 

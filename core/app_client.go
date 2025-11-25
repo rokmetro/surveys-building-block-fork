@@ -211,7 +211,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 
 	for i := range leaderboards {
 		lb := leaderboards[i]
-		notificationData := map[string]string{
+		notificationData := map[string]any{
 			"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, lb.ID),
 		}
 
@@ -244,17 +244,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 
 					body := fmt.Sprintf("@%s just passed you in your Runway Genius leaderboard %s. Ready to take your spot back?", username, lb.Name)
 
-					message := model.NotificationMessage{
-						OrgID: orgID,
-						AppID: appID,
-
-						Subject:    notifications.SubjectVogue,
-						Body:       body,
-						Data:       notificationData,
-						Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
-						Topic:      &topic,
-					}
-					a.app.notifications.SendNotification(message)
+					a.app.airship.SendNotification(orgID, appID, score.UserID, notifications.SubjectVogue, body, notificationData, []string{topic}, nil)
 				}
 
 				if notifyFirstDailyQuiz {
@@ -268,17 +258,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 					}
 					body := fmt.Sprintf("@%s just scored %g %s in today's Runway Genius. Can you outplay them?", username, points, pointsString)
 
-					message := model.NotificationMessage{
-						OrgID: orgID,
-						AppID: appID,
-
-						Subject:    notifications.SubjectVogue,
-						Body:       body,
-						Data:       notificationData,
-						Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
-						Topic:      &topic,
-					}
-					a.app.notifications.SendNotification(message)
+					a.app.airship.SendNotification(orgID, appID, score.UserID, notifications.SubjectVogue, body, notificationData, []string{topic}, nil)
 				}
 			}
 		}
@@ -561,21 +541,11 @@ func (a appClient) sendJoinLeaderboardNotifications(leaderboardID string, orgID 
 			}
 			topic := notifications.TopicQuizAll
 
-			data := map[string]string{
+			data := map[string]any{
 				"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, leaderboardID),
 			}
 
-			message := model.NotificationMessage{
-				OrgID: orgID,
-				AppID: appID,
-
-				Subject:    notifications.SubjectVogue,
-				Body:       body,
-				Data:       data,
-				Recipients: []model.NotificationMessageRecipient{{UserID: entry.UserID}},
-				Topic:      &topic,
-			}
-			a.app.notifications.SendNotification(message)
+			a.app.airship.SendNotification(orgID, appID, entry.UserID, notifications.SubjectVogue, body, data, []string{topic}, nil)
 		}
 	}
 }

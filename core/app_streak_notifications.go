@@ -19,7 +19,7 @@ package core
 
 import (
 	"application/core/interfaces"
-	"application/core/model"
+	"application/driven/airship"
 	"application/driven/notifications"
 	"application/utils"
 	"fmt"
@@ -32,7 +32,7 @@ type streakNotifications struct {
 	application *Application
 	logger      *logs.Logger
 
-	notifications interfaces.Notifications
+	airship *airship.Adapter
 
 	storage interfaces.Storage
 
@@ -101,20 +101,10 @@ func (n streakNotifications) processNotifications() {
 		body := fmt.Sprintf("You're on a %d-day Runway Genius streak! Play now to keep it going.", score.CurrentStreak)
 		topic := notifications.TopicQuizAll
 
-		data := map[string]string{
+		data := map[string]any{
 			"url": fmt.Sprintf("%s/quiz/landing", notifications.BaseURLVogue),
 		}
 
-		message := model.NotificationMessage{
-			OrgID: score.OrgID,
-			AppID: score.AppID,
-
-			Subject:    notifications.SubjectVogue,
-			Body:       body,
-			Data:       data,
-			Recipients: []model.NotificationMessageRecipient{{UserID: score.UserID}},
-			Topic:      &topic,
-		}
-		n.notifications.SendNotification(message)
+		n.airship.SendNotification(score.OrgID, score.AppID, score.UserID, notifications.SubjectVogue, body, data, []string{topic}, nil)
 	}
 }

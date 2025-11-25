@@ -445,3 +445,38 @@ func (a *Adapter) findRankForScore(score float64, orgID string, appID string) (u
 
 	return uint32(count) + 1, nil
 }
+
+// FindScoresWithoutExternalUserID finds scores that don't have external_user_id populated
+func (a *Adapter) FindScoresWithoutExternalUserID(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
+	filter := bson.M{
+		"org_id": orgID,
+		"app_id": appID,
+		"$or": []bson.M{
+			{"external_user_id": bson.M{"$exists": false}},
+			{"external_user_id": ""},
+		},
+	}
+	var scores []model.Score
+	err := a.db.scores.Find(a.context, filter, &scores, nil)
+	if err != nil {
+		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeScore, filterArgs(filter), err)
+	}
+
+	return scores, nil
+}
+
+// UpdateScoreExternalUserID updates a score's external_user_id field by score ID
+func (a *Adapter) UpdateScoreExternalUserID(scoreID string, externalUserID string) error {
+	filter := bson.M{"_id": scoreID}
+	update := bson.M{
+		"$set": bson.M{
+			"external_user_id": externalUserID,
+		},
+	}
+	_, err := a.db.scores.UpdateOne(a.context, filter, update, nil)
+	if err != nil {
+		return errors.WrapErrorAction(logutils.ActionUpdate, model.TypeScore, filterArgs(filter), err)
+	}
+
+	return nil
+}

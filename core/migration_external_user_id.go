@@ -31,7 +31,7 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 	}
 
 	// Get all scores that don't have external_user_id populated
-	scores, err := app.storage.FindScoresWithoutExternalUserID(orgID, appID, nil, nil)
+	scores, err := app.storage.FindScoresNoRanks(orgID, appID, nil, true, nil, nil)
 	if err != nil {
 		return fmt.Errorf("error fetching scores: %v", err)
 	}

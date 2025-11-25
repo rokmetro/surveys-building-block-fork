@@ -85,8 +85,8 @@ type Storage interface {
 	DeleteAllLeaderboardEntries(leaderboardID string, orgID string, appID string) error
 	InitLeaderboardEntryScores(orgID string, appID string) error
 
-	// FindScoresWithoutExternalUserID finds scores that don't have external_user_id populated
-	FindScoresWithoutExternalUserID(orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
+	// FindScoresNoRanks finds scores and does not set their ranks
+	FindScoresNoRanks(orgID string, appID string, userID []string, missingExternalUserID bool, limit *int, offset *int) ([]model.Score, error)
 	// UpdateScoreExternalUserID updates a score's external_user_id field by score ID
 	UpdateScoreExternalUserID(scoreID string, externalUserID string) error
 }

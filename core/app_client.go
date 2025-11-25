@@ -244,7 +244,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 
 					body := fmt.Sprintf("@%s just passed you in your Runway Genius leaderboard %s. Ready to take your spot back?", username, lb.Name)
 
-					a.app.airship.SendNotification(orgID, appID, score.UserID, notifications.SubjectVogue, body, notificationData, []string{topic}, nil)
+					a.app.airship.SendNotification(orgID, appID, score.ExternalUserID, notifications.SubjectVogue, body, notificationData, []string{topic}, nil)
 				}
 
 				if notifyFirstDailyQuiz {
@@ -258,7 +258,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 					}
 					body := fmt.Sprintf("@%s just scored %g %s in today's Runway Genius. Can you outplay them?", username, points, pointsString)
 
-					a.app.airship.SendNotification(orgID, appID, score.UserID, notifications.SubjectVogue, body, notificationData, []string{topic}, nil)
+					a.app.airship.SendNotification(orgID, appID, score.ExternalUserID, notifications.SubjectVogue, body, notificationData, []string{topic}, nil)
 				}
 			}
 		}
@@ -531,8 +531,23 @@ func (a appClient) sendJoinLeaderboardNotifications(leaderboardID string, orgID 
 		a.app.logger.WarnWithFields("error getting leaderboard entries", logutils.Fields{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID})
 		return
 	}
-	for _, entry := range leaderboardEntries {
-		if entry.UserID != userID {
+
+	userIDs := make([]string, len(leaderboardEntries))
+	userIDsToEntries := make(map[string]model.LeaderboardEntry)
+	for i, entry := range leaderboardEntries {
+		userIDs[i] = entry.UserID
+		userIDsToEntries[entry.UserID] = entry
+	}
+
+	scores, err := a.app.storage.FindScoresNoRanks(orgID, appID, []string{userID}, false, nil, nil)
+	if err != nil {
+		a.app.logger.WarnWithFields("error getting scores", logutils.Fields{"user_id": userID, "org_id": orgID, "app_id": appID})
+		return
+	}
+
+	for _, score := range scores {
+		if score.UserID != userID {
+			entry := userIDsToEntries[score.UserID]
 			body := ""
 			if entry.IsAdmin {
 				body = fmt.Sprintf("@%s accepted your invite and joined the %s leaderboard.", username, leaderboard.Name)
@@ -545,7 +560,7 @@ func (a appClient) sendJoinLeaderboardNotifications(leaderboardID string, orgID 
 				"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, leaderboardID),
 			}
 
-			a.app.airship.SendNotification(orgID, appID, entry.UserID, notifications.SubjectVogue, body, data, []string{topic}, nil)
+			a.app.airship.SendNotification(orgID, appID, score.ExternalUserID, notifications.SubjectVogue, body, data, []string{topic}, nil)
 		}
 	}
 }

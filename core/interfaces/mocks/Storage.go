@@ -479,29 +479,29 @@ func (_m *Storage) FindConfigs(configType *string) ([]model.Config, error) {
 	return r0, r1
 }
 
-// FindScoresWithoutExternalUserID provides a mock function with given fields: orgID, appID, limit, offset
-func (_m *Storage) FindScoresWithoutExternalUserID(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
-	ret := _m.Called(orgID, appID, limit, offset)
+// FindScoresNoRanks provides a mock function with given fields: orgID, appID, userID, missingExternalUserID, limit, offset
+func (_m *Storage) FindScoresNoRanks(orgID string, appID string, userID []string, missingExternalUserID bool, limit *int, offset *int) ([]model.Score, error) {
+	ret := _m.Called(orgID, appID, userID, missingExternalUserID, limit, offset)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindScoresWithoutExternalUserID")
+		panic("no return value specified for FindScoresNoRanks")
 	}
 
 	var r0 []model.Score
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, *int, *int) ([]model.Score, error)); ok {
-		return rf(orgID, appID, limit, offset)
+	if rf, ok := ret.Get(0).(func(string, string, []string, bool, *int, *int) ([]model.Score, error)); ok {
+		return rf(orgID, appID, userID, missingExternalUserID, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, *int, *int) []model.Score); ok {
-		r0 = rf(orgID, appID, limit, offset)
+	if rf, ok := ret.Get(0).(func(string, string, []string, bool, *int, *int) []model.Score); ok {
+		r0 = rf(orgID, appID, userID, missingExternalUserID, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Score)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, *int, *int) error); ok {
-		r1 = rf(orgID, appID, limit, offset)
+	if rf, ok := ret.Get(1).(func(string, string, []string, bool, *int, *int) error); ok {
+		r1 = rf(orgID, appID, userID, missingExternalUserID, limit, offset)
 	} else {
 		r1 = ret.Error(1)
 	}

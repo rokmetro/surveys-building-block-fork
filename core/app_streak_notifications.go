@@ -105,6 +105,6 @@ func (n streakNotifications) processNotifications() {
 			"url": fmt.Sprintf("%s/quiz/landing", notifications.BaseURLVogue),
 		}
 
-		n.airship.SendNotification(score.OrgID, score.AppID, score.UserID, notifications.SubjectVogue, body, data, []string{topic}, nil)
+		n.airship.SendNotification(score.OrgID, score.AppID, score.ExternalUserID, notifications.SubjectVogue, body, data, []string{topic}, nil)
 	}
 }

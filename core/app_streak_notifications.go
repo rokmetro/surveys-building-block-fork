@@ -20,7 +20,6 @@ package core
 import (
 	"application/core/interfaces"
 	"application/driven/airship"
-	"application/driven/notifications"
 	"application/utils"
 	"fmt"
 	"time"
@@ -99,12 +98,11 @@ func (n streakNotifications) processNotifications() {
 
 	for _, score := range scores {
 		body := fmt.Sprintf("You're on a %d-day Runway Genius streak! Play now to keep it going.", score.CurrentStreak)
-		topic := notifications.TopicQuizAll
 
 		data := map[string]any{
-			"url": fmt.Sprintf("%s/quiz/landing", notifications.BaseURLVogue),
+			"url": fmt.Sprintf("%s/quiz/landing", airship.BaseURLVogue),
 		}
 
-		n.airship.SendNotification(score.OrgID, score.AppID, score.ExternalUserID, notifications.SubjectVogue, body, data, []string{topic}, nil)
+		n.airship.SendNotification(score.OrgID, score.AppID, score.ExternalUserID, airship.SubjectVogue, body, data, []string{airship.TagQuizAll}, nil)
 	}
 }

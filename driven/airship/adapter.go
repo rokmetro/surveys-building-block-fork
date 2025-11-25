@@ -11,6 +11,13 @@ import (
 
 const (
 	vogueDefaultTagGroup string = "vogue-notifications"
+
+	// SubjectVogue is a subject type for vogue
+	SubjectVogue string = "Vogue"
+	// TagQuizAll is the tag to use for all quiz notifications
+	TagQuizAll string = "quiz.all.all"
+	// BaseURLVogue is a base url used for vogue deep links
+	BaseURLVogue string = "https://vogue.com"
 )
 
 type m map[string]any

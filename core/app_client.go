@@ -326,10 +326,10 @@ func (a appClient) CreateSurveyAlert(surveyAlert model.SurveyAlert) error {
 }
 
 // GetScore gets scores and creates one if it doesn't exist
-func (a appClient) GetScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
+func (a appClient) GetScore(orgID string, appID string, userID string, externalProfileID string, externalIDs map[string]string) (*model.Score, error) {
 	score, err := a.app.storage.GetScore(orgID, appID, userID)
 	if score == nil {
-		score, err = a.app.shared.createScore(orgID, appID, userID, externalProfileID, true, nil)
+		score, err = a.app.shared.createScore(orgID, appID, userID, externalProfileID, true, externalIDs)
 	}
 	if err != nil || score == nil {
 		return nil, err

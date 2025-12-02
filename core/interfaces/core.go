@@ -49,7 +49,7 @@ type Client interface {
 	CreateSurveyAlert(surveyAlert model.SurveyAlert) error
 
 	// Score
-	GetScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error)
+	GetScore(orgID string, appID string, userID string, externalProfileID string, externalIDs map[string]string) (*model.Score, error)
 	GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error)
 	GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int, l *logs.Log) ([]model.Score, error)
 	GetLeaderboardScores(leaderboardID string, orgID string, appID string, limit *int, offset *int) ([]model.Score, error)

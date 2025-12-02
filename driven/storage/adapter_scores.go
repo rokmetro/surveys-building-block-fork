@@ -456,8 +456,17 @@ func (a *Adapter) FindScoresWithoutExternalUserID(orgID string, appID string, li
 			{"external_user_id": ""},
 		},
 	}
+
+	findOptions := &options.FindOptions{}
+	if offset != nil {
+		findOptions.SetSkip(int64(*offset))
+	}
+	if limit != nil {
+		findOptions.SetLimit(int64(*limit))
+	}
+
 	var scores []model.Score
-	err := a.db.scores.Find(a.context, filter, &scores, nil)
+	err := a.db.scores.Find(a.context, filter, &scores, findOptions)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeScore, filterArgs(filter), err)
 	}

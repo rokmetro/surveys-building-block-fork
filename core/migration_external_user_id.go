@@ -30,33 +30,27 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 		log.Printf("Invalid batch size, using default: %d", batchSize)
 	}
 
-	// Get all scores that don't have external_user_id populated
-	scores, err := app.storage.FindScoresWithoutExternalUserID(orgID, appID, nil, nil)
-	if err != nil {
-		return fmt.Errorf("error fetching scores: %v", err)
-	}
-
-	total := len(scores)
-	log.Printf("Found %d scores to migrate", total)
-
-	if total == 0 {
-		log.Println("No scores to migrate")
-		return nil
-	}
-
 	successCount := 0
 	errorCount := 0
 	skippedCount := 0
+	total := 0
+	offset := 0
 
-	// Process in batches to avoid overwhelming the Core BB API
-	for i := 0; i < total; i += batchSize {
-		end := i + batchSize
-		if end > total {
-			end = total
+	// Process in batches to avoid overwhelming the Core BB API and memory
+	for {
+		// Fetch a batch of scores using limit and offset
+		batch, err := app.storage.FindScoresWithoutExternalUserID(orgID, appID, &batchSize, &offset)
+		if err != nil {
+			return fmt.Errorf("error fetching scores: %v", err)
 		}
 
-		batch := scores[i:end]
-		log.Printf("Processing batch %d-%d of %d", i+1, end, total)
+		// If no more scores, we're done
+		if len(batch) == 0 {
+			break
+		}
+
+		total += len(batch)
+		log.Printf("Processing batch %d-%d (fetched %d scores)", offset+1, offset+len(batch), len(batch))
 
 		// Collect unique account IDs from scores in this batch
 		accountIDs := []string{}
@@ -75,53 +69,59 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 
 		if len(accountIDs) == 0 {
 			log.Printf("No valid account IDs in this batch, skipping")
-			continue
-		}
+		} else {
+			log.Printf("Fetching Core BB accounts for %d account IDs", len(accountIDs))
 
-		log.Printf("Fetching Core BB accounts for %d account IDs", len(accountIDs))
-
-		// Look up all AmgUUIDs from Core BB in one call
-		coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria(accountIDs, &appID, &orgID)
-		if err != nil {
-			log.Printf("Error retrieving Core accounts for batch: %v", err)
-			errorCount += len(accountIDs)
-			continue
-		}
-
-		log.Printf("Retrieved %d Core BB accounts", len(coreAccounts))
-
-		// Build a map of account ID -> amg_uuid for quick lookup
-		accountIDToAmgUUID := make(map[string]string)
-		for _, account := range coreAccounts {
-			amgUUID := account.GetAmgUUID()
-			if account.ID != "" && amgUUID != "" {
-				accountIDToAmgUUID[account.ID] = amgUUID
-			}
-		}
-
-		// Update scores with their corresponding AmgUUIDs
-		for _, score := range batch {
-			if score.ExternalUserID != "" || score.UserID == "" {
-				continue
-			}
-
-			amgUUID, found := accountIDToAmgUUID[score.UserID]
-			if !found {
-				log.Printf("No Core account found for account ID: %s", score.UserID)
-				errorCount++
-				continue
-			}
-
-			err = app.storage.UpdateScoreExternalUserID(score.ID, amgUUID)
+			// Look up all AmgUUIDs from Core BB in one call
+			coreAccounts, err := app.corebb.RetrieveCoreUserAccountByCriteria(accountIDs, &appID, &orgID)
 			if err != nil {
-				log.Printf("Error updating score %s: %v", score.ID, err)
-				errorCount++
-				continue
-			}
+				log.Printf("Error retrieving Core accounts for batch: %v", err)
+				errorCount += len(accountIDs)
+			} else {
+				log.Printf("Retrieved %d Core BB accounts", len(coreAccounts))
 
-			log.Printf("✓ Score %s: UserID=%s → external_user_id=%s",
-				score.ID, score.UserID, amgUUID)
-			successCount++
+				// Build a map of account ID -> amg_uuid for quick lookup
+				accountIDToAmgUUID := make(map[string]string)
+				for _, account := range coreAccounts {
+					amgUUID := account.GetAmgUUID()
+					if account.ID != "" && amgUUID != "" {
+						accountIDToAmgUUID[account.ID] = amgUUID
+					}
+				}
+
+				// Update scores with their corresponding AmgUUIDs
+				for _, score := range batch {
+					if score.ExternalUserID != "" || score.UserID == "" {
+						continue
+					}
+
+					amgUUID, found := accountIDToAmgUUID[score.UserID]
+					if !found {
+						log.Printf("No Core account found for account ID: %s", score.UserID)
+						errorCount++
+						continue
+					}
+
+					err = app.storage.UpdateScoreExternalUserID(score.ID, amgUUID)
+					if err != nil {
+						log.Printf("Error updating score %s: %v", score.ID, err)
+						errorCount++
+						continue
+					}
+
+					log.Printf("✓ Score %s: UserID=%s → external_user_id=%s",
+						score.ID, score.UserID, amgUUID)
+					successCount++
+				}
+			}
+		}
+
+		// Move to next batch
+		offset += batchSize
+
+		// If we got fewer scores than the batch size, we've reached the end
+		if len(batch) < batchSize {
+			break
 		}
 	}
 

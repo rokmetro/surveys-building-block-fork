@@ -638,6 +638,28 @@ func (h AdminAPIsHandler) calculateUserScore(l *logs.Log, r *http.Request, claim
 	return l.HTTPResponseSuccessJSON(data)
 }
 
+func (h AdminAPIsHandler) migrateScoreExternalUserIDs(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
+	// Get batch size from query parameter (optional, defaults to 100)
+	batchSize := 100
+	batchSizeStr := r.URL.Query().Get("batch_size")
+	if batchSizeStr != "" {
+		parsed, err := strconv.Atoi(batchSizeStr)
+		if err != nil {
+			return l.HTTPResponseErrorData(logutils.StatusInvalid, logutils.TypeQueryParam, logutils.StringArgs("batch_size"), nil, http.StatusBadRequest, false)
+		}
+		if parsed > 0 {
+			batchSize = parsed
+		}
+	}
+
+	err := h.app.Admin.MigrateScoreExternalUserIDs(claims.OrgID, claims.AppID, batchSize)
+	if err != nil {
+		return l.HTTPResponseErrorAction(logutils.ActionUpdate, "score external user id migration", nil, err, http.StatusInternalServerError, true)
+	}
+
+	return l.HTTPResponseSuccess()
+}
+
 // NewAdminAPIsHandler creates new rest Handler instance
 func NewAdminAPIsHandler(app *core.Application) AdminAPIsHandler {
 	return AdminAPIsHandler{app: app}

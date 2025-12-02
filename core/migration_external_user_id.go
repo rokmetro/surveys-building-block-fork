@@ -55,10 +55,6 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 		// Collect unique account IDs from scores in this batch
 		accountIDs := []string{}
 		for _, score := range batch {
-			if score.ExternalUserID != "" {
-				skippedCount++
-				continue
-			}
 			if score.UserID == "" {
 				log.Printf("Score %s has no UserID (Core BB account ID), skipping", score.ID)
 				skippedCount++
@@ -91,7 +87,7 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 
 				// Update scores with their corresponding AmgUUIDs
 				for _, score := range batch {
-					if score.ExternalUserID != "" || score.UserID == "" {
+					if score.UserID == "" {
 						continue
 					}
 

@@ -148,14 +148,14 @@ func main() {
 	//core adapter
 	coreAdapter := corebb.NewCoreAdapter(coreBBBaseURL, serviceAccountManager)
 
-	// Parse USE_EXTERNAL_USER_ID environment variable
-	useExternalUserIDStr := envLoader.GetAndLogEnvVar("USE_EXTERNAL_USER_ID", false, false)
+	// Parse USE_SCORES_EXTERNAL_USER_ID environment variable
+	useExternalUserIDStr := envLoader.GetAndLogEnvVar(envPrefix+"USE_SCORES_EXTERNAL_USER_ID", false, false)
 	useExternalUserID := false
 	if useExternalUserIDStr != "" {
 		var err error
 		useExternalUserID, err = strconv.ParseBool(useExternalUserIDStr)
 		if err != nil {
-			logger.Warnf("Invalid USE_EXTERNAL_USER_ID value '%s', defaulting to false", useExternalUserIDStr)
+			logger.Warnf("Invalid %s+USE_SCORES_EXTERNAL_USER_ID value '%s', defaulting to false", envPrefix, useExternalUserIDStr)
 		}
 	}
 

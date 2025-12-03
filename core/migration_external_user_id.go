@@ -19,6 +19,10 @@ import (
 	"log"
 )
 
+const (
+	DefaultMigrationBatchSize int = 100
+)
+
 // MigrateScoreExternalUserIDs migrates all score records to populate external_user_id with AmgUUID from Core BB
 func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, batchSize int) error {
 	log.Println("Starting Score External User ID migration...")
@@ -26,7 +30,7 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 
 	// Validate batch size
 	if batchSize <= 0 {
-		batchSize = 100 // Default to 100 if invalid
+		batchSize = DefaultMigrationBatchSize
 		log.Printf("Invalid batch size, using default: %d", batchSize)
 	}
 

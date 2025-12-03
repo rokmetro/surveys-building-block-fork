@@ -639,8 +639,8 @@ func (h AdminAPIsHandler) calculateUserScore(l *logs.Log, r *http.Request, claim
 }
 
 func (h AdminAPIsHandler) migrateScoreExternalUserIDs(l *logs.Log, r *http.Request, claims *tokenauth.Claims) logs.HTTPResponse {
-	// Get batch size from query parameter (optional, defaults to 100)
-	batchSize := 100
+	// Get batch size from query parameter (optional, defaults to DefaultMigrationBatchSize)
+	batchSize := core.DefaultMigrationBatchSize
 	batchSizeStr := r.URL.Query().Get("batch_size")
 	if batchSizeStr != "" {
 		parsed, err := strconv.Atoi(batchSizeStr)

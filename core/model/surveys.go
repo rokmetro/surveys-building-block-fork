@@ -261,9 +261,3 @@ type SurveyTimeFilterRequest struct {
 	EndTimeAfter    *string `json:"end_time_after"`
 	EndTimeBefore   *string `json:"end_time_before"`
 }
-
-// UserData represents user data
-type UserData struct {
-	SurveyUserData         *[]Survey         `json:"survey"`
-	SurveyResponseUserData *[]SurveyResponse `json:"survey_responses"`
-}

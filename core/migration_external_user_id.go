@@ -20,7 +20,10 @@ import (
 )
 
 const (
-	DefaultMigrationBatchSize int = 100
+	// DefaultExternalUserIDMigrationBatchSize is the default batch size used when migrating
+	// external user IDs for score records. This constant is used when an invalid batch size
+	// is provided to the migration function.
+	DefaultExternalUserIDMigrationBatchSize int = 100
 )
 
 // MigrateScoreExternalUserIDs migrates all score records to populate external_user_id with AmgUUID from Core BB
@@ -30,7 +33,7 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 
 	// Validate batch size
 	if batchSize <= 0 {
-		batchSize = DefaultMigrationBatchSize
+		batchSize = DefaultExternalUserIDMigrationBatchSize
 		log.Printf("Invalid batch size, using default: %d", batchSize)
 	}
 

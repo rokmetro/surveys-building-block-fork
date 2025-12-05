@@ -226,7 +226,7 @@ func (a appShared) updateScore(score *model.Score, surveyResponse model.SurveyRe
 				// Ensure that local time (from user's device clock) is current (within 24 hours of survey response date)
 				if err == nil && surveyResponse.DateCreated.Sub(localResponseTime).Abs().Hours() < 24 {
 					responseTime = localResponseTime
-				} else if l != nil {
+				} else {
 					l.Errorf("Error parsing local time: %v", err)
 				}
 			}
@@ -240,9 +240,7 @@ func (a appShared) updateScore(score *model.Score, surveyResponse model.SurveyRe
 		score.CurrentStreak++
 	} else {
 		// Reset streak to day 1
-		if l != nil {
-			l.Infof("Resetting streak (%d) on %v (%s)", score.CurrentStreak, responseTime, survey.ID)
-		}
+		l.Infof("Resetting streak (%d) on %v (%s)", score.CurrentStreak, responseTime, survey.ID)
 		score.CurrentStreak = 1
 	}
 	score.PrevSurveyResponseDate = responseTime

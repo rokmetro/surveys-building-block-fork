@@ -63,8 +63,15 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 		accountIDs := []string{}
 		for _, score := range batch {
 			if score.UserID == "" {
-				log.Printf("Score %s has no UserID (Core BB account ID), skipping", score.ID)
-				skippedCount++
+				log.Printf("Score %s has no UserID (Core BB account ID), setting empty external_user_id to exclude from future batches", score.ID)
+				// Update the document with empty external_user_id to ensure it's not loaded in the next batch
+				err := app.storage.UpdateScoreExternalUserID(score.ID, "")
+				if err != nil {
+					log.Printf("Error updating score %s with empty external_user_id: %v", score.ID, err)
+					errorCount++
+				} else {
+					skippedCount++
+				}
 				continue
 			}
 			accountIDs = append(accountIDs, score.UserID)

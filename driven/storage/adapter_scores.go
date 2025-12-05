@@ -59,8 +59,12 @@ func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Sc
 
 // GetScores returns a list of scores in descending order
 func (a *Adapter) GetScores(orgID *string, appID *string, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error) {
+	externalIDField := "external_profile_id"
+	if a.useExternalUserID {
+		externalIDField = "external_user_id"
+	}
 	filter := bson.M{
-		"external_profile_id": bson.M{
+		externalIDField: bson.M{
 			"$ne": "",
 		},
 		"score": bson.M{
@@ -114,11 +118,15 @@ func (a *Adapter) GetScores(orgID *string, appID *string, limit *int, offset *in
 
 // GetTopAndLocalScores retrieves top and local scores closest to the user's score
 func (a *Adapter) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, abovePivotLimit *int, equalPivotLimit *int, belowPivotLimit *int, l *logs.Log) ([]model.Score, error) {
+	externalIDField := "external_profile_id"
+	if a.useExternalUserID {
+		externalIDField = "external_user_id"
+	}
 	// Get top scores
 	scoreFilter := bson.M{
 		"org_id": orgID,
 		"app_id": appID,
-		"external_profile_id": bson.M{
+		externalIDField: bson.M{
 			"$ne": "",
 		},
 	}
@@ -192,7 +200,7 @@ func (a *Adapter) GetTopAndLocalScores(orgID string, appID string, userID string
 		scoreFilter := bson.M{
 			"org_id": orgID,
 			"app_id": appID,
-			"external_profile_id": bson.M{
+			externalIDField: bson.M{
 				"$ne": "",
 			},
 			"user_id": bson.M{
@@ -457,14 +465,19 @@ func (a *Adapter) FindScoresNoRanks(orgID string, appID string, userID []string,
 		filter["user_id"] = bson.M{"$in": userID}
 	}
 	if missingExternalUserID {
-		filter["$or"] = []bson.M{
-			{"external_user_id": bson.M{"$exists": false}},
-			{"external_user_id": ""},
-		}
+		filter["external_user_id"] = bson.M{"$exists": false}
+	}
+
+	findOptions := &options.FindOptions{}
+	if offset != nil {
+		findOptions.SetSkip(int64(*offset))
+	}
+	if limit != nil {
+		findOptions.SetLimit(int64(*limit))
 	}
 
 	var scores []model.Score
-	err := a.db.scores.Find(a.context, filter, &scores, nil)
+	err := a.db.scores.Find(a.context, filter, &scores, findOptions)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeScore, filterArgs(filter), err)
 	}

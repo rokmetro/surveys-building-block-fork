@@ -641,7 +641,7 @@ func (h ClientAPIsHandler) getScores(l *logs.Log, r *http.Request, claims *token
 func (h ClientAPIsHandler) getScore(l *logs.Log, r *http.Request, claims *tokenauth.Claims, roundScore bool) logs.HTTPResponse {
 	externalProfileID := r.URL.Query().Get("external_profile_id")
 
-	score, err := h.app.Client.GetScore(claims.OrgID, claims.AppID, claims.Subject, externalProfileID)
+	score, err := h.app.Client.GetScore(claims.OrgID, claims.AppID, claims.Subject, externalProfileID, claims.ExternalIDs)
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeScore, nil, err, http.StatusInternalServerError, true)
 	}

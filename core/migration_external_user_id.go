@@ -44,8 +44,6 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 	batchNumber := 0
 
 	// Process in batches to avoid overwhelming the Core BB API and memory
-	// Note: We always query from offset 0 because processed documents are excluded from the query
-	// (they have external_user_id set), so the next batch naturally starts from the remaining unprocessed documents
 	for {
 		offset := 0
 		// Fetch a batch of scores using limit and offset

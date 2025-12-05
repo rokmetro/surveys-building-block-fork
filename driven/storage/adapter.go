@@ -46,6 +46,9 @@ type Adapter struct {
 	// ranksLock protects rank initialization operations to prevent concurrent writes
 	// Uses RWMutex: InitRanks takes write lock, score operations take read lock
 	ranksLock *sync.RWMutex
+
+	// useExternalUserID indicates whether to use external_user_id field instead of external_profile_id
+	useExternalUserID bool
 }
 
 // Start starts the storage
@@ -75,7 +78,7 @@ func (a *Adapter) RegisterStorageListener(listener interfaces.StorageListener) {
 
 // Creates a new Adapter with provided context
 func (a *Adapter) withContext(context mongo.SessionContext) *Adapter {
-	return &Adapter{db: a.db, context: context, cachedConfigs: a.cachedConfigs, configsLock: a.configsLock, ranksLock: a.ranksLock}
+	return &Adapter{db: a.db, context: context, cachedConfigs: a.cachedConfigs, configsLock: a.configsLock, ranksLock: a.ranksLock, useExternalUserID: a.useExternalUserID}
 }
 
 // cacheConfigs caches the configs from the DB
@@ -343,7 +346,7 @@ func filterArgs(filter bson.M) *logutils.FieldArgs {
 }
 
 // NewStorageAdapter creates a new storage adapter instance
-func NewStorageAdapter(mongoDBAuth string, mongoDBName string, mongoTimeout string, logger *logs.Logger) *Adapter {
+func NewStorageAdapter(mongoDBAuth string, mongoDBName string, mongoTimeout string, logger *logs.Logger, useExternalUserID bool) *Adapter {
 	timeout, err := strconv.Atoi(mongoTimeout)
 	if err != nil {
 		logger.Infof("Set default timeout - 2000")
@@ -355,7 +358,7 @@ func NewStorageAdapter(mongoDBAuth string, mongoDBName string, mongoTimeout stri
 	ranksLock := &sync.RWMutex{}
 
 	db := &database{mongoDBAuth: mongoDBAuth, mongoDBName: mongoDBName, mongoTimeout: time.Millisecond * time.Duration(timeout), logger: logger}
-	return &Adapter{db: db, cachedConfigs: cachedConfigs, configsLock: configsLock, ranksLock: ranksLock}
+	return &Adapter{db: db, cachedConfigs: cachedConfigs, configsLock: configsLock, ranksLock: ranksLock, useExternalUserID: useExternalUserID}
 }
 
 // AcquireRanksLock acquires the write lock for rank operations

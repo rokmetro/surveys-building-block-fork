@@ -59,8 +59,12 @@ func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Sc
 
 // GetScores returns a list of scores in descending order
 func (a *Adapter) GetScores(orgID *string, appID *string, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error) {
+	externalIDField := "external_profile_id"
+	if a.useExternalUserID {
+		externalIDField = "external_user_id"
+	}
 	filter := bson.M{
-		"external_profile_id": bson.M{
+		externalIDField: bson.M{
 			"$ne": "",
 		},
 		"score": bson.M{
@@ -114,11 +118,15 @@ func (a *Adapter) GetScores(orgID *string, appID *string, limit *int, offset *in
 
 // GetTopAndLocalScores retrieves top and local scores closest to the user's score
 func (a *Adapter) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, abovePivotLimit *int, equalPivotLimit *int, belowPivotLimit *int, l *logs.Log) ([]model.Score, error) {
+	externalIDField := "external_profile_id"
+	if a.useExternalUserID {
+		externalIDField = "external_user_id"
+	}
 	// Get top scores
 	scoreFilter := bson.M{
 		"org_id": orgID,
 		"app_id": appID,
-		"external_profile_id": bson.M{
+		externalIDField: bson.M{
 			"$ne": "",
 		},
 	}
@@ -192,7 +200,7 @@ func (a *Adapter) GetTopAndLocalScores(orgID string, appID string, userID string
 		scoreFilter := bson.M{
 			"org_id": orgID,
 			"app_id": appID,
-			"external_profile_id": bson.M{
+			externalIDField: bson.M{
 				"$ne": "",
 			},
 			"user_id": bson.M{
@@ -447,14 +455,13 @@ func (a *Adapter) findRankForScore(score float64, orgID string, appID string) (u
 }
 
 // FindScoresWithoutExternalUserID finds scores that don't have external_user_id populated
+// Excludes empty string values to prevent migration from getting stuck in an infinite loop
+// trying to load IDs for users that cannot be found
 func (a *Adapter) FindScoresWithoutExternalUserID(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
 	filter := bson.M{
-		"org_id": orgID,
-		"app_id": appID,
-		"$or": []bson.M{
-			{"external_user_id": bson.M{"$exists": false}},
-			{"external_user_id": ""},
-		},
+		"org_id":           orgID,
+		"app_id":           appID,
+		"external_user_id": bson.M{"$exists": false},
 	}
 
 	findOptions := &options.FindOptions{}

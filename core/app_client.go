@@ -623,9 +623,8 @@ func (app *Application) PrepareScoresForResponse(scores []model.Score) {
 	}
 
 	for i := range scores {
-		if scores[i].ExternalUserID != "" {
-			// When flag is enabled and we have an AmgUUID, use it in the external_profile_id field
-			scores[i].ExternalProfileID = scores[i].ExternalUserID
-		}
+		// When flag is enabled, always use ExternalUserID in the external_profile_id field,
+		// even if it's empty
+		scores[i].ExternalProfileID = scores[i].ExternalUserID
 	}
 }

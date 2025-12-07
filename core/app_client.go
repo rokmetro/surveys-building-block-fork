@@ -235,7 +235,6 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 			a.app.logger.WarnWithFields("failed to find scores for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": orgID, "app_id": appID})
 		}
 
-		topic := notifications.TopicQuizAll
 		for _, userScore := range entries {
 			if userScore.UserID != userID {
 				// current user's score has eclipsed this user's score in the leaderboard by completing the fashion quiz
@@ -244,17 +243,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 
 					body := fmt.Sprintf("@%s just passed you in your Runway Genius leaderboard %s. Ready to take your spot back?", username, lb.Name)
 
-					message := model.NotificationMessage{
-						OrgID: orgID,
-						AppID: appID,
-
-						Subject:    notifications.SubjectVogue,
-						Body:       body,
-						Data:       notificationData,
-						Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
-						Topic:      &topic,
-					}
-					a.app.notifications.SendNotification(message)
+					a.app.SendQuizNotifications(orgID, appID, score.UserID, score.ExternalUserID, body, notificationData)
 				}
 
 				if notifyFirstDailyQuiz {
@@ -268,17 +257,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 					}
 					body := fmt.Sprintf("@%s just scored %g %s in today's Runway Genius. Can you outplay them?", username, points, pointsString)
 
-					message := model.NotificationMessage{
-						OrgID: orgID,
-						AppID: appID,
-
-						Subject:    notifications.SubjectVogue,
-						Body:       body,
-						Data:       notificationData,
-						Recipients: []model.NotificationMessageRecipient{{UserID: userScore.UserID}},
-						Topic:      &topic,
-					}
-					a.app.notifications.SendNotification(message)
+					a.app.SendQuizNotifications(orgID, appID, score.UserID, score.ExternalUserID, body, notificationData)
 				}
 			}
 		}
@@ -551,31 +530,35 @@ func (a appClient) sendJoinLeaderboardNotifications(leaderboardID string, orgID 
 		a.app.logger.WarnWithFields("error getting leaderboard entries", logutils.Fields{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID})
 		return
 	}
-	for _, entry := range leaderboardEntries {
-		if entry.UserID != userID {
+
+	userIDs := make([]string, len(leaderboardEntries))
+	userIDsToEntries := make(map[string]model.LeaderboardEntry)
+	for i, entry := range leaderboardEntries {
+		userIDs[i] = entry.UserID
+		userIDsToEntries[entry.UserID] = entry
+	}
+
+	scores, err := a.app.storage.FindScoresNoRanks(orgID, appID, []string{userID}, false, nil, nil)
+	if err != nil {
+		a.app.logger.WarnWithFields("error getting scores", logutils.Fields{"user_id": userID, "org_id": orgID, "app_id": appID})
+		return
+	}
+
+	for _, score := range scores {
+		if score.UserID != userID {
+			entry := userIDsToEntries[score.UserID]
 			body := ""
 			if entry.IsAdmin {
 				body = fmt.Sprintf("@%s accepted your invite and joined the %s leaderboard.", username, leaderboard.Name)
 			} else {
 				body = fmt.Sprintf("@%s just joined the %s leaderboard. Want to see how they stack up?", username, leaderboard.Name)
 			}
-			topic := notifications.TopicQuizAll
 
 			data := map[string]string{
 				"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, leaderboardID),
 			}
 
-			message := model.NotificationMessage{
-				OrgID: orgID,
-				AppID: appID,
-
-				Subject:    notifications.SubjectVogue,
-				Body:       body,
-				Data:       data,
-				Recipients: []model.NotificationMessageRecipient{{UserID: entry.UserID}},
-				Topic:      &topic,
-			}
-			a.app.notifications.SendNotification(message)
+			a.app.SendQuizNotifications(orgID, appID, score.UserID, score.ExternalUserID, body, data)
 		}
 	}
 }

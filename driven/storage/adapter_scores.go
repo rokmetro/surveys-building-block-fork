@@ -454,14 +454,18 @@ func (a *Adapter) findRankForScore(score float64, orgID string, appID string) (u
 	return uint32(count) + 1, nil
 }
 
-// FindScoresWithoutExternalUserID finds scores that don't have external_user_id populated
-// Excludes empty string values to prevent migration from getting stuck in an infinite loop
-// trying to load IDs for users that cannot be found
-func (a *Adapter) FindScoresWithoutExternalUserID(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
+// FindScoresNoRanks finds scores and does not set their ranks
+func (a *Adapter) FindScoresNoRanks(orgID string, appID string, userID []string, missingExternalUserID bool, limit *int, offset *int) ([]model.Score, error) {
 	filter := bson.M{
-		"org_id":           orgID,
-		"app_id":           appID,
-		"external_user_id": bson.M{"$exists": false},
+		"org_id": orgID,
+		"app_id": appID,
+	}
+
+	if len(userID) > 0 {
+		filter["user_id"] = bson.M{"$in": userID}
+	}
+	if missingExternalUserID {
+		filter["external_user_id"] = bson.M{"$exists": false}
 	}
 
 	findOptions := &options.FindOptions{}

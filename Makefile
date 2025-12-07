@@ -26,7 +26,7 @@ V = 0
 Q = $(if $(filter 1,$V),,@)
 M = $(shell printf "\033[34;1m▶\033[0m")
 
-SHELL=sh
+SHELL=/bin/bash
 
 .PHONY: all
 all: vendor log-variables checkfmt lint vet vuln test-short | $(BASE) ; $(info $(M) building executable(s)... $(VERSION) $(DATE)) @ ## Build program binary

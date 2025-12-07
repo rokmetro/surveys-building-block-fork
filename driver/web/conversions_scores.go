@@ -26,6 +26,7 @@ func scoreToDef(item *model.Score) *Def.Score {
 		CorrectAnswerCount:     &correctAnswerCount,
 		CurrentStreak:          &currentStreak,
 		ExternalProfileId:      &item.ExternalProfileID,
+		ExternalUserId:         &item.ExternalUserID,
 		Id:                     &item.ID,
 		OrgId:                  &item.OrgID,
 		PrevSurveyResponseDate: &prevSurveyResponseDate,

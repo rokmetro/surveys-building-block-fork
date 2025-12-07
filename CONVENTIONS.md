@@ -23,7 +23,7 @@ Whenever a new interface is created, a unit test should be created for each func
 When updating or changing existing implementations, run the associated unit tests to ensure that they still pass. If they do not, the implementation changes likely changed the interface as well. If the change to the interface was intentional, update the unit tests as needed to make them pass and document the [Breaking Change](#breaking-changes). If the change was not intentional, rework your implementation changes to keep the interface consistent and ensure all tests pass.
 
 ### Mocks
-To test some components of the system in isolation, it may be necessary to mock some interfaces. Mocks should be automatically generated using the [Mockery](https://github.com/vektra/mockery) utility. Mockery can be installed by running `go install github.com/vektra/mockery/v2@latest`. One example of an interface that will need to be mocked is the `interfaces.Storage` interface. To generate (or regenerate) the mocks for the storage interface using Mockery, `cd core/interfaces` then run `mockery --name=Storage`. 
+To test some components of the system in isolation, it may be necessary to mock some interfaces. Mocks should be automatically generated using the [Mockery](https://github.com/vektra/mockery) utility. Mockery can be installed by running `go install github.com/vektra/mockery/v3@v3.6.1`. One example of an interface that will need to be mocked is the `interfaces.Storage` interface. To generate (or regenerate) the mocks for the relevant interfaces using Mockery, run `mockery`. 
 
 ## Releases
 Whenever a new release is made, the following process should be followed.

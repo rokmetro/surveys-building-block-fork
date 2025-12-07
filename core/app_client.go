@@ -17,7 +17,7 @@ package core
 import (
 	"application/core/interfaces"
 	"application/core/model"
-	"application/driven/airship"
+	"application/driven/notifications"
 	"application/utils"
 	"fmt"
 	"time"
@@ -211,8 +211,8 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 
 	for i := range leaderboards {
 		lb := leaderboards[i]
-		notificationData := map[string]any{
-			"url": fmt.Sprintf("%s/quiz/leaderboard/%s", airship.BaseURLVogue, lb.ID),
+		notificationData := map[string]string{
+			"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, lb.ID),
 		}
 
 		notifyFirstDailyQuiz := false
@@ -243,7 +243,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 
 					body := fmt.Sprintf("@%s just passed you in your Runway Genius leaderboard %s. Ready to take your spot back?", username, lb.Name)
 
-					a.app.airship.SendNotification(orgID, appID, score.ExternalUserID, airship.SubjectVogue, body, notificationData, []string{airship.TagQuizAll}, nil)
+					a.app.SendQuizNotifications(orgID, appID, score.UserID, score.ExternalUserID, body, notificationData)
 				}
 
 				if notifyFirstDailyQuiz {
@@ -257,7 +257,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 					}
 					body := fmt.Sprintf("@%s just scored %g %s in today's Runway Genius. Can you outplay them?", username, points, pointsString)
 
-					a.app.airship.SendNotification(orgID, appID, score.ExternalUserID, airship.SubjectVogue, body, notificationData, []string{airship.TagQuizAll}, nil)
+					a.app.SendQuizNotifications(orgID, appID, score.UserID, score.ExternalUserID, body, notificationData)
 				}
 			}
 		}
@@ -554,11 +554,11 @@ func (a appClient) sendJoinLeaderboardNotifications(leaderboardID string, orgID 
 				body = fmt.Sprintf("@%s just joined the %s leaderboard. Want to see how they stack up?", username, leaderboard.Name)
 			}
 
-			data := map[string]any{
-				"url": fmt.Sprintf("%s/quiz/leaderboard/%s", airship.BaseURLVogue, leaderboardID),
+			data := map[string]string{
+				"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, leaderboardID),
 			}
 
-			a.app.airship.SendNotification(orgID, appID, score.ExternalUserID, airship.SubjectVogue, body, data, []string{airship.TagQuizAll}, nil)
+			a.app.SendQuizNotifications(orgID, appID, score.UserID, score.ExternalUserID, body, data)
 		}
 	}
 }

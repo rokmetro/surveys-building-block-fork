@@ -7,7 +7,7 @@ generate: true
 include-auto-generated: false
 log-level: info
 structname: '{{.Mock}}{{.InterfaceName}}'
-pkgname: '{{.SrcPackageName}}'
+pkgname: 'mocks'
 recursive: false
 require-template-schema-exists: true
 template: testify
@@ -18,3 +18,4 @@ packages:
       Storage:
         config:
           filename: mocks/Storage.go
+          structname: Storage

@@ -16,8 +16,6 @@ const (
 	SubjectVogue string = "Vogue"
 	// TagQuizAll is the tag to use for all quiz notifications
 	TagQuizAll string = "quiz.all.all"
-	// BaseURLVogue is a base url used for vogue deep links
-	BaseURLVogue string = "https://vogue.com"
 )
 
 type m map[string]any
@@ -39,7 +37,7 @@ func NewAirshipAdapter(host string, bearerToken string, tagGroup string) *Adapte
 }
 
 // SendNotification sends a notification to an Airship user with the given tags
-func (a *Adapter) SendNotification(orgID string, appID string, userID string, title string, body string, data m, tags []string, excludeTags []string) error {
+func (a *Adapter) SendNotification(orgID string, appID string, userID string, title string, body string, data map[string]string, tags []string, excludeTags []string) error {
 	url := fmt.Sprintf("%s/api/push", a.host)
 
 	client := &http.Client{

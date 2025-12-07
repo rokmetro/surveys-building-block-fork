@@ -19,7 +19,7 @@ package core
 
 import (
 	"application/core/interfaces"
-	"application/driven/airship"
+	"application/driven/notifications"
 	"application/utils"
 	"fmt"
 	"time"
@@ -30,8 +30,6 @@ import (
 type streakNotifications struct {
 	application *Application
 	logger      *logs.Logger
-
-	airship *airship.Adapter
 
 	storage interfaces.Storage
 
@@ -99,10 +97,10 @@ func (n streakNotifications) processNotifications() {
 	for _, score := range scores {
 		body := fmt.Sprintf("You're on a %d-day Runway Genius streak! Play now to keep it going.", score.CurrentStreak)
 
-		data := map[string]any{
-			"url": fmt.Sprintf("%s/quiz/landing", airship.BaseURLVogue),
+		data := map[string]string{
+			"url": fmt.Sprintf("%s/quiz/landing", notifications.BaseURLVogue),
 		}
 
-		n.airship.SendNotification(score.OrgID, score.AppID, score.ExternalUserID, airship.SubjectVogue, body, data, []string{airship.TagQuizAll}, nil)
+		n.application.SendQuizNotifications(score.OrgID, score.AppID, score.UserID, score.ExternalUserID, body, data)
 	}
 }

@@ -19,6 +19,7 @@ import (
 	"application/core/model"
 	"application/driven/airship"
 	corebb "application/driven/core"
+	"application/driven/notifications"
 	"time"
 
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
@@ -100,6 +101,26 @@ func (a *Application) CheckTimersConfig(key string, filterTime time.Time, update
 	return model.GetConfigData[model.TimersConfigData](*config)
 }
 
+// SendQuizNotifications sends quiz notifications to all notification services
+func (a *Application) SendQuizNotifications(orgID string, appID string, userID string, externalUserID string, body string, notificationData map[string]string) {
+	// Send to Airship
+	a.airship.SendNotification(orgID, appID, externalUserID, airship.SubjectVogue, body, notificationData, []string{airship.TagQuizAll}, nil)
+
+	// Send to Notifications BB
+	topic := notifications.TopicQuizAll
+	message := model.NotificationMessage{
+		OrgID: orgID,
+		AppID: appID,
+
+		Subject:    notifications.SubjectVogue,
+		Body:       body,
+		Data:       notificationData,
+		Recipients: []model.NotificationMessageRecipient{{UserID: userID}},
+		Topic:      &topic,
+	}
+	a.notifications.SendNotification(message)
+}
+
 // NewApplication creates new Application
 func NewApplication(version string, build string, storage interfaces.Storage, notifications interfaces.Notifications, calendar interfaces.Calendar,
 	coreBB *corebb.Adapter, airship *airship.Adapter, serviceID string, logger *logs.Logger, useExternalUserID bool) *Application {
@@ -110,8 +131,7 @@ func NewApplication(version string, build string, storage interfaces.Storage, no
 		useExternalUserID: useExternalUserID}
 
 	streakNotificationsTimerDone := make(chan bool)
-	streakNotifications := streakNotifications{application: &application, logger: logger, storage: storage, airship: airship,
-		streakNotificationsTimerDone: streakNotificationsTimerDone}
+	streakNotifications := streakNotifications{application: &application, logger: logger, storage: storage, streakNotificationsTimerDone: streakNotificationsTimerDone}
 
 	application.streakNotifications = streakNotifications
 

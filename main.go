@@ -22,6 +22,7 @@ import (
 	"application/driven/notifications"
 	"application/driven/storage"
 	"application/driver/web"
+	"strconv"
 	"strings"
 
 	"github.com/rokwire/rokwire-building-block-sdk-go/services/core/auth/keys"
@@ -59,11 +60,22 @@ func main() {
 		port = "80"
 	}
 
+	// Parse USE_SCORES_EXTERNAL_USER_ID environment variable
+	useExternalUserIDStr := envLoader.GetAndLogEnvVar(envPrefix+"USE_SCORES_EXTERNAL_USER_ID", false, false)
+	useExternalUserID := false
+	if useExternalUserIDStr != "" {
+		var err error
+		useExternalUserID, err = strconv.ParseBool(useExternalUserIDStr)
+		if err != nil {
+			logger.Warnf("Invalid %s+USE_SCORES_EXTERNAL_USER_ID value '%s', defaulting to false", envPrefix, useExternalUserIDStr)
+		}
+	}
+
 	// mongoDB adapter
 	mongoDBAuth := envLoader.GetAndLogEnvVar(envPrefix+"MONGO_AUTH", true, true)
 	mongoDBName := envLoader.GetAndLogEnvVar(envPrefix+"MONGO_DATABASE", true, false)
 	mongoTimeout := envLoader.GetAndLogEnvVar(envPrefix+"MONGO_TIMEOUT", false, false)
-	storageAdapter := storage.NewStorageAdapter(mongoDBAuth, mongoDBName, mongoTimeout, logger)
+	storageAdapter := storage.NewStorageAdapter(mongoDBAuth, mongoDBName, mongoTimeout, logger, useExternalUserID)
 	err := storageAdapter.Start()
 	if err != nil {
 		logger.Fatalf("Cannot start the mongoDB adapter: %v", err)
@@ -149,7 +161,7 @@ func main() {
 
 	// Application
 	application := core.NewApplication(Version, Build, storageAdapter, notificationsAdapter,
-		calendarAdapter, coreAdapter, serviceID, logger)
+		calendarAdapter, coreAdapter, serviceID, logger, useExternalUserID)
 	application.Start()
 
 	// read CORS parameters from stored env config

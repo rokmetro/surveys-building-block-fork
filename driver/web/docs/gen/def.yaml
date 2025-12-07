@@ -2410,6 +2410,12 @@ components:
         external_profile_id:
           type: string
           readOnly: true
+          deprecated: true
+          description: Deprecated. Use external_user_id instead. This field contains the legacy Mastodon ID.
+        external_user_id:
+          type: string
+          readOnly: true
+          description: The external user ID (AmgUUID) from Core BB. This is the new field that should be used instead of external_profile_id.
         score:
           type: number
           readOnly: true

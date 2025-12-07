@@ -160,7 +160,7 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 		// Create a new score if not present
 		// Otherwise update score
 		if score == nil || err != nil {
-			score, err = a.app.shared.createScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, "", true)
+			score, err = a.app.shared.createScore(surveyResponse.OrgID, surveyResponse.AppID, surveyResponse.UserID, "", true, externalIDs)
 			if err != nil {
 				return nil, errors.WrapErrorAction(logutils.ActionCreate, model.TypeScore, nil, err)
 			}
@@ -326,10 +326,10 @@ func (a appClient) CreateSurveyAlert(surveyAlert model.SurveyAlert) error {
 }
 
 // GetScore gets scores and creates one if it doesn't exist
-func (a appClient) GetScore(orgID string, appID string, userID string, externalProfileID string) (*model.Score, error) {
+func (a appClient) GetScore(orgID string, appID string, userID string, externalProfileID string, externalIDs map[string]string) (*model.Score, error) {
 	score, err := a.app.storage.GetScore(orgID, appID, userID)
 	if score == nil {
-		score, err = a.app.shared.createScore(orgID, appID, userID, externalProfileID, true)
+		score, err = a.app.shared.createScore(orgID, appID, userID, externalProfileID, true, externalIDs)
 	}
 	if err != nil || score == nil {
 		return nil, err
@@ -349,18 +349,33 @@ func (a appClient) GetScore(orgID string, appID string, userID string, externalP
 	}
 
 	score.StreakMultiplier = model.ScoreStreakMultiplier
+
+	scores := []model.Score{*score}
+	a.app.PrepareScoresForResponse(scores)
+	*score = scores[0]
+
 	return score, err
 }
 
 // GetScores returns scores in descending order and removes scores with empty external IDs
 func (a appClient) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
-	return a.app.storage.GetScores(&orgID, &appID, limit, offset, nil, nil)
+	scores, err := a.app.storage.GetScores(&orgID, &appID, limit, offset, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	a.app.PrepareScoresForResponse(scores)
+	return scores, nil
 }
 
 // GetScoresWithPivot retrieves scores closest to the user's score
 func (a appClient) GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int, l *logs.Log) ([]model.Score, error) {
 	// We replace the local limit with the equal limit when getting scores from database
-	return a.app.storage.GetTopAndLocalScores(orgID, appID, userID, limit, offset, abovePivotLimit, localLimit, belowPivotLimit, l)
+	scores, err := a.app.storage.GetTopAndLocalScores(orgID, appID, userID, limit, offset, abovePivotLimit, localLimit, belowPivotLimit, l)
+	if err != nil {
+		return nil, err
+	}
+	a.app.PrepareScoresForResponse(scores)
+	return scores, nil
 }
 
 // GetLeaderboard gets the leaderboard with the provided ID
@@ -386,7 +401,12 @@ func (a appClient) GetLeaderboards(orgID string, appID string, userID string) ([
 
 // GetLeaderboardScores returns the paginated scores in the leaderboard with the provided ID
 func (a appClient) GetLeaderboardScores(leaderboardID string, orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
-	return a.app.storage.GetLeaderboardScores(leaderboardID, orgID, appID, limit, offset)
+	scores, err := a.app.storage.GetLeaderboardScores(leaderboardID, orgID, appID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	a.app.PrepareScoresForResponse(scores)
+	return scores, nil
 }
 
 // GetLeaderboardUserRanks returns the scores of a user in each leaderboard
@@ -594,4 +614,17 @@ func (a appClient) requireLeaderboardAdmin(leaderboardID string, orgID string, a
 // newAppClient creates new appClient
 func newAppClient(app *Application) appClient {
 	return appClient{app: app}
+}
+
+// PrepareScoresForResponse prepares multiple scores for API response based on feature flag
+func (app *Application) PrepareScoresForResponse(scores []model.Score) {
+	if !app.useExternalUserID {
+		return
+	}
+
+	for i := range scores {
+		// When flag is enabled, always use ExternalUserID in the external_profile_id field,
+		// even if it's empty
+		scores[i].ExternalProfileID = scores[i].ExternalUserID
+	}
 }

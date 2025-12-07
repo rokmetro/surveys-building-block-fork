@@ -16,10 +16,10 @@ package corebb
 
 import (
 	"application/core/model"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -69,18 +69,69 @@ func (a *Adapter) LoadDeletedMemberships() ([]model.DeletedUserData, error) {
 		return nil, fmt.Errorf("LoadDeletedMemberships: error with response code != 200")
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("LoadDeletedMemberships: unable to read json: %s", err)
-		return nil, fmt.Errorf("LoadDeletedMemberships: unable to parse json: %s", err)
-	}
-
 	var deletedMemberships []model.DeletedUserData
-	err = json.Unmarshal(data, &deletedMemberships)
+	err = json.NewDecoder(resp.Body).Decode(&deletedMemberships)
 	if err != nil {
 		log.Printf("LoadDeletedMemberships: unable to parse json: %s", err)
 		return nil, fmt.Errorf("LoadDeletedMemberships: unable to parse json: %s", err)
 	}
 
 	return deletedMemberships, nil
+}
+
+// RetrieveCoreUserAccountByCriteria retrieves Core user accounts by account IDs
+func (a *Adapter) RetrieveCoreUserAccountByCriteria(accountIDs []string, appID *string, orgID *string) ([]model.CoreAccount, error) {
+	if a.serviceAccountManager == nil {
+		log.Println("RetrieveCoreUserAccountByCriteria: service account manager is nil")
+		return nil, errors.New("service account manager is nil")
+	}
+
+	appIDVal := "all"
+	if appID != nil && len(*appID) != 0 {
+		appIDVal = *appID
+	}
+	orgIDVal := "all"
+	if orgID != nil && len(*orgID) != 0 {
+		orgIDVal = *orgID
+	}
+
+	url := fmt.Sprintf("%s/bbs/accounts?app_id=%s&org_id=%s", a.coreURL, appIDVal, orgIDVal)
+
+	accountCriteria := map[string]interface{}{
+		"id": accountIDs,
+	}
+
+	bodyBytes, err := json.Marshal(accountCriteria)
+	if err != nil {
+		log.Printf("RetrieveCoreUserAccountByCriteria: error marshalling body - %s", err)
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewReader(bodyBytes))
+	if err != nil {
+		log.Printf("RetrieveCoreUserAccountByCriteria: error creating request - %s", err)
+		return nil, err
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := a.serviceAccountManager.MakeRequest(req, appIDVal, orgIDVal)
+	if err != nil {
+		log.Printf("RetrieveCoreUserAccountByCriteria: error sending request - %s", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		log.Printf("RetrieveCoreUserAccountByCriteria: error with response code - %d", resp.StatusCode)
+		return nil, fmt.Errorf("RetrieveCoreUserAccountByCriteria: error with response code != 200")
+	}
+
+	var coreAccounts []model.CoreAccount
+	err = json.NewDecoder(resp.Body).Decode(&coreAccounts)
+	if err != nil {
+		log.Printf("RetrieveCoreUserAccountByCriteria: unable to parse json: %s", err)
+		return nil, fmt.Errorf("RetrieveCoreUserAccountByCriteria: unable to parse json: %s", err)
+	}
+
+	return coreAccounts, nil
 }

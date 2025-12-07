@@ -40,7 +40,8 @@ type Score struct {
 	AppID                  string       `json:"app_id" bson:"app_id"`
 	UserID                 string       `json:"user_id" bson:"user_id"`
 	SurveyType             string       `json:"survey_type" bson:"survey_type"`
-	ExternalProfileID      string       `json:"external_profile_id" bson:"external_profile_id"`
+	ExternalProfileID      string       `json:"external_profile_id" bson:"external_profile_id"`     // Mastodon ID (legacy)
+	ExternalUserID         string       `json:"external_user_id,omitempty" bson:"external_user_id"` // AmgUUID (new)
 	Score                  float64      `json:"score" bson:"score"`
 	ResponseCount          uint32       `json:"response_count" bson:"response_count"`
 	PrevSurveyResponseDate time.Time    `json:"prev_survey_response_date" bson:"prev_survey_response_date"`

@@ -219,14 +219,6 @@ type SurveyTimeFilter struct {
 	EndTimeBefore   *time.Time `json:"end_time_before"`
 }
 
-// SurveyTimeFilterRequest wraps the time filter for surveys
-type SurveyTimeFilterRequest struct {
-	StartTimeAfter  *string `json:"start_time_after"`
-	StartTimeBefore *string `json:"start_time_before"`
-	EndTimeAfter    *string `json:"end_time_after"`
-	EndTimeBefore   *string `json:"end_time_before"`
-}
-
 // SurveysResponseData wraps the entire record
 type SurveysResponseData struct {
 	ID                      string                 `json:"id"`
@@ -260,4 +252,12 @@ type SurveysResponseData struct {
 	Completed               *bool                  `json:"completed"`
 	SurveyResponses         []*SurveyResponse      `json:"survey_response"`
 	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties"`
+}
+
+// SurveyTimeFilterRequest wraps the time filter for surveys
+type SurveyTimeFilterRequest struct {
+	StartTimeAfter  *string `json:"start_time_after"`
+	StartTimeBefore *string `json:"start_time_before"`
+	EndTimeAfter    *string `json:"end_time_after"`
+	EndTimeBefore   *string `json:"end_time_before"`
 }

@@ -132,6 +132,7 @@ func (a Adapter) Start() {
 
 	adminRouter.HandleFunc("/leaderboard/init-scores", a.wrapFunc(a.adminAPIsHandler.initLeaderboardScores, a.auth.admin.Permissions)).Methods("POST")
 	adminRouter.HandleFunc("/users/{id}/calculate-score", a.wrapFunc(a.adminAPIsHandler.calculateUserScore, a.auth.admin.Permissions)).Methods("GET")
+	adminRouter.HandleFunc("/scores/migrate-external-user-ids", a.wrapFunc(a.adminAPIsHandler.migrateScoreExternalUserIDs, a.auth.admin.Permissions)).Methods("POST")
 
 	// Analytics APIs
 	analyticsRouter := mainRouter.PathPrefix("/analytics").Subrouter()

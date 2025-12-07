@@ -30,3 +30,4 @@ p, delete_configs_surveys, /surveys/api/admin/configs, (GET),
 p, get_survey_responses, /surveys/api/admin/surveys/*/response, (GET), 
 
 p, surveys_init_scores, /surveys/api/admin/leaderboard/init-scores, (POST), Initialize scores for surveys
+p, surveys_migrate_score_external_user_ids, /surveys/api/admin/scores/migrate-external-user-ids, (POST), Migrate score external user IDs

@@ -149,7 +149,7 @@ func (a appShared) hasAttendedEvent(orgID string, appID string, eventID string, 
 }
 
 // createScore Creates a score object by iterating over all previous survey responses
-func (a appShared) createScore(orgID string, appID string, userID string, externalProfileID string, apply bool) (*model.Score, error) {
+func (a appShared) createScore(orgID string, appID string, userID string, externalProfileID string, apply bool, externalIDs map[string]string) (*model.Score, error) {
 	surveyResponses, err := a.app.storage.GetSurveyResponses(&orgID, &appID, &userID, nil, []string{model.SurveyTypeFashionQuiz}, nil, nil, nil, nil)
 	if err != nil {
 		return nil, err
@@ -172,6 +172,11 @@ func (a appShared) createScore(orgID string, appID string, userID string, extern
 	// Iterate over responses in reverse order (need to start with oldest first, date sorted descending by default)
 	for i := len(surveyResponses) - 1; i >= 0; i-- {
 		a.updateScore(&score, surveyResponses[i], nil)
+	}
+
+	// Set AmgUUID from externalIDs if present
+	if amgUUID, ok := externalIDs["amg_uuid"]; ok && amgUUID != "" {
+		score.ExternalUserID = amgUUID
 	}
 
 	if apply {

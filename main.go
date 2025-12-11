@@ -161,7 +161,7 @@ func main() {
 	airshipHost := envLoader.GetAndLogEnvVar(envPrefix+"AIRSHIP_HOST", false, false)
 	airshipBearerToken := envLoader.GetAndLogEnvVar(envPrefix+"AIRSHIP_BEARER_TOKEN", false, true)
 	airshipTagGroup := envLoader.GetAndLogEnvVar(envPrefix+"AIRSHIP_TAG_GROUP", false, false)
-	airshipAdapter := airship.NewAirshipAdapter(airshipHost, airshipBearerToken, airshipTagGroup)
+	airshipAdapter := airship.NewAirshipAdapter(airshipHost, airshipBearerToken, airshipTagGroup, logger)
 
 	//core adapter
 	coreAdapter := corebb.NewCoreAdapter(coreBBBaseURL, serviceAccountManager)

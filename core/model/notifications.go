@@ -31,6 +31,24 @@ type NotificationMessage struct {
 	Topic                    *string                         `json:"topic"`
 }
 
+// GetLoggingParams returns logging parameters for the notification message
+func (nm *NotificationMessage) GetLoggingParams() map[string]any {
+	recipients := make([]string, len(nm.Recipients))
+	for i, r := range nm.Recipients {
+		recipients[i] = r.UserID
+	}
+	topic := ""
+	if nm.Topic != nil {
+		topic = *nm.Topic
+	}
+
+	return map[string]any{
+		"recipients":                 recipients,
+		"recipient_account_criteria": nm.RecipientAccountCriteria,
+		"topic":                      topic,
+	}
+}
+
 // NotificationMessageRecipient represents a recipient of a Notifications BB message
 type NotificationMessageRecipient struct {
 	UserID string `json:"user_id"`

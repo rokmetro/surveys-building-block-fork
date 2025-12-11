@@ -222,6 +222,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 			notifyFirstDailyQuiz = true
 			lb.LastQuizTime = &now
 
+			a.app.logger.InfoWithFields("updating leaderboard last quiz time", logutils.Fields{"id": lb.ID, "org_id": orgID, "app_id": appID})
 			err = a.app.storage.UpdateLeaderboard(lb)
 			if err != nil {
 				a.app.logger.WarnWithFields("failed to update leaderboard", logutils.Fields{"id": lb.ID, "org_id": orgID, "app_id": appID})
@@ -230,12 +231,8 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 			}
 		}
 
-		entries, err := a.app.storage.GetLeaderboardEntries(lb.ID, orgID, appID, nil)
-		if err != nil {
-			a.app.logger.WarnWithFields("failed to find scores for leaderboard", logutils.Fields{"leaderboard_id": lb.ID, "org_id": orgID, "app_id": appID})
-		}
-
-		for _, userScore := range entries {
+		scores, _ := a.app.shared.getScoresForLeaderboard(&lb)
+		for _, userScore := range scores {
 			if userScore.UserID != userID {
 				// current user's score has eclipsed this user's score in the leaderboard by completing the fashion quiz
 				if userScore.Score >= oldScore.Score && userScore.Score < score.Score {
@@ -243,7 +240,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 
 					body := fmt.Sprintf("@%s just passed you in your Runway Genius leaderboard %s. Ready to take your spot back?", username, lb.Name)
 
-					a.app.SendQuizNotifications(orgID, appID, score.UserID, score.ExternalUserID, body, notificationData)
+					a.app.SendQuizNotifications(orgID, appID, userScore.UserID, userScore.ExternalUserID, body, notificationData)
 				}
 
 				if notifyFirstDailyQuiz {
@@ -257,7 +254,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 					}
 					body := fmt.Sprintf("@%s just scored %g %s in today's Runway Genius. Can you outplay them?", username, points, pointsString)
 
-					a.app.SendQuizNotifications(orgID, appID, score.UserID, score.ExternalUserID, body, notificationData)
+					a.app.SendQuizNotifications(orgID, appID, userScore.UserID, userScore.ExternalUserID, body, notificationData)
 				}
 			}
 		}
@@ -525,25 +522,7 @@ func (a appClient) sendJoinLeaderboardNotifications(leaderboardID string, orgID 
 		return
 	}
 
-	leaderboardEntries, err := a.app.storage.GetLeaderboardEntries(leaderboardID, orgID, appID, nil)
-	if err != nil {
-		a.app.logger.WarnWithFields("error getting leaderboard entries", logutils.Fields{"leaderboard_id": leaderboardID, "org_id": orgID, "app_id": appID})
-		return
-	}
-
-	userIDs := make([]string, len(leaderboardEntries))
-	userIDsToEntries := make(map[string]model.LeaderboardEntry)
-	for i, entry := range leaderboardEntries {
-		userIDs[i] = entry.UserID
-		userIDsToEntries[entry.UserID] = entry
-	}
-
-	scores, err := a.app.storage.FindScoresNoRanks(orgID, appID, []string{userID}, false, nil, nil)
-	if err != nil {
-		a.app.logger.WarnWithFields("error getting scores", logutils.Fields{"user_id": userID, "org_id": orgID, "app_id": appID})
-		return
-	}
-
+	scores, userIDsToEntries := a.app.shared.getScoresForLeaderboard(leaderboard)
 	for _, score := range scores {
 		if score.UserID != userID {
 			entry := userIDsToEntries[score.UserID]

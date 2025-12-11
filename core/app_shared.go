@@ -252,6 +252,35 @@ func (a appShared) updateScore(score *model.Score, surveyResponse model.SurveyRe
 	}
 }
 
+// getScoresForLeaderboardEntries gets scores for the given leaderboard and provides a map of user IDs to leaderboard entries
+func (a appShared) getScoresForLeaderboard(leaderboard *model.Leaderboard) ([]model.Score, map[string]model.LeaderboardEntry) {
+	if leaderboard == nil {
+		return nil, nil
+	}
+
+	entries, err := a.app.storage.GetLeaderboardEntries(leaderboard.ID, leaderboard.OrgID, leaderboard.AppID, nil)
+	if err != nil {
+		a.app.logger.WarnWithFields("error getting leaderboard entries", logutils.Fields{"leaderboard_id": leaderboard.ID, "org_id": leaderboard.OrgID, "app_id": leaderboard.AppID})
+		return nil, nil
+	}
+
+	userIDs := make([]string, len(entries))
+	userIDsToEntries := make(map[string]model.LeaderboardEntry)
+	for i, entry := range entries {
+		userIDs[i] = entry.UserID
+		userIDsToEntries[entry.UserID] = entry
+	}
+	a.app.logger.InfoWithFields("getting scores for leaderboard", logutils.Fields{"leaderboard_id": leaderboard.ID, "org_id": leaderboard.OrgID, "app_id": leaderboard.AppID, "user_ids": userIDs})
+
+	scores, err := a.app.storage.FindScoresNoRanks(leaderboard.OrgID, leaderboard.AppID, userIDs, false, nil, nil)
+	if err != nil {
+		a.app.logger.WarnWithFields("error getting scores", logutils.Fields{"user_ids": userIDs, "org_id": leaderboard.OrgID, "app_id": leaderboard.AppID})
+		return nil, nil
+	}
+
+	return scores, userIDsToEntries
+}
+
 // newAppShared creates new appShared
 func newAppShared(app *Application) appShared {
 	return appShared{app: app}

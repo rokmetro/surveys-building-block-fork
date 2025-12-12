@@ -32,7 +32,7 @@ SHELL=sh
 all: vendor log-variables checkfmt lint vet vuln test-short | $(BASE) ; $(info $(M) building executable(s)... $(VERSION) $(DATE)) @ ## Build program binary
 	$Q cd $(CURDIR) && $(GO) generate ./...
 	@ret=0 && for d in $(BUILDS); do \
-		if expr \"$$d\" : \"${MODULE}\" 1>/dev/null; then SRCPATH=$(CURDIR) ; else SRCPATH=$(CURDIR)/$${d/${MODULE}\//} ; fi ;  \
+		if expr \"$$d\" : \"${MODULE}\" 1>/dev/null; then SRCPATH=$(CURDIR) ; else SRCPATH=$(CURDIR)/$$(echo $$d | sed "s|${MODULE}/||") ; fi ;  \
 		echo $$d; \
 		cd $${SRCPATH} && $(GO) install \
 			-tags release \

@@ -99,7 +99,7 @@ type StorageListener interface {
 
 // Notifications is the interface for accessing the Notifications BB
 type Notifications interface {
-	SendNotification(notification model.NotificationMessage)
+	SendNotification(notification model.NotificationMessage) error
 	SendMail(toEmail string, subject string, body string)
 }
 

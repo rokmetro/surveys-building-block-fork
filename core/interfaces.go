@@ -34,6 +34,7 @@ type Shared interface {
 
 	createScore(orgID string, appID string, userID string, externalProfileID string, apply bool, externalIDs map[string]string) (*model.Score, error)
 	updateScore(score *model.Score, surveyResponse model.SurveyResponse, l *logs.Log)
+	getScoresForLeaderboard(leaderboard *model.Leaderboard) ([]model.Score, map[string]model.LeaderboardEntry)
 }
 
 // Core exposes Core APIs for the driver adapters

@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
+
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
 )
 
 const (
@@ -26,14 +27,16 @@ type Adapter struct {
 	bearerToken string
 
 	tagGroup string
+
+	logger *logs.Logger
 }
 
 // NewAirshipAdapter creates a new Airship adapter instance
-func NewAirshipAdapter(host string, bearerToken string, tagGroup string) *Adapter {
+func NewAirshipAdapter(host string, bearerToken string, tagGroup string, logger *logs.Logger) *Adapter {
 	if tagGroup == "" {
 		tagGroup = vogueDefaultTagGroup
 	}
-	return &Adapter{host: host, bearerToken: bearerToken, tagGroup: tagGroup}
+	return &Adapter{host: host, bearerToken: bearerToken, tagGroup: tagGroup, logger: logger}
 }
 
 // SendNotification sends a notification to an Airship user with the given tags
@@ -80,22 +83,23 @@ func (a *Adapter) SendNotification(orgID string, appID string, userID string, ti
 
 	bodyBytes, err := json.Marshal(bodyData)
 	if err != nil {
-		log.Printf("error marshalling airship notification request - %s", err)
+		a.logger.Errorf("error marshalling airship notification request - %s", err)
 		return err
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewReader(bodyBytes))
 	if err != nil {
-		log.Printf("error creating airship notification request - %s", err)
+		a.logger.Errorf("error creating airship notification request - %s", err)
 		return err
 	}
 
 	bearerToken := a.bearerToken
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
 
+	a.logger.Infof("sending airship push notification request to audience %v", bodyData["audience"])
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("error loading airship response data - %s", err)
+		a.logger.Errorf("error loading airship response data - %s", err)
 		return err
 	}
 
@@ -103,9 +107,11 @@ func (a *Adapter) SendNotification(orgID string, appID string, userID string, ti
 
 	//TODO save response?
 	if resp.StatusCode != 202 {
-		log.Printf("error with airship response code - %d", resp.StatusCode)
+		a.logger.Errorf("error with airship response code - %d", resp.StatusCode)
 		return fmt.Errorf("error with airship response code != 200")
 	}
+
+	a.logger.Infof("successfully sent airship push notification request to audience %v", bodyData["audience"])
 	return nil
 }
 

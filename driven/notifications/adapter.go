@@ -37,13 +37,18 @@ func NewNotificationsAdapter(notificationHost string, serviceAccountManager *aut
 }
 
 // SendNotification Sends a direct notification trough Notifications BB
-func (a *Adapter) SendNotification(notification model.NotificationMessage) {
+func (a *Adapter) SendNotification(notification model.NotificationMessage) error {
 	if a.serviceAccountManager == nil {
 		a.logger.Error("service account manager is nil")
-		return
+		return errors.New("service account manager is nil")
 	}
 
-	go a.logger.Error(fmt.Sprint(a.sendNotification(notification)))
+	err := a.sendNotification(notification)
+	if err != nil {
+		a.logger.Errorf("error sending notification: %v", err)
+		return err
+	}
+	return nil
 }
 
 // SendNotification sends notification to a user
@@ -68,6 +73,8 @@ func (a *Adapter) sendNotification(message model.NotificationMessage) error {
 		return errors.WrapErrorAction(logutils.ActionCreate, logutils.TypeRequest, nil, err)
 	}
 
+	loggingParams := message.GetLoggingParams()
+	a.logger.Infof("sending notifications BB request to recipients %v", loggingParams)
 	resp, err := a.serviceAccountManager.MakeRequest(req, message.AppID, message.OrgID)
 	if err != nil {
 		return errors.WrapErrorAction(logutils.ActionSend, logutils.TypeRequest, nil, err)
@@ -82,6 +89,7 @@ func (a *Adapter) sendNotification(message model.NotificationMessage) error {
 	if resp.StatusCode != 200 {
 		return errors.Newf("request error response code (%d): %s", resp.Status, respBytes)
 	}
+	a.logger.Infof("successfully sent notifications BB request to recipients %v", loggingParams)
 	return nil
 }
 

@@ -220,9 +220,10 @@ func (a *Adapter) FindConfigs(configType *string) ([]model.Config, error) {
 
 // FindAndUpdateTimerConfig finds and updates a config
 func (a *Adapter) FindAndUpdateTimerConfig(appID string, orgID string, key string, filterTime time.Time, updateTime time.Time) (*model.Config, error) {
-	filter := bson.M{"type": model.ConfigTypeTimers, "data." + key: bson.M{"$lte": filterTime}}
+	filter := bson.M{"app_id": appID, "org_id": orgID, "type": model.ConfigTypeTimers, "data." + key: bson.M{"$lte": filterTime}}
 	update := bson.M{"$set": bson.M{
-		"data." + key: updateTime,
+		"data." + key:  updateTime,
+		"date_updated": time.Now().UTC(),
 	}}
 
 	var config model.Config

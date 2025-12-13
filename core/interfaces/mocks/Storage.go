@@ -1380,8 +1380,8 @@ func (_c *Storage_FindConfigs_Call) RunAndReturn(run func(configType *string) ([
 }
 
 // FindScoresNoRanks provides a mock function for the type Storage
-func (_mock *Storage) FindScoresNoRanks(orgID string, appID string, userID []string, missingExternalUserID bool, limit *int, offset *int) ([]model.Score, error) {
-	ret := _mock.Called(orgID, appID, userID, missingExternalUserID, limit, offset)
+func (_mock *Storage) FindScoresNoRanks(orgID *string, appID *string, userID []string, missingExternalUserID bool, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error) {
+	ret := _mock.Called(orgID, appID, userID, missingExternalUserID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindScoresNoRanks")
@@ -1389,18 +1389,18 @@ func (_mock *Storage) FindScoresNoRanks(orgID string, appID string, userID []str
 
 	var r0 []model.Score
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string, string, []string, bool, *int, *int) ([]model.Score, error)); ok {
-		return returnFunc(orgID, appID, userID, missingExternalUserID, limit, offset)
+	if returnFunc, ok := ret.Get(0).(func(*string, *string, []string, bool, *int, *int, *time.Time, *time.Time) ([]model.Score, error)); ok {
+		return returnFunc(orgID, appID, userID, missingExternalUserID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string, string, []string, bool, *int, *int) []model.Score); ok {
-		r0 = returnFunc(orgID, appID, userID, missingExternalUserID, limit, offset)
+	if returnFunc, ok := ret.Get(0).(func(*string, *string, []string, bool, *int, *int, *time.Time, *time.Time) []model.Score); ok {
+		r0 = returnFunc(orgID, appID, userID, missingExternalUserID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Score)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(string, string, []string, bool, *int, *int) error); ok {
-		r1 = returnFunc(orgID, appID, userID, missingExternalUserID, limit, offset)
+	if returnFunc, ok := ret.Get(1).(func(*string, *string, []string, bool, *int, *int, *time.Time, *time.Time) error); ok {
+		r1 = returnFunc(orgID, appID, userID, missingExternalUserID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1413,25 +1413,27 @@ type Storage_FindScoresNoRanks_Call struct {
 }
 
 // FindScoresNoRanks is a helper method to define mock.On call
-//   - orgID string
-//   - appID string
+//   - orgID *string
+//   - appID *string
 //   - userID []string
 //   - missingExternalUserID bool
 //   - limit *int
 //   - offset *int
-func (_e *Storage_Expecter) FindScoresNoRanks(orgID interface{}, appID interface{}, userID interface{}, missingExternalUserID interface{}, limit interface{}, offset interface{}) *Storage_FindScoresNoRanks_Call {
-	return &Storage_FindScoresNoRanks_Call{Call: _e.mock.On("FindScoresNoRanks", orgID, appID, userID, missingExternalUserID, limit, offset)}
+//   - prevSurveyResponseDateMin *time.Time
+//   - prevSurveyResponseDateMax *time.Time
+func (_e *Storage_Expecter) FindScoresNoRanks(orgID interface{}, appID interface{}, userID interface{}, missingExternalUserID interface{}, limit interface{}, offset interface{}, prevSurveyResponseDateMin interface{}, prevSurveyResponseDateMax interface{}) *Storage_FindScoresNoRanks_Call {
+	return &Storage_FindScoresNoRanks_Call{Call: _e.mock.On("FindScoresNoRanks", orgID, appID, userID, missingExternalUserID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)}
 }
 
-func (_c *Storage_FindScoresNoRanks_Call) Run(run func(orgID string, appID string, userID []string, missingExternalUserID bool, limit *int, offset *int)) *Storage_FindScoresNoRanks_Call {
+func (_c *Storage_FindScoresNoRanks_Call) Run(run func(orgID *string, appID *string, userID []string, missingExternalUserID bool, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time)) *Storage_FindScoresNoRanks_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 *string
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(*string)
 		}
-		var arg1 string
+		var arg1 *string
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].(*string)
 		}
 		var arg2 []string
 		if args[2] != nil {
@@ -1449,6 +1451,14 @@ func (_c *Storage_FindScoresNoRanks_Call) Run(run func(orgID string, appID strin
 		if args[5] != nil {
 			arg5 = args[5].(*int)
 		}
+		var arg6 *time.Time
+		if args[6] != nil {
+			arg6 = args[6].(*time.Time)
+		}
+		var arg7 *time.Time
+		if args[7] != nil {
+			arg7 = args[7].(*time.Time)
+		}
 		run(
 			arg0,
 			arg1,
@@ -1456,6 +1466,8 @@ func (_c *Storage_FindScoresNoRanks_Call) Run(run func(orgID string, appID strin
 			arg3,
 			arg4,
 			arg5,
+			arg6,
+			arg7,
 		)
 	})
 	return _c
@@ -1466,7 +1478,7 @@ func (_c *Storage_FindScoresNoRanks_Call) Return(scores []model.Score, err error
 	return _c
 }
 
-func (_c *Storage_FindScoresNoRanks_Call) RunAndReturn(run func(orgID string, appID string, userID []string, missingExternalUserID bool, limit *int, offset *int) ([]model.Score, error)) *Storage_FindScoresNoRanks_Call {
+func (_c *Storage_FindScoresNoRanks_Call) RunAndReturn(run func(orgID *string, appID *string, userID []string, missingExternalUserID bool, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error)) *Storage_FindScoresNoRanks_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2242,8 +2254,8 @@ func (_c *Storage_GetScore_Call) RunAndReturn(run func(orgID string, appID strin
 }
 
 // GetScores provides a mock function for the type Storage
-func (_mock *Storage) GetScores(orgID *string, appID *string, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error) {
-	ret := _mock.Called(orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
+func (_mock *Storage) GetScores(orgID *string, appID *string, limit *int, offset *int) ([]model.Score, error) {
+	ret := _mock.Called(orgID, appID, limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetScores")
@@ -2251,18 +2263,18 @@ func (_mock *Storage) GetScores(orgID *string, appID *string, limit *int, offset
 
 	var r0 []model.Score
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(*string, *string, *int, *int, *time.Time, *time.Time) ([]model.Score, error)); ok {
-		return returnFunc(orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
+	if returnFunc, ok := ret.Get(0).(func(*string, *string, *int, *int) ([]model.Score, error)); ok {
+		return returnFunc(orgID, appID, limit, offset)
 	}
-	if returnFunc, ok := ret.Get(0).(func(*string, *string, *int, *int, *time.Time, *time.Time) []model.Score); ok {
-		r0 = returnFunc(orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
+	if returnFunc, ok := ret.Get(0).(func(*string, *string, *int, *int) []model.Score); ok {
+		r0 = returnFunc(orgID, appID, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Score)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(*string, *string, *int, *int, *time.Time, *time.Time) error); ok {
-		r1 = returnFunc(orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)
+	if returnFunc, ok := ret.Get(1).(func(*string, *string, *int, *int) error); ok {
+		r1 = returnFunc(orgID, appID, limit, offset)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2279,13 +2291,11 @@ type Storage_GetScores_Call struct {
 //   - appID *string
 //   - limit *int
 //   - offset *int
-//   - prevSurveyResponseDateMin *time.Time
-//   - prevSurveyResponseDateMax *time.Time
-func (_e *Storage_Expecter) GetScores(orgID interface{}, appID interface{}, limit interface{}, offset interface{}, prevSurveyResponseDateMin interface{}, prevSurveyResponseDateMax interface{}) *Storage_GetScores_Call {
-	return &Storage_GetScores_Call{Call: _e.mock.On("GetScores", orgID, appID, limit, offset, prevSurveyResponseDateMin, prevSurveyResponseDateMax)}
+func (_e *Storage_Expecter) GetScores(orgID interface{}, appID interface{}, limit interface{}, offset interface{}) *Storage_GetScores_Call {
+	return &Storage_GetScores_Call{Call: _e.mock.On("GetScores", orgID, appID, limit, offset)}
 }
 
-func (_c *Storage_GetScores_Call) Run(run func(orgID *string, appID *string, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time)) *Storage_GetScores_Call {
+func (_c *Storage_GetScores_Call) Run(run func(orgID *string, appID *string, limit *int, offset *int)) *Storage_GetScores_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 *string
 		if args[0] != nil {
@@ -2303,21 +2313,11 @@ func (_c *Storage_GetScores_Call) Run(run func(orgID *string, appID *string, lim
 		if args[3] != nil {
 			arg3 = args[3].(*int)
 		}
-		var arg4 *time.Time
-		if args[4] != nil {
-			arg4 = args[4].(*time.Time)
-		}
-		var arg5 *time.Time
-		if args[5] != nil {
-			arg5 = args[5].(*time.Time)
-		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
-			arg4,
-			arg5,
 		)
 	})
 	return _c
@@ -2328,7 +2328,7 @@ func (_c *Storage_GetScores_Call) Return(scores []model.Score, err error) *Stora
 	return _c
 }
 
-func (_c *Storage_GetScores_Call) RunAndReturn(run func(orgID *string, appID *string, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error)) *Storage_GetScores_Call {
+func (_c *Storage_GetScores_Call) RunAndReturn(run func(orgID *string, appID *string, limit *int, offset *int) ([]model.Score, error)) *Storage_GetScores_Call {
 	_c.Call.Return(run)
 	return _c
 }

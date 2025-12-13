@@ -88,19 +88,18 @@ func (n streakNotifications) processNotifications() {
 		return
 	}
 
-	scores, err := n.storage.GetScores(nil, nil, nil, nil, &prevDay, &nowDay)
+	scores, err := n.storage.FindScoresNoRanks(nil, nil, nil, false, nil, nil, &prevDay, &nowDay)
 	if err != nil {
 		n.logger.Errorf("processNotifications -> error finding scores: %v", err)
 		return
 	}
 
+	data := map[string]string{
+		"url": fmt.Sprintf("%s/quiz/landing", notifications.BaseURLVogue),
+	}
 	for _, score := range scores {
 		body := fmt.Sprintf("You're on a %d-day Runway Genius streak! Play now to keep it going.", score.CurrentStreak)
-
-		data := map[string]string{
-			"url": fmt.Sprintf("%s/quiz/landing", notifications.BaseURLVogue),
-		}
-
-		n.application.SendQuizNotifications(score.OrgID, score.AppID, score.UserID, score.ExternalUserID, body, data)
+		// notifications must be sent individually because the body contains the user's current streak count
+		n.application.SendQuizNotifications(score.OrgID, score.AppID, []string{score.UserID}, []string{score.ExternalUserID}, body, data)
 	}
 }

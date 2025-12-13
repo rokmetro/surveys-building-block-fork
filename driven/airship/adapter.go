@@ -39,8 +39,8 @@ func NewAirshipAdapter(host string, bearerToken string, tagGroup string, logger 
 	return &Adapter{host: host, bearerToken: bearerToken, tagGroup: tagGroup, logger: logger}
 }
 
-// SendNotification sends a notification to an Airship user with the given tags
-func (a *Adapter) SendNotification(orgID string, appID string, userID string, title string, body string, data map[string]string, tags []string, excludeTags []string) error {
+// SendNotification sends a notification to multiple Airship users with the given tags
+func (a *Adapter) SendNotification(orgID string, appID string, userIDs []string, title string, body string, data map[string]string, tags []string, excludeTags []string) error {
 	url := fmt.Sprintf("%s/api/push", a.host)
 
 	client := &http.Client{
@@ -74,7 +74,7 @@ func (a *Adapter) SendNotification(orgID string, appID string, userID string, ti
 
 	bodyData := m{
 		"device_types": []string{"ios", "android"},
-		"audience":     a.getAudience(userID, tags, excludeTags),
+		"audience":     a.getAudience(userIDs, tags, excludeTags),
 		"notification": m{
 			"ios":     ios,
 			"android": android,
@@ -117,10 +117,13 @@ func (a *Adapter) SendNotification(orgID string, appID string, userID string, ti
 
 // Helpers
 
-func (a *Adapter) getAudience(userID string, tags []string, excludeTags []string) m {
-	audience := m{
-		"named_user": userID,
+func (a *Adapter) getAudience(userIDs []string, tags []string, excludeTags []string) m {
+	// Build the audience using the "or" helper for multiple named_user
+	var userSelectors []m
+	for _, id := range userIDs {
+		userSelectors = append(userSelectors, m{"named_user": id})
 	}
+	audience := a.or(userSelectors...)
 
 	if len(tags) > 0 {
 		includeSelectors := make([]m, 0, len(tags))
@@ -130,7 +133,6 @@ func (a *Adapter) getAudience(userID string, tags []string, excludeTags []string
 				"tag":   t,
 			})
 		}
-
 		audience = a.and(
 			audience,
 			a.or(includeSelectors...),
@@ -145,7 +147,6 @@ func (a *Adapter) getAudience(userID string, tags []string, excludeTags []string
 				"tag":   t,
 			})
 		}
-
 		return a.and(
 			audience,
 			a.not(a.or(excludeSelectors...)),

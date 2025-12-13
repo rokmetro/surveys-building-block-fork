@@ -272,7 +272,7 @@ func (a appShared) getScoresForLeaderboard(leaderboard *model.Leaderboard) ([]mo
 	}
 	a.app.logger.InfoWithFields("getting scores for leaderboard", logutils.Fields{"leaderboard_id": leaderboard.ID, "org_id": leaderboard.OrgID, "app_id": leaderboard.AppID, "user_ids": userIDs})
 
-	scores, err := a.app.storage.FindScoresNoRanks(leaderboard.OrgID, leaderboard.AppID, userIDs, false, nil, nil)
+	scores, err := a.app.storage.FindScoresNoRanks(&leaderboard.OrgID, &leaderboard.AppID, userIDs, false, nil, nil, nil, nil)
 	if err != nil {
 		a.app.logger.WarnWithFields("error getting scores", logutils.Fields{"user_ids": userIDs, "org_id": leaderboard.OrgID, "app_id": leaderboard.AppID})
 		return nil, nil

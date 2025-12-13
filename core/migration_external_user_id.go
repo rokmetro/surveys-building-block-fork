@@ -47,7 +47,7 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 	for {
 		offset := 0
 		// Fetch a batch of scores using limit and offset
-		batch, err := app.storage.FindScoresNoRanks(orgID, appID, nil, true, &batchSize, &offset)
+		batch, err := app.storage.FindScoresNoRanks(&orgID, &appID, nil, true, &batchSize, &offset, nil, nil)
 		if err != nil {
 			return fmt.Errorf("error fetching scores: %v", err)
 		}

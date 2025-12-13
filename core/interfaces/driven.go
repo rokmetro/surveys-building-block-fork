@@ -60,7 +60,7 @@ type Storage interface {
 	DeleteAlertContact(id string, orgID string, appID string) error
 
 	GetScore(orgID string, appID string, userID string) (*model.Score, error)
-	GetScores(orgID *string, appID *string, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error)
+	GetScores(orgID *string, appID *string, limit *int, offset *int) ([]model.Score, error)
 	GetTopAndLocalScores(orgID string, appID string, userID string, limit *int, offset *int, localLimit *int, abovePivotLimit *int, belowPivotLimit *int, l *logs.Log) ([]model.Score, error)
 	CreateScore(score model.Score) error
 	UpdateScore(score model.Score) error
@@ -86,7 +86,8 @@ type Storage interface {
 	InitLeaderboardEntryScores(orgID string, appID string) error
 
 	// FindScoresNoRanks finds scores and does not set their ranks
-	FindScoresNoRanks(orgID string, appID string, userID []string, missingExternalUserID bool, limit *int, offset *int) ([]model.Score, error)
+	FindScoresNoRanks(orgID *string, appID *string, userID []string, missingExternalUserID bool, limit *int, offset *int,
+		prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error)
 	// UpdateScoreExternalUserID updates a score's external_user_id field by score ID
 	UpdateScoreExternalUserID(scoreID string, externalUserID string) error
 }

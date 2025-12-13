@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix first daily leaderboard quiz points text [#45](https://github.com/rokmetro/surveys-building-block-fork/issues/45)
 - Duplicate responses and timezone issue in quiz calculations [#52](https://github.com/rokmetro/surveys-building-block-fork/issues/52)
 - Issues sending quiz notifications [#59](https://github.com/rokmetro/surveys-building-block-fork/issues/59)
+- Issues sending quiz notifications (bug fixes and optimizations) [#59](https://github.com/rokmetro/surveys-building-block-fork/issues/59#issuecomment-3648478668)
 
 ### Changed
 - Optimize ranking counts [#24](https://github.com/rokmetro/surveys-building-block-fork/issues/24)

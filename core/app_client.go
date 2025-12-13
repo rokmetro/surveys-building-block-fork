@@ -218,7 +218,7 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 		notifyFirstDailyQuiz := false
 		now := time.Now().UTC()
 		// notify each user in each leaderboard the user has played the fashion quiz, if have not notified for that leaderboard yet today
-		if lb.LastQuizTime == nil || utils.IsNextDay(now, *lb.LastQuizTime) {
+		if lb.LastQuizTime == nil || !utils.IsPrevOrSameDay(*lb.LastQuizTime, now) {
 			notifyFirstDailyQuiz = true
 			lb.LastQuizTime = &now
 

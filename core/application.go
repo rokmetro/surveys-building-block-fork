@@ -100,9 +100,17 @@ func (a *Application) CheckTimersConfig(key string, filterTime time.Time, update
 
 // SendQuizNotifications sends quiz notifications to all notification services
 func (a *Application) SendQuizNotifications(orgID string, appID string, userIDs []string, externalUserIDs []string, body string, notificationData map[string]string) {
-	// Send to Airship (all externalUserIDs at once)
-	a.airship.SendNotification(orgID, appID, externalUserIDs, airship.SubjectVogue, body, notificationData, []string{airship.TagQuizAll}, nil)
+	if len(externalUserIDs) > 0 {
+		// Send to Airship (all externalUserIDs at once)
+		a.airship.SendNotification(orgID, appID, externalUserIDs, airship.SubjectVogue, body, notificationData, []string{airship.TagQuizAll}, nil)
+	} else {
+		a.logger.WarnWithFields("no external user IDs provided for quiz notification", logutils.Fields{"org_id": orgID, "app_id": appID, "body": body})
+	}
 
+	if len(userIDs) == 0 {
+		a.logger.WarnWithFields("no user IDs provided for quiz notification", logutils.Fields{"org_id": orgID, "app_id": appID, "body": body})
+		return
+	}
 	// Send to Notifications BB (all userIDs)
 	recipients := make([]model.NotificationMessageRecipient, len(userIDs))
 	for i, userID := range userIDs {

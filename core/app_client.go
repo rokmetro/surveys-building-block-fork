@@ -246,24 +246,24 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 				// current user's score has eclipsed this user's score in the leaderboard by completing the fashion quiz
 				if userScore.Score >= oldScore.Score && userScore.Score < score.Score {
 					// notify each user in each leaderboard that has userScore.Score >= oldScore.Score and < score.Score (any other conditions?)
-					if !rokwireutils.ContainsString(lbScoreUserIDs, score.UserID) {
-						lbScoreUserIDs = append(lbScoreUserIDs, score.UserID)
-						scoreUserIDs = append(scoreUserIDs, score.UserID)
+					if !rokwireutils.ContainsString(scoreUserIDs, userScore.UserID) {
+						lbScoreUserIDs = append(lbScoreUserIDs, userScore.UserID)
+						scoreUserIDs = append(scoreUserIDs, userScore.UserID)
 					}
-					if !rokwireutils.ContainsString(lbScoreExternalIDs, score.ExternalUserID) {
-						lbScoreExternalIDs = append(lbScoreExternalIDs, score.ExternalUserID)
-						scoreExternalIDs = append(scoreExternalIDs, score.ExternalUserID)
+					if !rokwireutils.ContainsString(scoreExternalIDs, userScore.ExternalUserID) {
+						lbScoreExternalIDs = append(lbScoreExternalIDs, userScore.ExternalUserID)
+						scoreExternalIDs = append(scoreExternalIDs, userScore.ExternalUserID)
 					}
 				}
 
 				if notifyFirstDailyQuiz {
-					if !rokwireutils.ContainsString(lbDailyUserIDs, score.UserID) {
-						lbDailyUserIDs = append(lbDailyUserIDs, score.UserID)
-						dailyUserIDs = append(dailyUserIDs, score.UserID)
+					if !rokwireutils.ContainsString(dailyUserIDs, userScore.UserID) {
+						lbDailyUserIDs = append(lbDailyUserIDs, userScore.UserID)
+						dailyUserIDs = append(dailyUserIDs, userScore.UserID)
 					}
-					if !rokwireutils.ContainsString(lbDailyExternalIDs, score.ExternalUserID) {
-						lbDailyExternalIDs = append(lbDailyExternalIDs, score.ExternalUserID)
-						dailyExternalIDs = append(dailyExternalIDs, score.ExternalUserID)
+					if !rokwireutils.ContainsString(dailyExternalIDs, userScore.ExternalUserID) {
+						lbDailyExternalIDs = append(lbDailyExternalIDs, userScore.ExternalUserID)
+						dailyExternalIDs = append(dailyExternalIDs, userScore.ExternalUserID)
 					}
 				}
 

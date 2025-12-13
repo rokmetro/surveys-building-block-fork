@@ -26,6 +26,7 @@ import (
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/errors"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logs"
 	"github.com/rokwire/rokwire-building-block-sdk-go/utils/logging/logutils"
+	"github.com/rokwire/rokwire-building-block-sdk-go/utils/rokwireutils"
 )
 
 // appClient contains client implementations
@@ -209,6 +210,10 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 		a.app.logger.WarnWithFields("failed to find leaderboards", logutils.Fields{"user_id": userID, "org_id": orgID, "app_id": appID})
 	}
 
+	scoreUserIDs := make([]string, 0)
+	scoreExternalIDs := make([]string, 0)
+	dailyUserIDs := make([]string, 0)
+	dailyExternalIDs := make([]string, 0)
 	for i := range leaderboards {
 		lb := leaderboards[i]
 		notificationData := map[string]string{
@@ -232,32 +237,56 @@ func (a appClient) sendFashionQuizNotifications(orgID string, appID string, user
 		}
 
 		scores, _ := a.app.shared.getScoresForLeaderboard(&lb)
+		lbScoreUserIDs := make([]string, 0)
+		lbScoreExternalIDs := make([]string, 0)
+		lbDailyUserIDs := make([]string, 0)
+		lbDailyExternalIDs := make([]string, 0)
 		for _, userScore := range scores {
 			if userScore.UserID != userID {
 				// current user's score has eclipsed this user's score in the leaderboard by completing the fashion quiz
 				if userScore.Score >= oldScore.Score && userScore.Score < score.Score {
 					// notify each user in each leaderboard that has userScore.Score >= oldScore.Score and < score.Score (any other conditions?)
-
-					body := fmt.Sprintf("@%s just passed you in your Runway Genius leaderboard %s. Ready to take your spot back?", username, lb.Name)
-
-					a.app.SendQuizNotifications(orgID, appID, userScore.UserID, userScore.ExternalUserID, body, notificationData)
+					if !rokwireutils.ContainsString(lbScoreUserIDs, score.UserID) {
+						lbScoreUserIDs = append(lbScoreUserIDs, score.UserID)
+						scoreUserIDs = append(scoreUserIDs, score.UserID)
+					}
+					if !rokwireutils.ContainsString(lbScoreExternalIDs, score.ExternalUserID) {
+						lbScoreExternalIDs = append(lbScoreExternalIDs, score.ExternalUserID)
+						scoreExternalIDs = append(scoreExternalIDs, score.ExternalUserID)
+					}
 				}
 
 				if notifyFirstDailyQuiz {
-					points := float64(0)
-					if score != nil {
-						points = score.Score - oldScore.Score
+					if !rokwireutils.ContainsString(lbDailyUserIDs, score.UserID) {
+						lbDailyUserIDs = append(lbDailyUserIDs, score.UserID)
+						dailyUserIDs = append(dailyUserIDs, score.UserID)
 					}
-					pointsString := "points"
-					if points == 1 {
-						pointsString = "point"
+					if !rokwireutils.ContainsString(lbDailyExternalIDs, score.ExternalUserID) {
+						lbDailyExternalIDs = append(lbDailyExternalIDs, score.ExternalUserID)
+						dailyExternalIDs = append(dailyExternalIDs, score.ExternalUserID)
 					}
-					body := fmt.Sprintf("@%s just scored %g %s in today's Runway Genius. Can you outplay them?", username, points, pointsString)
-
-					a.app.SendQuizNotifications(orgID, appID, userScore.UserID, userScore.ExternalUserID, body, notificationData)
 				}
+
+				// for each notification type, do not notify the same user more than once per the current user's quiz submission (users may share multiple leaderboards)
 			}
 		}
+
+		//score
+		body := fmt.Sprintf("@%s just passed you in your Runway Genius leaderboard %s. Ready to take your spot back?", username, lb.Name)
+		a.app.SendQuizNotifications(orgID, appID, lbScoreUserIDs, lbScoreExternalIDs, body, notificationData)
+
+		//daily
+		points := float64(0)
+		if score != nil {
+			points = score.Score - oldScore.Score
+		}
+		pointsString := "points"
+		if points == 1 {
+			pointsString = "point"
+		}
+
+		body = fmt.Sprintf("@%s just scored %g %s in today's Runway Genius. Can you outplay them?", username, points, pointsString)
+		a.app.SendQuizNotifications(orgID, appID, lbDailyUserIDs, lbDailyExternalIDs, body, notificationData)
 	}
 }
 
@@ -523,23 +552,34 @@ func (a appClient) sendJoinLeaderboardNotifications(leaderboardID string, orgID 
 	}
 
 	scores, userIDsToEntries := a.app.shared.getScoresForLeaderboard(leaderboard)
+	adminUserIDs := make([]string, 0)
+	adminExternalIDs := make([]string, 0)
+	memberUserIDs := make([]string, 0)
+	memberExternalIDs := make([]string, 0)
 	for _, score := range scores {
 		if score.UserID != userID {
 			entry := userIDsToEntries[score.UserID]
-			body := ""
 			if entry.IsAdmin {
-				body = fmt.Sprintf("@%s accepted your invite and joined the %s leaderboard.", username, leaderboard.Name)
+				adminUserIDs = append(adminUserIDs, score.UserID)
+				adminExternalIDs = append(adminExternalIDs, score.ExternalUserID)
 			} else {
-				body = fmt.Sprintf("@%s just joined the %s leaderboard. Want to see how they stack up?", username, leaderboard.Name)
+				memberUserIDs = append(memberUserIDs, score.UserID)
+				memberExternalIDs = append(memberExternalIDs, score.ExternalUserID)
 			}
-
-			data := map[string]string{
-				"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, leaderboardID),
-			}
-
-			a.app.SendQuizNotifications(orgID, appID, score.UserID, score.ExternalUserID, body, data)
 		}
 	}
+
+	data := map[string]string{
+		"url": fmt.Sprintf("%s/quiz/leaderboard/%s", notifications.BaseURLVogue, leaderboardID),
+	}
+
+	//admins
+	body := fmt.Sprintf("@%s accepted your invite and joined the %s leaderboard.", username, leaderboard.Name)
+	a.app.SendQuizNotifications(orgID, appID, adminUserIDs, adminExternalIDs, body, data)
+
+	//members
+	body = fmt.Sprintf("@%s just joined the %s leaderboard. Want to see how they stack up?", username, leaderboard.Name)
+	a.app.SendQuizNotifications(orgID, appID, memberUserIDs, memberExternalIDs, body, data)
 }
 
 func (a appClient) LeaveLeaderboard(leaderboardID string, orgID string, appID string, userID string, leavingUserIDs []string) error {

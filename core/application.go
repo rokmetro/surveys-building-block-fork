@@ -102,20 +102,23 @@ func (a *Application) CheckTimersConfig(key string, filterTime time.Time, update
 }
 
 // SendQuizNotifications sends quiz notifications to all notification services
-func (a *Application) SendQuizNotifications(orgID string, appID string, userID string, externalUserID string, body string, notificationData map[string]string) {
-	// Send to Airship
-	a.airship.SendNotification(orgID, appID, externalUserID, airship.SubjectVogue, body, notificationData, []string{airship.TagQuizAll}, nil)
+func (a *Application) SendQuizNotifications(orgID string, appID string, userIDs []string, externalUserIDs []string, body string, notificationData map[string]string) {
+	// Send to Airship (all externalUserIDs at once)
+	a.airship.SendNotification(orgID, appID, externalUserIDs, airship.SubjectVogue, body, notificationData, []string{airship.TagQuizAll}, nil)
 
-	// Send to Notifications BB
+	// Send to Notifications BB (all userIDs)
+	recipients := make([]model.NotificationMessageRecipient, len(userIDs))
+	for i, userID := range userIDs {
+		recipients[i] = model.NotificationMessageRecipient{UserID: userID}
+	}
 	topic := notifications.TopicQuizAll
 	message := model.NotificationMessage{
-		OrgID: orgID,
-		AppID: appID,
-
+		OrgID:      orgID,
+		AppID:      appID,
 		Subject:    notifications.SubjectVogue,
 		Body:       body,
 		Data:       notificationData,
-		Recipients: []model.NotificationMessageRecipient{{UserID: userID}},
+		Recipients: recipients,
 		Topic:      &topic,
 	}
 	a.notifications.SendNotification(message)

@@ -88,7 +88,7 @@ func (n streakNotifications) processNotifications() {
 		return
 	}
 
-	scores, err := n.storage.GetScores(nil, nil, nil, nil, &prevDay, &nowDay)
+	scores, err := n.storage.FindScoresNoRanks(nil, nil, nil, false, nil, nil, &prevDay, &nowDay)
 	if err != nil {
 		n.logger.Errorf("processNotifications -> error finding scores: %v", err)
 		return

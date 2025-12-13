@@ -58,7 +58,7 @@ func (a *Adapter) GetScore(orgID string, appID string, userID string) (*model.Sc
 }
 
 // GetScores returns a list of scores in descending order
-func (a *Adapter) GetScores(orgID *string, appID *string, limit *int, offset *int, prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error) {
+func (a *Adapter) GetScores(orgID *string, appID *string, limit *int, offset *int) ([]model.Score, error) {
 	externalIDField := "external_profile_id"
 	if a.useExternalUserID {
 		externalIDField = "external_user_id"
@@ -76,12 +76,6 @@ func (a *Adapter) GetScores(orgID *string, appID *string, limit *int, offset *in
 	}
 	if appID != nil && *appID != "" {
 		filter["app_id"] = *appID
-	}
-	if prevSurveyResponseDateMin != nil {
-		filter["prev_survey_response_date"] = bson.M{"$gte": *prevSurveyResponseDateMin}
-	}
-	if prevSurveyResponseDateMax != nil {
-		filter["prev_survey_response_date"] = bson.M{"$lt": *prevSurveyResponseDateMax}
 	}
 
 	// Use Find with sort and pagination options - much simpler than aggregation pipeline
@@ -455,17 +449,24 @@ func (a *Adapter) findRankForScore(score float64, orgID string, appID string) (u
 }
 
 // FindScoresNoRanks finds scores and does not set their ranks
-func (a *Adapter) FindScoresNoRanks(orgID string, appID string, userID []string, missingExternalUserID bool, limit *int, offset *int) ([]model.Score, error) {
-	filter := bson.M{
-		"org_id": orgID,
-		"app_id": appID,
-	}
+func (a *Adapter) FindScoresNoRanks(orgID *string, appID *string, userID []string, missingExternalUserID bool, limit *int, offset *int,
+	prevSurveyResponseDateMin *time.Time, prevSurveyResponseDateMax *time.Time) ([]model.Score, error) {
+	filter := bson.M{}
 
+	if orgID != nil && *orgID != "" {
+		filter["org_id"] = *orgID
+	}
+	if appID != nil && *appID != "" {
+		filter["app_id"] = *appID
+	}
 	if len(userID) > 0 {
 		filter["user_id"] = bson.M{"$in": userID}
 	}
 	if missingExternalUserID {
 		filter["external_user_id"] = bson.M{"$exists": false}
+	}
+	if prevSurveyResponseDateMin != nil && prevSurveyResponseDateMax != nil {
+		filter["prev_survey_response_date"] = bson.M{"$gte": *prevSurveyResponseDateMin, "$lt": *prevSurveyResponseDateMax}
 	}
 
 	findOptions := &options.FindOptions{}

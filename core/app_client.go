@@ -364,7 +364,7 @@ func (a appClient) GetScore(orgID string, appID string, userID string, externalP
 
 // GetScores returns scores in descending order and removes scores with empty external IDs
 func (a appClient) GetScores(orgID string, appID string, limit *int, offset *int) ([]model.Score, error) {
-	scores, err := a.app.storage.GetScores(&orgID, &appID, limit, offset, nil, nil)
+	scores, err := a.app.storage.GetScores(&orgID, &appID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

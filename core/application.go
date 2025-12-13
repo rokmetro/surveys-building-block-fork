@@ -89,16 +89,13 @@ func (a *Application) GetEnvConfigs() (*model.EnvConfigData, error) {
 }
 
 // CheckTimersConfig retrieves the database timers config
-func (a *Application) CheckTimersConfig(key string, filterTime time.Time, updateTime time.Time) (*model.TimersConfigData, error) {
+func (a *Application) CheckTimersConfig(key string, filterTime time.Time, updateTime time.Time) (*model.Config, error) {
 	// Load env configs from database
 	config, err := a.storage.FindAndUpdateTimerConfig(rokwireutils.AllApps, rokwireutils.AllOrgs, key, filterTime, updateTime)
 	if err != nil {
 		return nil, errors.WrapErrorAction(logutils.ActionFind, model.TypeConfig, nil, err)
 	}
-	if config == nil {
-		return nil, nil
-	}
-	return model.GetConfigData[model.TimersConfigData](*config)
+	return config, nil
 }
 
 // SendQuizNotifications sends quiz notifications to all notification services

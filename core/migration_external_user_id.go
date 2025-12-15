@@ -111,7 +111,6 @@ func (app *Application) MigrateScoreExternalUserIDs(orgID string, appID string, 
 					if !found {
 						log.Printf("No Core account found for account ID: %s", score.UserID)
 						errorCount++
-						continue
 					}
 
 					err = app.storage.UpdateScoreExternalUserID(score.ID, amgUUID)

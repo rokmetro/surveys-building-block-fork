@@ -95,7 +95,7 @@ func GetTimeDay(t time.Time) time.Time {
 }
 
 // StartTimer starts a timer with the given name, period, and function to call when the timer goes off
-func StartTimer(timer *time.Timer, timerDone chan bool, initialDuration *time.Duration, period time.Duration, periodicFunc func(), name string, logger *logs.Logger) {
+func StartTimer(timer *time.Timer, timerDone chan bool, initialDuration *time.Duration, period time.Duration, periodicFunc func(), awaitPeriodicFunc bool, name string, logger *logs.Logger) {
 	if logger != nil {
 		logger.Info("start timer for " + name)
 	}
@@ -110,10 +110,10 @@ func StartTimer(timer *time.Timer, timerDone chan bool, initialDuration *time.Du
 		timer.Stop()
 	}
 
-	onTimer(timer, timerDone, initialDuration, period, periodicFunc, name, logger)
+	onTimer(timer, timerDone, initialDuration, period, periodicFunc, awaitPeriodicFunc, name, logger)
 }
 
-func onTimer(timer *time.Timer, timerDone chan bool, initialDuration *time.Duration, period time.Duration, periodicFunc func(), name string, logger *logs.Logger) {
+func onTimer(timer *time.Timer, timerDone chan bool, initialDuration *time.Duration, period time.Duration, periodicFunc func(), awaitPeriodicFunc bool, name string, logger *logs.Logger) {
 	hasLogger := (logger != nil)
 	if hasLogger {
 		logger.Info(name)
@@ -122,8 +122,10 @@ func onTimer(timer *time.Timer, timerDone chan bool, initialDuration *time.Durat
 	duration := period
 	if initialDuration != nil {
 		duration = *initialDuration
-	} else {
+	} else if awaitPeriodicFunc {
 		periodicFunc()
+	} else {
+		go periodicFunc()
 	}
 	timer = time.NewTimer(duration)
 
@@ -139,7 +141,7 @@ func onTimer(timer *time.Timer, timerDone chan bool, initialDuration *time.Durat
 		}
 		timer = nil
 
-		onTimer(timer, timerDone, nil, period, periodicFunc, name, logger)
+		onTimer(timer, timerDone, nil, period, periodicFunc, awaitPeriodicFunc, name, logger)
 	case <-timerDone:
 		// timer aborted
 		if hasLogger {

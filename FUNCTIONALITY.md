@@ -96,9 +96,9 @@ The service follows **hexagonal architecture** with clear separation of concerns
 
 ---
 
-## Quiz System
+## Surveys System
 
-The service provides comprehensive quiz functionality with scoring, streaks, and competitive features.
+The service provides flexible survey functionality that allows for a variety of dynamic question types and logical flows.
 
 ### Survey Types
 
@@ -134,6 +134,10 @@ Surveys support multiple question formats through the `SurveyData` model:
 - **Response Validation**: Answers validated against correct answers and constraints
 - **Completion Tracking**: Surveys track completion status and timestamps
 - **Historical Data**: All responses preserved for analytics and score recalculation
+
+## Quiz System
+
+The service provides comprehensive quiz functionality with scoring, streaks, and competitive features.
 
 ### Scoring Mechanism
 

@@ -74,7 +74,7 @@ func (n streakNotifications) setupStreakNotificationsTimer() {
 	}
 
 	initialDuration := time.Second * time.Duration(durationInSeconds)
-	utils.StartTimer(n.streakNotificationsTimer, n.streakNotificationsTimerDone, &initialDuration, time.Duration(utils.HoursInDay)*time.Hour, n.processNotifications, "processStreakNotifications", n.logger)
+	utils.StartTimer(n.streakNotificationsTimer, n.streakNotificationsTimerDone, &initialDuration, time.Duration(utils.HoursInDay)*time.Hour, n.processNotifications, false, "processStreakNotifications", n.logger)
 }
 
 func (n streakNotifications) processNotifications() {

@@ -2726,8 +2726,8 @@ func (_c *Storage_GetSurveys_Call) RunAndReturn(run func(orgID string, appID str
 }
 
 // GetSurveysWithResponses provides a mock function for the type Storage
-func (_mock *Storage) GetSurveysWithResponses(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, unstructuredProperties map[string]interface{}, query *string) ([]model.Survey, error) {
-	ret := _mock.Called(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses, sortByDateCreated, unstructuredProperties, query)
+func (_mock *Storage) GetSurveysWithResponses(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, unstructuredProperties map[string]interface{}, query *string, admin bool) ([]model.Survey, error) {
+	ret := _mock.Called(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses, sortByDateCreated, unstructuredProperties, query, admin)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSurveysWithResponses")
@@ -2735,18 +2735,18 @@ func (_mock *Storage) GetSurveysWithResponses(orgID string, appID string, userID
 
 	var r0 []model.Survey
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string, string, *string, *string, []string, []string, string, *int, *int, *model.SurveyTimeFilter, *bool, *bool, *bool, *bool, *bool, map[string]interface{}, *string) ([]model.Survey, error)); ok {
-		return returnFunc(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses, sortByDateCreated, unstructuredProperties, query)
+	if returnFunc, ok := ret.Get(0).(func(string, string, *string, *string, []string, []string, string, *int, *int, *model.SurveyTimeFilter, *bool, *bool, *bool, *bool, *bool, map[string]interface{}, *string, bool) ([]model.Survey, error)); ok {
+		return returnFunc(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses, sortByDateCreated, unstructuredProperties, query, admin)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string, string, *string, *string, []string, []string, string, *int, *int, *model.SurveyTimeFilter, *bool, *bool, *bool, *bool, *bool, map[string]interface{}, *string) []model.Survey); ok {
-		r0 = returnFunc(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses, sortByDateCreated, unstructuredProperties, query)
+	if returnFunc, ok := ret.Get(0).(func(string, string, *string, *string, []string, []string, string, *int, *int, *model.SurveyTimeFilter, *bool, *bool, *bool, *bool, *bool, map[string]interface{}, *string, bool) []model.Survey); ok {
+		r0 = returnFunc(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses, sortByDateCreated, unstructuredProperties, query, admin)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Survey)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(string, string, *string, *string, []string, []string, string, *int, *int, *model.SurveyTimeFilter, *bool, *bool, *bool, *bool, *bool, map[string]interface{}, *string) error); ok {
-		r1 = returnFunc(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses, sortByDateCreated, unstructuredProperties, query)
+	if returnFunc, ok := ret.Get(1).(func(string, string, *string, *string, []string, []string, string, *int, *int, *model.SurveyTimeFilter, *bool, *bool, *bool, *bool, *bool, map[string]interface{}, *string, bool) error); ok {
+		r1 = returnFunc(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses, sortByDateCreated, unstructuredProperties, query, admin)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2776,11 +2776,12 @@ type Storage_GetSurveysWithResponses_Call struct {
 //   - sortByDateCreated *bool
 //   - unstructuredProperties map[string]interface{}
 //   - query *string
-func (_e *Storage_Expecter) GetSurveysWithResponses(orgID interface{}, appID interface{}, userID interface{}, creatorID interface{}, surveyIDs interface{}, surveyTypes interface{}, calendarEventID interface{}, limit interface{}, offset interface{}, timeFilter interface{}, public interface{}, archived interface{}, completed interface{}, includeResponses interface{}, sortByDateCreated interface{}, unstructuredProperties interface{}, query interface{}) *Storage_GetSurveysWithResponses_Call {
-	return &Storage_GetSurveysWithResponses_Call{Call: _e.mock.On("GetSurveysWithResponses", orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses, sortByDateCreated, unstructuredProperties, query)}
+//   - admin bool
+func (_e *Storage_Expecter) GetSurveysWithResponses(orgID interface{}, appID interface{}, userID interface{}, creatorID interface{}, surveyIDs interface{}, surveyTypes interface{}, calendarEventID interface{}, limit interface{}, offset interface{}, timeFilter interface{}, public interface{}, archived interface{}, completed interface{}, includeResponses interface{}, sortByDateCreated interface{}, unstructuredProperties interface{}, query interface{}, admin interface{}) *Storage_GetSurveysWithResponses_Call {
+	return &Storage_GetSurveysWithResponses_Call{Call: _e.mock.On("GetSurveysWithResponses", orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, timeFilter, public, archived, completed, includeResponses, sortByDateCreated, unstructuredProperties, query, admin)}
 }
 
-func (_c *Storage_GetSurveysWithResponses_Call) Run(run func(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, unstructuredProperties map[string]interface{}, query *string)) *Storage_GetSurveysWithResponses_Call {
+func (_c *Storage_GetSurveysWithResponses_Call) Run(run func(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, unstructuredProperties map[string]interface{}, query *string, admin bool)) *Storage_GetSurveysWithResponses_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 string
 		if args[0] != nil {
@@ -2850,6 +2851,10 @@ func (_c *Storage_GetSurveysWithResponses_Call) Run(run func(orgID string, appID
 		if args[16] != nil {
 			arg16 = args[16].(*string)
 		}
+		var arg17 bool
+		if args[17] != nil {
+			arg17 = args[17].(bool)
+		}
 		run(
 			arg0,
 			arg1,
@@ -2868,6 +2873,7 @@ func (_c *Storage_GetSurveysWithResponses_Call) Run(run func(orgID string, appID
 			arg14,
 			arg15,
 			arg16,
+			arg17,
 		)
 	})
 	return _c
@@ -2878,7 +2884,7 @@ func (_c *Storage_GetSurveysWithResponses_Call) Return(surveys []model.Survey, e
 	return _c
 }
 
-func (_c *Storage_GetSurveysWithResponses_Call) RunAndReturn(run func(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, unstructuredProperties map[string]interface{}, query *string) ([]model.Survey, error)) *Storage_GetSurveysWithResponses_Call {
+func (_c *Storage_GetSurveysWithResponses_Call) RunAndReturn(run func(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, unstructuredProperties map[string]interface{}, query *string, admin bool) ([]model.Survey, error)) *Storage_GetSurveysWithResponses_Call {
 	_c.Call.Return(run)
 	return _c
 }

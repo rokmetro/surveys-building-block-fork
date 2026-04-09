@@ -26,7 +26,7 @@ func surveyRequestToSurvey(item model.SurveyRequest) model.Survey {
 		DefaultDataKeyRule: item.DefaultDataKeyRule, Constants: item.Constants, Strings: item.Strings, SubRules: item.SubRules,
 		ResponseKeys: item.ResponseKeys, CalendarEventID: item.CalendarEventID, StartDate: startValue, EndDate: endValue,
 		Public: item.Public, Archived: item.Archived, EstimatedCompletionTime: item.EstimatedCompletionTime,
-		UnstructuredProperties: item.UnstructuredProperties}
+		Draft: item.Draft, UnstructuredProperties: item.UnstructuredProperties}
 }
 
 func getSurvey(item model.Survey) model.Survey {
@@ -37,7 +37,7 @@ func getSurvey(item model.Survey) model.Survey {
 		DefaultDataKeyRule: item.DefaultDataKeyRule, Constants: item.Constants, Strings: item.Strings, SubRules: item.SubRules,
 		ResponseKeys: item.ResponseKeys, CalendarEventID: item.CalendarEventID, StartDate: item.StartDate, EndDate: item.EndDate,
 		Public: item.Public, Archived: item.Archived, EstimatedCompletionTime: item.EstimatedCompletionTime,
-		UnstructuredProperties: item.UnstructuredProperties}
+		Draft: item.Draft, UnstructuredProperties: item.UnstructuredProperties}
 }
 
 func getSurveys(items []model.Survey) []model.Survey {
@@ -69,7 +69,7 @@ func updateSurveyRequestToSurvey(item model.SurveyRequest, id string) model.Surv
 		DefaultDataKeyRule: item.DefaultDataKeyRule, Constants: item.Constants, Strings: item.Strings, SubRules: item.SubRules,
 		ResponseKeys: item.ResponseKeys, CalendarEventID: item.CalendarEventID, StartDate: startValue, EndDate: endValue,
 		Public: item.Public, Archived: item.Archived, EstimatedCompletionTime: item.EstimatedCompletionTime,
-		UnstructuredProperties: item.UnstructuredProperties}
+		Draft: item.Draft, UnstructuredProperties: item.UnstructuredProperties}
 }
 
 func surveyTimeFilter(item *model.SurveyTimeFilterRequest) *model.SurveyTimeFilter {
@@ -133,6 +133,7 @@ func getSurveysResData(items []model.Survey) []model.SurveysResponseData {
 			Archived:                item.Archived,
 			EstimatedCompletionTime: item.EstimatedCompletionTime,
 			Completed:               item.Completed,
+			Draft:                   item.Draft,
 			DateCreated:             item.DateCreated,
 			SurveyResponses:         item.SurveyResponses,
 			UnstructuredProperties:  item.UnstructuredProperties,

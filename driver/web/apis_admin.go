@@ -248,6 +248,18 @@ func (h AdminAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *token
 		completed = &valueCompleted
 	}
 
+	draftStr := r.URL.Query().Get("draft")
+
+	var draft *bool
+
+	if draftStr != "" {
+		valueDraft, err := strconv.ParseBool(draftStr)
+		if err != nil {
+			return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)
+		}
+		draft = &valueDraft
+	}
+
 	includeResponsesStr := r.URL.Query().Get("include_responses")
 
 	var includeResponses *bool
@@ -292,7 +304,7 @@ func (h AdminAPIsHandler) getSurveys(l *logs.Log, r *http.Request, claims *token
 	query := r.URL.Query().Get("query")
 
 	surveys, err := h.app.Admin.GetSurveys(claims.OrgID, claims.AppID, &claims.Subject, nil, surveyIDs, surveyTypes, calendarEventID,
-		&limit, &offset, filter, public, archived, completed, includeResponses, unstrucProps, &query)
+		&limit, &offset, filter, public, archived, completed, includeResponses, draft, unstrucProps, &query)
 
 	if err != nil {
 		return l.HTTPResponseErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err, http.StatusInternalServerError, true)

@@ -248,6 +248,9 @@ type GetApiAdminSurveysParams struct {
 	// Completed Shows if the survery is completed or not
 	Completed *bool `json:"completed,omitempty"`
 
+	// Draft Filter surveys by draft status
+	Draft *bool `json:"draft,omitempty"`
+
 	// StartTimeBefore Only include surveys starting before this UTC timestamp
 	StartTimeBefore *string `json:"start_time_before,omitempty"`
 

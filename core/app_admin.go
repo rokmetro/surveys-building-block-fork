@@ -33,13 +33,13 @@ type appAdmin struct {
 // Surveys
 // GetSurvey returns the survey with the provided ID
 func (a appAdmin) GetSurvey(id string, orgID string, appID string) (*model.Survey, error) {
-	return a.app.shared.getSurvey(id, orgID, appID)
+	return a.app.shared.getSurvey(id, orgID, appID, true)
 }
 
 // GetSurvey returns surveys matching the provided query
-func (a appAdmin) GetSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, unstrucProps map[string]interface{}, query *string) ([]model.Survey, error) {
+func (a appAdmin) GetSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, draft *bool, unstrucProps map[string]interface{}, query *string) ([]model.Survey, error) {
 	sortByDateCreated := true
-	return a.app.shared.getSurveys(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed, includeResponses, &sortByDateCreated, unstrucProps, query)
+	return a.app.shared.getSurveys(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed, includeResponses, &sortByDateCreated, draft, unstrucProps, query, true)
 }
 
 // GetAllSurveyResponses returns survey responses matching the provided query
@@ -47,7 +47,7 @@ func (a appAdmin) GetAllSurveyResponses(orgID string, appID string, surveyID str
 	var allResponses []model.SurveyResponse
 	var err error
 
-	survey, err := a.app.shared.getSurvey(surveyID, orgID, appID)
+	survey, err := a.app.shared.getSurvey(surveyID, orgID, appID, true)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (a appAdmin) GetAllSurveysResponses(orgID string, appID string, surveyID st
 	var allResponses []model.SurveyResponse
 	var err error
 
-	survey, err := a.app.shared.getSurvey(surveyID, orgID, appID)
+	survey, err := a.app.shared.getSurvey(surveyID, orgID, appID, true)
 	if err != nil {
 		return nil, err
 	}

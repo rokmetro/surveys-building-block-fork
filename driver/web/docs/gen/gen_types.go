@@ -117,6 +117,7 @@ type Survey struct {
 	DateUpdated             *string                 `json:"date_updated"`
 	DefaultDataKey          *string                 `json:"default_data_key,omitempty"`
 	DefaultDataKeyRule      *string                 `json:"default_data_key_rule,omitempty"`
+	Draft                   *bool                   `json:"draft,omitempty"`
 	EndDate                 *string                 `json:"end_date"`
 	EstimatedCompletionTime *int64                  `json:"estimated_completion_time"`
 	Id                      *string                 `json:"id,omitempty"`
@@ -247,6 +248,9 @@ type GetApiAdminSurveysParams struct {
 
 	// Completed Shows if the survery is completed or not
 	Completed *bool `json:"completed,omitempty"`
+
+	// Draft Filter surveys by draft status
+	Draft *bool `json:"draft,omitempty"`
 
 	// StartTimeBefore Only include surveys starting before this UTC timestamp
 	StartTimeBefore *string `json:"start_time_before,omitempty"`

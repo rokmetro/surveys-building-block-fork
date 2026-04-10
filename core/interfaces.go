@@ -23,8 +23,8 @@ import (
 // Shared exposes shared APIs for other interface implementations
 type Shared interface {
 	// Surveys
-	getSurvey(id string, orgID string, appID string) (*model.Survey, error)
-	getSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, unstrucProps map[string]interface{}, query *string) ([]model.Survey, error)
+	getSurvey(id string, orgID string, appID string, admin bool) (*model.Survey, error)
+	getSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, draft *bool, unstrucProps map[string]interface{}, query *string, admin bool) ([]model.Survey, error)
 	createSurvey(survey model.Survey, externalIDs map[string]string) (*model.Survey, error)
 	updateSurvey(survey model.Survey, userID string, externalIDs map[string]string, admin bool) error
 	deleteSurvey(id string, orgID string, appID string, userID string, externalIDs map[string]string, admin bool) error

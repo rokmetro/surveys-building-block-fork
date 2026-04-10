@@ -70,6 +70,7 @@ type Survey struct {
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time" bson:"estimated_completion_time"`
 	SurveyResponses         []*SurveyResponse      `json:"survey_response" bson:"survey_response"`
 	Completed               *bool                  `json:"completed" bson:"completed"`
+	Draft                   bool                   `json:"draft" bson:"draft"`
 	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties" bson:"unstructured_properties"`
 	// Deprecated: Use UnstructuredProperties instead
 	UnstructuredPropertiesDep map[string]interface{} `json:"unstructuredproperties" bson:"unstructuredproperties"`
@@ -208,6 +209,7 @@ type SurveyRequest struct {
 	Public                  *bool                  `json:"public" bson:"public"`
 	Archived                *bool                  `json:"archived" bson:"archived"`
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time" bson:"estimated_completion_time"`
+	Draft                   bool                   `json:"draft" bson:"draft"`
 	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties" bson:"unstructured_properties"`
 }
 
@@ -250,6 +252,7 @@ type SurveysResponseData struct {
 	Archived                *bool                  `json:"archived"`
 	EstimatedCompletionTime *int                   `json:"estimated_completion_time"`
 	Completed               *bool                  `json:"completed"`
+	Draft                   bool                   `json:"draft"`
 	SurveyResponses         []*SurveyResponse      `json:"survey_response"`
 	UnstructuredProperties  map[string]interface{} `json:"unstructured_properties"`
 }

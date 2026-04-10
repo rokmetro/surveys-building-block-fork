@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Custom leaderboard notifications [#29](https://github.com/rokmetro/surveys-building-block-fork/issues/29)
 - Add fashion quiz notification topics [#39](https://github.com/rokmetro/surveys-building-block-fork/issues/39)
 - Add Airship integration [#57](https://github.com/rokmetro/surveys-building-block-fork/issues/57)
+- Support draft surveys [#64](https://github.com/rokmetro/surveys-building-block-fork/issues/64)
 
 ### Fixed
 - Streak not updating correctly [#47](https://github.com/rokmetro/surveys-building-block-fork/issues/47)

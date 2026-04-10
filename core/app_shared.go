@@ -32,12 +32,12 @@ type appShared struct {
 	app *Application
 }
 
-func (a appShared) getSurvey(id string, orgID string, appID string) (*model.Survey, error) {
-	return a.app.storage.GetSurvey(id, orgID, appID)
+func (a appShared) getSurvey(id string, orgID string, appID string, admin bool) (*model.Survey, error) {
+	return a.app.storage.GetSurvey(id, orgID, appID, admin)
 }
 
-func (a appShared) getSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, unstrucProps map[string]interface{}, query *string) ([]model.Survey, error) {
-	return a.app.storage.GetSurveysWithResponses(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed, includeResponses, sortByDateCreated, unstrucProps, query)
+func (a appShared) getSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, draft *bool, unstrucProps map[string]interface{}, query *string, admin bool) ([]model.Survey, error) {
+	return a.app.storage.GetSurveysWithResponses(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed, includeResponses, sortByDateCreated, draft, unstrucProps, query, admin)
 }
 
 func (a appShared) createSurvey(survey model.Survey, externalIDs map[string]string) (*model.Survey, error) {
@@ -75,7 +75,7 @@ func (a appShared) updateSurvey(survey model.Survey, userID string, externalIDs 
 func (a appShared) deleteSurvey(id string, orgID string, appID string, userID string, externalIDs map[string]string, admin bool) error {
 	transaction := func(storage interfaces.Storage) error {
 		//1. find survey
-		survey, err := storage.GetSurvey(id, orgID, appID)
+		survey, err := storage.GetSurvey(id, orgID, appID, admin)
 		if err != nil {
 			return errors.WrapErrorAction(logutils.ActionGet, model.TypeSurvey, nil, err)
 		}

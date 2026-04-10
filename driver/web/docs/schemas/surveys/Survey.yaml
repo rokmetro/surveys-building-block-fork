@@ -81,5 +81,7 @@ properties:
   completed:
     type: boolean
     nullable: true
+  draft:
+    type: boolean
   unstructured_properties:
     type: object

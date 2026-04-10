@@ -77,7 +77,7 @@ type Admin interface {
 
 	// Surveys
 	GetSurvey(id string, orgID string, appID string) (*model.Survey, error)
-	GetSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, unstrucProps map[string]interface{}, query *string) ([]model.Survey, error)
+	GetSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, draft *bool, unstrucProps map[string]interface{}, query *string) ([]model.Survey, error)
 	CreateSurvey(survey model.Survey, externalIDs map[string]string) (*model.Survey, error)
 	UpdateSurvey(survey model.Survey, userID string, externalIDs map[string]string) error
 	DeleteSurvey(id string, orgID string, appID string, userID string, externalIDs map[string]string) error

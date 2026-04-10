@@ -37,13 +37,14 @@ type appClient struct {
 // Surveys
 // GetSurvey returns the survey with the provided ID
 func (a appClient) GetSurvey(id string, orgID string, appID string) (*model.Survey, error) {
-	return a.app.shared.getSurvey(id, orgID, appID)
+	return a.app.shared.getSurvey(id, orgID, appID, false)
 }
 
 // GetSurvey returns surveys matching the provided query
 func (a appClient) GetSurveys(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string,
 	limit *int, offset *int, filter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, unstrucProps map[string]interface{}, query *string) ([]model.Survey, error) {
-	return a.app.shared.getSurveys(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed, includeResponses, nil, unstrucProps, query)
+	draftFalse := false
+	return a.app.shared.getSurveys(orgID, appID, userID, creatorID, surveyIDs, surveyTypes, calendarEventID, limit, offset, filter, public, archived, completed, includeResponses, nil, &draftFalse, unstrucProps, query, false)
 }
 
 // CreateSurvey creates a new survey
@@ -77,7 +78,7 @@ func (a appClient) GetAllSurveyResponses(orgID string, appID string, userID stri
 	var allResponses []model.SurveyResponse
 	var err error
 
-	survey, err := a.app.shared.getSurvey(surveyID, orgID, appID)
+	survey, err := a.app.shared.getSurvey(surveyID, orgID, appID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +125,7 @@ func (a appClient) CreateSurveyResponse(surveyResponse model.SurveyResponse, ext
 	surveyResponse.DateUpdated = nil
 
 	// Get survey from storage
-	survey, err := a.app.storage.GetSurvey(surveyResponse.Survey.ID, surveyResponse.OrgID, surveyResponse.AppID)
+	survey, err := a.app.storage.GetSurvey(surveyResponse.Survey.ID, surveyResponse.OrgID, surveyResponse.AppID, false)
 	if err != nil {
 		return nil, err
 	}

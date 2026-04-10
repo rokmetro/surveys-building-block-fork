@@ -27,8 +27,17 @@ import (
 )
 
 // GetSurvey retrieves a single survey
-func (a *Adapter) GetSurvey(id string, orgID string, appID string) (*model.Survey, error) {
+func (a *Adapter) GetSurvey(id string, orgID string, appID string, admin bool) (*model.Survey, error) {
 	filter := bson.M{"_id": id, "org_id": orgID, "app_id": appID}
+
+	// Non-admin requests should not see draft surveys
+	if !admin {
+		filter["$or"] = bson.A{
+			bson.M{"draft": false},
+			bson.M{"draft": bson.M{"$exists": false}},
+		}
+	}
+
 	var entry model.Survey
 	err := a.db.surveys.FindOne(a.context, filter, &entry, nil)
 	if err != nil {
@@ -137,7 +146,7 @@ func (a *Adapter) GetSurveys(orgID string, appID string, creatorID *string, surv
 }
 
 // GetSurveysWithResponses gets surveys with optional responses
-func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, unstructuredProperties map[string]interface{}, query *string) ([]model.Survey, error) {
+func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *string, creatorID *string, surveyIDs []string, surveyTypes []string, calendarEventID string, limit *int, offset *int, timeFilter *model.SurveyTimeFilter, public *bool, archived *bool, completed *bool, includeResponses *bool, sortByDateCreated *bool, draft *bool, unstructuredProperties map[string]interface{}, query *string, admin bool) ([]model.Survey, error) {
 	surveyFilter := bson.D{
 		{Key: "org_id", Value: orgID},
 		{Key: "app_id", Value: appID},
@@ -159,6 +168,25 @@ func (a *Adapter) GetSurveysWithResponses(orgID string, appID string, userID *st
 	if calendarEventID != "" {
 		surveyFilter = append(surveyFilter, bson.E{Key: "calendar_event_id", Value: calendarEventID})
 	}
+
+	// Filter by draft status
+	if draft != nil {
+		if *draft {
+			surveyFilter = append(surveyFilter, bson.E{Key: "draft", Value: true})
+		} else {
+			surveyFilter = append(surveyFilter, bson.E{Key: "$or", Value: bson.A{
+				bson.M{"draft": false},
+				bson.M{"draft": bson.M{"$exists": false}},
+			}})
+		}
+	} else if !admin {
+		// Non-admin requests should not see draft surveys by default
+		surveyFilter = append(surveyFilter, bson.E{Key: "$or", Value: bson.A{
+			bson.M{"draft": false},
+			bson.M{"draft": bson.M{"$exists": false}},
+		}})
+	}
+
 	if timeFilter.StartTimeAfter != nil {
 		surveyFilter = append(surveyFilter, primitive.E{Key: "$or", Value: bson.A{
 			bson.M{"start_date": nil},
@@ -445,6 +473,7 @@ func (a *Adapter) UpdateSurvey(survey model.Survey, admin bool) error {
 			"public":                    survey.Public,
 			"archived":                  survey.Archived,
 			"estimated_completion_time": survey.EstimatedCompletionTime,
+			"draft":                     survey.Draft,
 			"date_updated":              now,
 			"unstructured_properties":   survey.UnstructuredProperties,
 		}}

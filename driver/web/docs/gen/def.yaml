@@ -1434,6 +1434,14 @@ paths:
           explode: false
           schema:
             type: boolean
+        - name: draft
+          in: query
+          description: Filter surveys by draft status
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: boolean
         - name: start_time_before
           in: query
           description: Only include surveys starting before this UTC timestamp
@@ -2187,6 +2195,8 @@ components:
         completed:
           type: boolean
           nullable: true
+        draft:
+          type: boolean
         unstructured_properties:
           type: object
     SurveyData:

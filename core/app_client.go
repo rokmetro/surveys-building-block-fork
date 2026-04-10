@@ -78,7 +78,7 @@ func (a appClient) GetAllSurveyResponses(orgID string, appID string, userID stri
 	var allResponses []model.SurveyResponse
 	var err error
 
-	survey, err := a.app.shared.getSurvey(surveyID, orgID, appID, true)
+	survey, err := a.app.shared.getSurvey(surveyID, orgID, appID, false)
 	if err != nil {
 		return nil, err
 	}
